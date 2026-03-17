@@ -10,21 +10,22 @@ import { cn } from '@/lib/utils';
 const ShellInner = ({ children }: { children: React.ReactNode }) => {
   const { collapsed, openMobile } = useSidebar();
   return (
-    <div className="relative h-screen overflow-hidden">
+    <>
       <DesktopSidebar />
       <MobileDrawer />
       <main
         className={cn(
-          'h-full overflow-y-auto transition-[padding] duration-300 ease-in-out',
+          'min-h-dvh transition-[padding] duration-300 ease-in-out',
           collapsed ? 'md:pl-20' : 'md:pl-64'
         )}
       >
         {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/30 bg-card/70 px-4 backdrop-blur-xl md:hidden">
           <button
-            onClick={openMobile}
+            type="button"
+            onClick={() => openMobile()}
             aria-label="Open navigation"
-            className="flex size-9 items-center justify-center rounded-lg text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative flex size-9 items-center justify-center rounded-lg text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Menu className="size-5" />
           </button>
@@ -35,7 +36,7 @@ const ShellInner = ({ children }: { children: React.ReactNode }) => {
 
         {children}
       </main>
-    </div>
+    </>
   );
 };
 

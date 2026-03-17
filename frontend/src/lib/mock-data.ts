@@ -8,12 +8,21 @@ export const EVENTS: Event[] = [
     date: '2026-06-20T19:00:00',
     venue: 'Rotušės aikštė',
     city: 'Vilnius',
-    price: 25,
+    priceFrom: 25,
+    ticketTypes: [
+      { id: '1-early', name: 'Early bird', price: 25, description: 'Limited release' },
+      { id: '1-std', name: 'Standard', price: 35 },
+      { id: '1-vip', name: 'VIP lounge', price: 70, description: 'Reserved seating, complimentary drink' },
+    ],
     imageUrl: 'https://placehold.co/600x400/1e3a5f/ffffff?text=Jazz+Festival',
     description:
       'One of the most prestigious jazz festivals in the Baltic states, bringing together world-class musicians for three nights of unforgettable performances under the open sky in the heart of the Old Town.',
     availableTickets: 480,
     featured: true,
+    disclaimers: [
+      'Outdoor event — performances continue rain or shine.',
+      'No professional cameras or recording equipment.',
+    ],
   },
   {
     id: '2',
@@ -22,13 +31,19 @@ export const EVENTS: Event[] = [
     date: '2026-06-27T18:00:00',
     venue: 'Žalgirio Arena',
     city: 'Kaunas',
-    price: 35,
+    priceFrom: 35,
+    ticketTypes: [
+      { id: '2-upper', name: 'Upper tier', price: 35 },
+      { id: '2-lower', name: 'Lower tier', price: 60 },
+      { id: '2-courtside', name: 'Courtside', price: 180, description: 'Front-row seating' },
+    ],
     imageUrl:
       'https://placehold.co/600x400/006400/ffffff?text=Zalgiris+Basketball',
     description:
       'Witness the passion of Lithuanian basketball as Žalgiris Kaunas takes on Olympiacos in a crucial EuroLeague clash. The atmosphere at Žalgirio Arena is unlike anything else in European basketball.',
-    availableTickets: 1200,
+    availableTickets: 92,
     featured: true,
+    venueMapId: 'vm-zalgirio',
   },
   {
     id: '3',
@@ -37,13 +52,22 @@ export const EVENTS: Event[] = [
     date: '2026-07-04T19:30:00',
     venue: 'Lietuvos Nacionalinis Operos ir Baleto Teatras',
     city: 'Vilnius',
-    price: 55,
+    priceFrom: 55,
+    ticketTypes: [
+      { id: '3-balcony', name: 'Balcony', price: 55 },
+      { id: '3-stalls', name: 'Stalls', price: 95 },
+      { id: '3-box', name: 'Private box', price: 160, description: 'Up to 4 guests' },
+    ],
     imageUrl:
       'https://placehold.co/600x400/4a0072/ffffff?text=Phantom+of+the+Opera',
     description:
       "Andrew Lloyd Webber's timeless masterpiece performed by the Lithuanian National Opera. A breathtaking production featuring stunning costumes, dramatic sets, and world-class vocal performances.",
     availableTickets: 220,
     featured: false,
+    disclaimers: [
+      'Recommended age 12+. Latecomers admitted at a suitable break.',
+      'Smart-casual dress code observed.',
+    ],
   },
   {
     id: '4',
@@ -52,7 +76,11 @@ export const EVENTS: Event[] = [
     date: '2026-07-12T20:00:00',
     venue: 'Kaunas Sports Hall',
     city: 'Kaunas',
-    price: 18,
+    priceFrom: 18,
+    ticketTypes: [
+      { id: '4-ga', name: 'General admission', price: 18 },
+      { id: '4-pit', name: 'Front pit', price: 32, description: 'Standing, closer to stage' },
+    ],
     imageUrl: 'https://placehold.co/600x400/8b0000/ffffff?text=Rock+Nights',
     description:
       'A night of high-energy rock music featuring the best Lithuanian rock bands. Expect electric performances, crowd surfing, and an unforgettable evening of pure rock and roll.',
@@ -66,12 +94,21 @@ export const EVENTS: Event[] = [
     date: '2026-07-19T09:00:00',
     venue: 'Šiauliai City Centre',
     city: 'Šiauliai',
-    price: 12,
+    priceFrom: 12,
+    ticketTypes: [
+      { id: '5-5k', name: '5 km', price: 12 },
+      { id: '5-10k', name: '10 km', price: 18 },
+      { id: '5-half', name: 'Half marathon', price: 28 },
+      { id: '5-full', name: 'Full marathon', price: 38 },
+    ],
     imageUrl: 'https://placehold.co/600x400/2e7d32/ffffff?text=City+Marathon',
     description:
       'Join thousands of runners for the annual Šiauliai City Marathon. Courses available for all levels — 5 km, 10 km, half marathon, and full marathon. A celebration of sport and community.',
     availableTickets: 3000,
     featured: false,
+    disclaimers: [
+      'Medical certificate required for the half and full marathon distances.',
+    ],
   },
   {
     id: '6',
@@ -80,13 +117,21 @@ export const EVENTS: Event[] = [
     date: '2026-06-21T22:00:00',
     venue: 'Panevėžys Lakeside Park',
     city: 'Panevėžys',
-    price: 42,
+    priceFrom: 42,
+    ticketTypes: [
+      { id: '6-ga', name: 'General admission', price: 42 },
+      { id: '6-vip', name: 'VIP', price: 95, description: 'Raised viewing deck, dedicated bar' },
+    ],
     imageUrl:
       'https://placehold.co/600x400/0d1b2a/00ffcc?text=Electronic+Festival',
     description:
       'Celebrate the summer solstice with 12 hours of non-stop electronic music. Four stages, over 30 international and local DJs, and an incredible light show set against a natural lakeside backdrop.',
-    availableTickets: 1800,
+    availableTickets: 190,
     featured: true,
+    disclaimers: [
+      'Strictly 18+. Photo ID required at the gate.',
+    ],
+    venueMapId: 'vm-lakeside',
   },
   {
     id: '7',
@@ -95,7 +140,12 @@ export const EVENTS: Event[] = [
     date: '2026-08-08T19:00:00',
     venue: 'Klaipėda Concert Hall',
     city: 'Klaipėda',
-    price: 65,
+    priceFrom: 65,
+    ticketTypes: [
+      { id: '7-balcony', name: 'Balcony', price: 65 },
+      { id: '7-stalls', name: 'Stalls', price: 110 },
+      { id: '7-premium', name: 'Premium centre', price: 150 },
+    ],
     imageUrl: 'https://placehold.co/600x400/1a237e/ffffff?text=Swan+Lake',
     description:
       "Tchaikovsky's Swan Lake performed by the renowned Klaipėda State Musical Theatre ballet company. A classic tale of love and transformation brought to life with graceful choreography and lush orchestral music.",
@@ -109,7 +159,12 @@ export const EVENTS: Event[] = [
     date: '2026-08-15T17:00:00',
     venue: 'LFF Stadionas',
     city: 'Vilnius',
-    price: 15,
+    priceFrom: 15,
+    ticketTypes: [
+      { id: '8-standing', name: 'Standing', price: 15 },
+      { id: '8-seated', name: 'Seated', price: 28 },
+      { id: '8-hospitality', name: 'Hospitality', price: 80, description: 'Lounge access, refreshments' },
+    ],
     imageUrl:
       'https://placehold.co/600x400/154360/ffffff?text=Football+Cup+Final',
     description:
@@ -124,7 +179,11 @@ export const EVENTS: Event[] = [
     date: '2026-09-05T18:00:00',
     venue: 'Vilnius Brewery Gardens',
     city: 'Vilnius',
-    price: 22,
+    priceFrom: 22,
+    ticketTypes: [
+      { id: '9-ga', name: 'General admission', price: 22 },
+      { id: '9-table', name: 'Reserved table', price: 60, description: 'Seats up to 4' },
+    ],
     imageUrl: 'https://placehold.co/600x400/37474f/ffcc00?text=Indie+Sounds',
     description:
       'A curated evening of independent music showcasing the best emerging artists from Lithuania and the wider Baltic region. Intimate setting, great acoustics, craft beer, and good vibes.',
@@ -138,7 +197,11 @@ export const EVENTS: Event[] = [
     date: '2026-09-18T19:30:00',
     venue: 'Vilnius Small Theatre',
     city: 'Vilnius',
-    price: 30,
+    priceFrom: 30,
+    ticketTypes: [
+      { id: '10-std', name: 'Standard', price: 30 },
+      { id: '10-front', name: 'Front rows', price: 48 },
+    ],
     imageUrl: 'https://placehold.co/600x400/4a148c/ffd740?text=Midsummer+Dream',
     description:
       "Shakespeare's beloved comedy reimagined in a contemporary Lithuanian setting. A magical production that blends folk tradition with modern theatrical innovation.",
@@ -152,7 +215,12 @@ export const EVENTS: Event[] = [
     date: '2026-09-26T10:00:00',
     venue: 'Trakai Historical Park',
     city: 'Trakai',
-    price: 8,
+    priceFrom: 8,
+    ticketTypes: [
+      { id: '11-spectator', name: 'Spectator pass', price: 8 },
+      { id: '11-amateur', name: 'Amateur entry', price: 25 },
+      { id: '11-pro', name: 'Pro entry', price: 55 },
+    ],
     imageUrl:
       'https://placehold.co/600x400/004d40/ffffff?text=Cycling+Grand+Prix',
     description:
@@ -167,7 +235,13 @@ export const EVENTS: Event[] = [
     date: '2026-10-10T19:00:00',
     venue: 'Siemens Arena',
     city: 'Vilnius',
-    price: 85,
+    priceFrom: 85,
+    ticketTypes: [
+      { id: '12-upper', name: 'Upper tier', price: 85 },
+      { id: '12-lower', name: 'Lower tier', price: 130 },
+      { id: '12-fanpit', name: 'Fan pit', price: 175, description: 'Standing, closest to stage' },
+      { id: '12-vip', name: 'VIP package', price: 250, description: 'Meet & greet, signed merch' },
+    ],
     imageUrl:
       'https://placehold.co/600x400/212121/e0e0e0?text=Zilvinas+Zilinskas',
     description:
