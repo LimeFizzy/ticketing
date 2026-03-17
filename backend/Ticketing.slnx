@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Ticketing.API/Ticketing.API.csproj" />
+  <Project Path="Ticketing.Application/Ticketing.Application.csproj" />
+  <Project Path="Ticketing.Domain/Ticketing.Domain.csproj" />
+  <Project Path="Ticketing.Infrastructure/Ticketing.Infrastructure.csproj" />
+</Solution>
