@@ -10,11 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  CATEGORY_LABELS,
-  DATE_LABELS,
-  PRICE_LABELS,
-} from '@/lib/event-styles';
+import { CATEGORY_LABELS, DATE_LABELS, PRICE_LABELS } from '@/lib/event-styles';
+import { Route } from '@/lib/routes';
 
 export const FilterBar = () => {
   const router = useRouter();
@@ -28,7 +25,7 @@ export const FilterBar = () => {
       next.delete(key);
     }
     const qs = next.toString();
-    router.replace(qs ? `/?${qs}` : '/');
+    router.replace(qs ? `${Route.Home}?${qs}` : Route.Home);
   };
 
   return (
@@ -39,18 +36,18 @@ export const FilterBar = () => {
         <Input
           type="search"
           placeholder="Search events, venues, cities…"
-          defaultValue={params.get('q') ?? ''}
-          className="h-10 rounded-xl bg-white/95 border-white/70 pl-9 backdrop-blur-md"
+          value={params.get('q') ?? ''}
+          className="h-10 rounded-xl bg-white/95 border-border pl-9 backdrop-blur-md"
           onChange={(e) => update('q', e.target.value)}
         />
       </div>
 
       {/* Category */}
       <Select
-        defaultValue={params.get('category') ?? 'all'}
+        value={params.get('category') ?? 'all'}
         onValueChange={(value) => update('category', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-white/70 backdrop-blur-md sm:w-44">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-44">
           <Tag className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) =>
@@ -68,10 +65,10 @@ export const FilterBar = () => {
 
       {/* Date */}
       <Select
-        defaultValue={params.get('date') ?? 'all'}
+        value={params.get('date') ?? 'all'}
         onValueChange={(value) => update('date', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-white/70 backdrop-blur-md sm:w-40">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-40">
           <CalendarDays className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) => DATE_LABELS[String(value ?? 'all')] ?? 'Any date'}
@@ -87,10 +84,10 @@ export const FilterBar = () => {
 
       {/* Price */}
       <Select
-        defaultValue={params.get('price') ?? 'all'}
+        value={params.get('price') ?? 'all'}
         onValueChange={(value) => update('price', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-white/70 backdrop-blur-md sm:w-40">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-40">
           <Wallet className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) => PRICE_LABELS[String(value ?? 'all')] ?? 'Any price'}

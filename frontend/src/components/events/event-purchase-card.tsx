@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { formatPrice } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { eventBuyRoute } from '@/lib/routes';
 
 interface EventPurchaseCardProps {
   eventId: string;
@@ -25,7 +26,7 @@ export const EventPurchaseCard = ({
         </p>
       </div>
       <Link
-        href={`/events/${eventId}/buy`}
+        href={eventBuyRoute(eventId)}
         className={cn(buttonVariants({ size: 'lg' }), 'gap-2')}
       >
         <Ticket className="size-4" />

@@ -84,7 +84,8 @@ export const usePanZoom = ({
   containerRef,
   onTap,
 }: UsePanZoomOptions): UsePanZoomResult => {
-  const [transform, setTransform] = useState<PanZoomTransform>(PAN_ZOOM_INITIAL);
+  const [transform, setTransform] =
+    useState<PanZoomTransform>(PAN_ZOOM_INITIAL);
   const transformRef = useRef(PAN_ZOOM_INITIAL);
   useEffect(() => {
     transformRef.current = transform;
@@ -195,7 +196,9 @@ export const usePanZoom = ({
       );
       const prev = transformRef.current;
       if (desired === prev.scale) return;
-      updateTransform(zoomedTransform(prev, drag.anchor.x, drag.anchor.y, desired));
+      updateTransform(
+        zoomedTransform(prev, drag.anchor.x, drag.anchor.y, desired)
+      );
       return;
     }
 

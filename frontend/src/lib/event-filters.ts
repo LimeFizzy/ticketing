@@ -1,9 +1,6 @@
 import { EVENTS, TODAY } from '@/lib/mock-data';
 import { type Event } from '@/types/event';
-import {
-  type CategoryFilter,
-  type SearchParams,
-} from '@/types/filters';
+import { type CategoryFilter, type SearchParams } from '@/types/filters';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -42,9 +39,9 @@ export const filterEvents = (params: SearchParams): Event[] =>
 export const hasActiveFilter = (params: SearchParams): boolean =>
   Boolean(
     (params.q && params.q.trim().length > 0) ||
-      (params.category && params.category !== 'all') ||
-      (params.date && params.date !== 'all') ||
-      (params.price && params.price !== 'all')
+    (params.category && params.category !== 'all') ||
+    (params.date && params.date !== 'all') ||
+    (params.price && params.price !== 'all')
   );
 
 export const trending = (events: Event[]): Event[] =>

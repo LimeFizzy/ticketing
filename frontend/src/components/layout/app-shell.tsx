@@ -1,14 +1,20 @@
 'use client';
 
-import { Menu } from 'lucide-react';
+import Link from 'next/link';
+import { LogIn, Menu, User } from 'lucide-react';
 import { SidebarProvider } from '@/contexts/sidebar-context';
 import { DesktopSidebar } from './desktop-sidebar';
 import { MobileDrawer } from './mobile-drawer';
 import { useSidebar } from '@/hooks/use-sidebar';
+import { useAuth } from '@/hooks/use-auth';
+import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Route } from '@/lib/routes';
 
 const ShellInner = ({ children }: { children: React.ReactNode }) => {
   const { collapsed, openMobile } = useSidebar();
+  const { user } = useAuth();
+
   return (
     <>
       <DesktopSidebar />
@@ -19,7 +25,6 @@ const ShellInner = ({ children }: { children: React.ReactNode }) => {
           collapsed ? 'md:pl-20' : 'md:pl-64'
         )}
       >
-        {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/30 bg-card/70 px-4 backdrop-blur-xl md:hidden">
           <button
             type="button"
@@ -29,9 +34,35 @@ const ShellInner = ({ children }: { children: React.ReactNode }) => {
           >
             <Menu className="size-5" />
           </button>
-          <span className="font-display text-xl tracking-tight text-foreground">
+          <Link
+            href={Route.Home}
+            className="font-display text-xl tracking-tight text-foreground"
+          >
             TicketFlow
-          </span>
+          </Link>
+          {user ? (
+            <Link
+              href={Route.Account}
+              className="ml-auto flex max-w-[50%] items-center gap-1.5 text-sm font-medium text-foreground hover:underline"
+            >
+              <User className="size-4 shrink-0" />
+              <span className="truncate">
+                {user.firstName}
+                {user.lastName ? ` ${user.lastName}` : ''}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              href={Route.SignIn}
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'ml-auto gap-1.5'
+              )}
+            >
+              <LogIn className="size-4" />
+              Sign In
+            </Link>
+          )}
         </header>
 
         {children}

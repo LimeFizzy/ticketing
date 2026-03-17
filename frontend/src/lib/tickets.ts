@@ -20,3 +20,12 @@ export const getUserTickets = (
     past: tickets.filter((t) => t.isPast),
   };
 };
+
+export const getUserTicketById = (
+  events: Event[],
+  today: Date,
+  ticketId: string
+): UserTicket | undefined => {
+  const { upcoming, past } = getUserTickets(events, today);
+  return [...upcoming, ...past].find((t) => t.ticketId === ticketId);
+};

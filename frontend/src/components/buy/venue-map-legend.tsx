@@ -1,8 +1,5 @@
 import { type Event } from '@/types/event';
-import {
-  SOLD_FILL,
-  type PlaceColor,
-} from '@/lib/venue-maps';
+import { SOLD_FILL, type PlaceColor } from '@/lib/venue-maps';
 
 interface VenueMapLegendProps {
   event: Event;

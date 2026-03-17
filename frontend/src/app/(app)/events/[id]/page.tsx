@@ -10,10 +10,8 @@ import { EventPurchaseCard } from '@/components/events/event-purchase-card';
 import { EventDisclaimers } from '@/components/events/event-disclaimers';
 import { EVENTS } from '@/lib/mock-data';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
-import {
-  formatEventDateLong,
-  formatEventTime,
-} from '@/lib/formatters';
+import { formatEventDateLong, formatEventTime } from '@/lib/formatters';
+import { Route } from '@/lib/routes';
 
 export const generateMetadata = async ({
   params,
@@ -39,7 +37,7 @@ const EventDetailPage = async ({
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
       <Link
-        href="/"
+        href={Route.Home}
         className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft className="size-4" />
@@ -80,7 +78,8 @@ const EventDetailPage = async ({
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="size-4 shrink-0" />
-                  {formatEventDateLong(event.date)} at {formatEventTime(event.date)}
+                  {formatEventDateLong(event.date)} at{' '}
+                  {formatEventTime(event.date)}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <MapPin className="size-4 shrink-0" />

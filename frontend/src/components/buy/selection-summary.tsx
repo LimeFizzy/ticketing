@@ -37,7 +37,9 @@ export const SelectionSummary = ({
     <Card className="glass border-white/40 shadow-sm lg:sticky lg:top-6 lg:self-start">
       <CardContent className="flex flex-col gap-4 p-5">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-base font-semibold text-foreground">Your selection</h2>
+          <h2 className="text-base font-semibold text-foreground">
+            Your selection
+          </h2>
           <span className="text-xs text-muted-foreground">
             {totalQuantity} / {MAX_PLACES_PER_ORDER}
           </span>

@@ -14,7 +14,11 @@ interface CategoryRowProps {
   viewAllHref?: string;
 }
 
-export const CategoryRow = ({ title, events, viewAllHref }: CategoryRowProps) => {
+export const CategoryRow = ({
+  title,
+  events,
+  viewAllHref,
+}: CategoryRowProps) => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
