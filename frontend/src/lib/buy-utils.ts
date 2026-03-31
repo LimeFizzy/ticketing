@@ -1,4 +1,4 @@
-import { type Event, type EventTicketType } from '@/types/event';
+import { EventDto, EventTicketTypeDto } from "./api";
 
 export const MAX_PLACES_PER_ORDER = 8;
 
@@ -25,16 +25,16 @@ export interface TicketTypeInfo {
 }
 
 export const buildTicketTypeIndex = (
-  event: Event
-): Map<string, EventTicketType> =>
+  event: EventDto
+): Map<string, EventTicketTypeDto> =>
   new Map(event.ticketTypes.map((t) => [t.id, t]));
 
 export const ticketTypeNameFromIndex = (
-  index: Map<string, EventTicketType>,
+  index: Map<string, EventTicketTypeDto>,
   id: string
 ): string => index.get(id)?.name ?? 'Ticket';
 
 export const ticketTypePriceFromIndex = (
-  index: Map<string, EventTicketType>,
+  index: Map<string, EventTicketTypeDto>,
   id: string
 ): number => index.get(id)?.price ?? 0;

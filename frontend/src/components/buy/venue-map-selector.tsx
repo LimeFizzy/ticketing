@@ -9,14 +9,14 @@ import {
 import { VenueMapCanvas } from '@/components/buy/venue-map-canvas';
 import { VenueMapLegend } from '@/components/buy/venue-map-legend';
 import { VenueMapZoomControls } from '@/components/buy/venue-map-zoom-controls';
-import { type Event } from '@/types/event';
 import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
+import { EventDto } from '@/lib/api';
 
 interface VenueMapSelectorProps {
-  event: Event;
+  event: EventDto;
   venueMap: VenueMap;
 }
 

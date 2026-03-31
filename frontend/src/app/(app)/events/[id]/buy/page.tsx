@@ -4,9 +4,9 @@ import { type Metadata } from 'next';
 import { ChevronLeft } from 'lucide-react';
 import { TicketTypeSelector } from '@/components/buy/ticket-type-selector';
 import { VenueMapSelector } from '@/components/buy/venue-map-selector';
-import { EVENTS } from '@/lib/mock-data';
 import { getVenueMap } from '@/lib/venue-maps';
 import { eventRoute } from '@/lib/routes';
+import { getEventById } from '@/lib/api';
 
 export const generateMetadata = async ({
   params,
@@ -14,7 +14,7 @@ export const generateMetadata = async ({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> => {
   const { id } = await params;
-  const event = EVENTS.find((e) => e.id === id);
+  const { data: event } = await getEventById({ path: { id } });
   return {
     title: event
       ? `Select tickets — ${event.title} — TicketFlow`
@@ -28,7 +28,7 @@ const BuyTicketsPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const { id } = await params;
-  const event = EVENTS.find((e) => e.id === id);
+  const { data: event } = await getEventById({ path: { id } });
   if (!event) notFound();
 
   const venueMap = event.venueMapId ? getVenueMap(event.venueMapId) : undefined;

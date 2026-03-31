@@ -7,11 +7,11 @@ import {
   SelectionSummary,
   type SelectionLine,
 } from '@/components/buy/selection-summary';
-import { type Event } from '@/types/event';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
+import { EventDto } from '@/lib/api';
 
 interface TicketTypeSelectorProps {
-  event: Event;
+  event: EventDto;
 }
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {

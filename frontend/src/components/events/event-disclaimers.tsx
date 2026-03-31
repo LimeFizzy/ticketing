@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { STATIC_DISCLAIMERS } from '@/lib/disclaimers';
 
 interface EventDisclaimersProps {
-  extras?: string[];
+  extras?: string[] | null;
 }
 
 export const EventDisclaimers = ({ extras }: EventDisclaimersProps) => {

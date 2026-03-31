@@ -1,9 +1,9 @@
-import { type Event } from '@/types/event';
+import { EventDto } from "@/lib/api";
 
 export type Tab = 'upcoming' | 'past';
 
 export interface UserTicket {
-  event: Event;
+  event: EventDto;
   ticketId: string;
   isPast: boolean;
 }

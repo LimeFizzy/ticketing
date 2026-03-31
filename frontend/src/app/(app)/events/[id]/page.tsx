@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { EventPurchaseCard } from '@/components/events/event-purchase-card';
 import { EventDisclaimers } from '@/components/events/event-disclaimers';
-import { EVENTS } from '@/lib/mock-data';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
 import { formatEventDateLong, formatEventTime } from '@/lib/formatters';
 import { Route } from '@/lib/routes';
+import { getEventById } from '@/lib/api';
 
 export const generateMetadata = async ({
   params,
@@ -19,7 +19,7 @@ export const generateMetadata = async ({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> => {
   const { id } = await params;
-  const event = EVENTS.find((e) => e.id === id);
+  const { data: event } = await getEventById({ path: { id } });
   return {
     title: event ? `${event.title} — TicketFlow` : 'Event — TicketFlow',
   };
@@ -31,7 +31,7 @@ const EventDetailPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const { id } = await params;
-  const event = EVENTS.find((e) => e.id === id);
+  const { data: event } = await getEventById({ path: { id } });
   if (!event) notFound();
 
   return (
