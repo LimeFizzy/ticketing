@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ "master" ]
 
-defaults:
-  run:
-    working-directory: ./frontend
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,6 +32,12 @@ jobs:
         run: npm run build
         env:
           INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
+
+      - name: Check build output location
+        run: |
+            echo "Current directory:" && pwd
+            echo "Listing root of frontend:" && ls -la
+            echo "Listing .next if it exists:" && ls -la .next || echo ".next not found in current dir"
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
