@@ -11,7 +11,7 @@ defaults:
     working-directory: ./frontend
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,21 +36,16 @@ jobs:
         run: npm run build
         env:
           INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
-      
-      - name: Check build output location
-        run: |
-            echo "Current directory:" && pwd
-            echo "Listing root of frontend:" && ls -la
-            echo "Listing .next if it exists:" && ls -la .next || echo ".next not found in current dir"
 
       - name: Upload build output
+        if: github.ref_name == 'master'
         uses: actions/upload-artifact@v4
         with:
           name: next-build
-          path: ./frontend/.next
+          path: frontend/.next
 
-  deploy:
-    needs: build
+  cd:
+    needs: ci
     if: github.ref_name == 'master'
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +55,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: next-build
-          path: ./frontend/.next
+          path: frontend/.next
 
       - name: Deploy to Vercel (prebuilt)
         uses: amondnet/vercel-action@v25
