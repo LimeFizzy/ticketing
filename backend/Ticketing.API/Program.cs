@@ -22,7 +22,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddDbContext<TicketingDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=ticketing.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()!)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -68,15 +68,13 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.MapOpenApi();
+app.UseSwagger();
 
 if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ticketing API V1");
     });
-}
 
 app.UseHttpsRedirection();
 
@@ -87,7 +85,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed data on startup
 await app.Services.SeedDataAsync();
 
 app.Run();

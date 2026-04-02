@@ -1,24 +1,10 @@
-using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
 
-public interface IDataSeeder
+public static class DataSeeder
 {
-    Task SeedAsync();
-}
-
-public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
-{
-    public async Task SeedAsync()
-    {
-        var existingEvents = await eventRepository.GetAllAsync();
-        if (existingEvents.Any()) return;
-
-        var events = GetMockEvents();
-    }
-
     public static List<Event> GetMockEvents()
     {
         return
@@ -28,7 +14,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Title = "Vilnius Jazz Festival",
                 Category = EventCategory.Music,
-                Date = DateTime.Parse("2026-06-20T19:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-06-20T19:00:00"), DateTimeKind.Utc),
                 Venue = "Rotušės aikštė",
                 City = "Vilnius",
                 PriceFrom = 25m,
@@ -66,7 +52,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
                 Title = "Žalgiris vs Olympiacos — EuroLeague",
                 Category = EventCategory.Sports,
-                Date = DateTime.Parse("2026-06-27T18:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-06-27T18:00:00"), DateTimeKind.Utc),
                 Venue = "Žalgirio Arena",
                 City = "Kaunas",
                 PriceFrom = 35m,
@@ -103,7 +89,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000003"),
                 Title = "The Phantom of the Opera",
                 Category = EventCategory.Theater,
-                Date = DateTime.Parse("2026-07-04T19:30:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-07-04T19:30:00"), DateTimeKind.Utc),
                 Venue = "Lietuvos Nacionalinis Operos ir Baleto Teatras",
                 City = "Vilnius",
                 PriceFrom = 55m,
@@ -140,7 +126,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000004"),
                 Title = "Kaunas Rock Nights",
                 Category = EventCategory.Music,
-                Date = DateTime.Parse("2026-07-12T20:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-07-12T20:00:00"), DateTimeKind.Utc),
                 Venue = "Kaunas Sports Hall",
                 City = "Kaunas",
                 PriceFrom = 18m,
@@ -170,7 +156,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000005"),
                 Title = "Šiauliai City Marathon",
                 Category = EventCategory.Sports,
-                Date = DateTime.Parse("2026-07-19T09:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-07-19T09:00:00"), DateTimeKind.Utc),
                 Venue = "Šiauliai City Centre",
                 City = "Šiauliai",
                 PriceFrom = 12m,
@@ -212,7 +198,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000006"),
                 Title = "Midsummer Electronic Festival",
                 Category = EventCategory.Music,
-                Date = DateTime.Parse("2026-06-21T22:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-06-21T22:00:00"), DateTimeKind.Utc),
                 Venue = "Panevėžys Lakeside Park",
                 City = "Panevėžys",
                 PriceFrom = 42m,
@@ -244,7 +230,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000007"),
                 Title = "Swan Lake — Ballet Gala",
                 Category = EventCategory.Theater,
-                Date = DateTime.Parse("2026-08-08T19:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-08-08T19:00:00"), DateTimeKind.Utc),
                 Venue = "Klaipėda Concert Hall",
                 City = "Klaipėda",
                 PriceFrom = 65m,
@@ -279,7 +265,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000008"),
                 Title = "Lithuanian Football Cup Final",
                 Category = EventCategory.Sports,
-                Date = DateTime.Parse("2026-08-15T17:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-08-15T17:00:00"), DateTimeKind.Utc),
                 Venue = "LFF Stadionas",
                 City = "Vilnius",
                 PriceFrom = 15m,
@@ -315,7 +301,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000009"),
                 Title = "Indie Sounds — Summer Edition",
                 Category = EventCategory.Music,
-                Date = DateTime.Parse("2026-09-05T18:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-09-05T18:00:00"), DateTimeKind.Utc),
                 Venue = "Vilnius Brewery Gardens",
                 City = "Vilnius",
                 PriceFrom = 22m,
@@ -345,7 +331,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000010"),
                 Title = "A Midsummer Night's Dream",
                 Category = EventCategory.Theater,
-                Date = DateTime.Parse("2026-09-18T19:30:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-09-18T19:30:00"), DateTimeKind.Utc),
                 Venue = "Vilnius Small Theatre",
                 City = "Vilnius",
                 PriceFrom = 30m,
@@ -374,7 +360,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000011"),
                 Title = "Baltic Cycling Grand Prix",
                 Category = EventCategory.Sports,
-                Date = DateTime.Parse("2026-09-26T10:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-09-26T10:00:00"), DateTimeKind.Utc),
                 Venue = "Trakai Historical Park",
                 City = "Trakai",
                 PriceFrom = 8m,
@@ -409,7 +395,7 @@ public class DataSeeder(IEventRepository eventRepository) : IDataSeeder
                 Id = Guid.Parse("00000000-0000-0000-0000-000000000012"),
                 Title = "Žilvinas Žilinskas Live Concert",
                 Category = EventCategory.Music,
-                Date = DateTime.Parse("2026-10-10T19:00:00"),
+                Date = DateTime.SpecifyKind(DateTime.Parse("2026-10-10T19:00:00"), DateTimeKind.Utc),
                 Venue = "Siemens Arena",
                 City = "Vilnius",
                 PriceFrom = 85m,
