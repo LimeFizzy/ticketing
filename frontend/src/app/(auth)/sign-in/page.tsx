@@ -44,7 +44,9 @@ const SignInForm = () => {
       await signIn(email, password);
       router.replace(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during sign in'
+      );
     }
   };
 

@@ -1,4 +1,4 @@
-import { EventDto, EventTicketTypeDto } from "./api";
+import { EventDto, EventTicketTypeDto } from './api';
 
 export const MAX_PLACES_PER_ORDER = 8;
 
