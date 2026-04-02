@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "master" ]
 
+defaults:
+  run:
+    working-directory: ./frontend
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,7 +36,7 @@ jobs:
         run: npm run build
         env:
           INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
-
+      
       - name: Check build output location
         run: |
             echo "Current directory:" && pwd
