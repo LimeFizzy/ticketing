@@ -45,11 +45,11 @@ jobs:
             VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
             INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
 
-      - name: Debug output
-        run: find .vercel/output -type f
-
       - name: Debug project config
         run: cat .vercel/project.json
+
+      - name: Debug output
+        run: find .vercel/output -type f
 
       - name: Upload build output
         if: github.ref_name == 'master'
