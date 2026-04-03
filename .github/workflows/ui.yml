@@ -54,6 +54,7 @@ jobs:
         with:
             name: next-build
             path: ${{ github.workspace }}/frontend/.vercel
+            include-hidden-files: true
 
   cd:
     needs: ci
