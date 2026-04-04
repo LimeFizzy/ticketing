@@ -64,6 +64,7 @@ jobs:
             path: .
 
       - name: Deploy to Vercel (prebuilt)
+        working-directory: frontend
         run: npx vercel@latest deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
             VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
