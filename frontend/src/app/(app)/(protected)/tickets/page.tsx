@@ -1,15 +1,26 @@
 import { type Metadata } from 'next';
-import { getEvents } from '@/lib/api';
-import { getUserTickets } from '@/lib/tickets';
+import { cookies } from 'next/headers';
+import { type UserTicket } from '@/types/tickets';
+import { getMyTickets } from '@/lib/api';
 import { TicketsTabs } from '@/components/tickets/tickets-tabs';
 
 export const metadata: Metadata = { title: 'My Tickets — TicketFlow' };
 
 const TicketsPage = async () => {
-  const { data, error } = await getEvents();
+  const cookieStore = await cookies();
+  const { data, error } = await getMyTickets({
+    headers: { Cookie: cookieStore.toString() },
+  });
   if (error) throw error;
-  
-  const { upcoming, past } = getUserTickets(data ?? [], new Date());
+
+  const now = new Date();
+  const tickets: UserTicket[] = (data ?? []).map((t) => ({
+    ...t,
+    isPast: new Date(t.eventDate) < now,
+  }));
+
+  const upcoming = tickets.filter((t) => !t.isPast);
+  const past = tickets.filter((t) => t.isPast);
 
   return (
     <div className="flex flex-col gap-6 p-6">

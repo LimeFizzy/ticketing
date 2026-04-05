@@ -13,7 +13,7 @@ Setup `appsettings.Development.json`:
 ```json
 {
     "ConnectionStrings": {
-        "DefaultConnection": "Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=postgres"
+        "DefaultConnection": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres"
     },
     "AllowedOrigin": "http://localhost:3000"
 }

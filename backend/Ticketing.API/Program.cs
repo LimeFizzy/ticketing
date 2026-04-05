@@ -21,6 +21,16 @@ builder.Services.AddSwaggerGen(c =>
     c.SupportNonNullableReferenceTypes();
 });
 
+if (builder.Environment.IsEnvironment("SwaggerGen"))
+{
+    var swaggerApp = builder.Build();
+
+    swaggerApp.UseSwagger();
+    swaggerApp.Run();
+
+    return;
+}
+
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -29,6 +39,10 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 
 builder.Services.AddCors(options =>
 {
@@ -85,6 +99,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.Services.SeedDataAsync();
+if (!builder.Environment.IsEnvironment("SwaggerGen"))
+    await app.Services.SeedDataAsync();
 
 app.Run();

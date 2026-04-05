@@ -1,9 +1,17 @@
-import { EventDto } from '@/lib/api';
-
 export type Tab = 'upcoming' | 'past';
 
 export interface UserTicket {
-  event: EventDto;
-  ticketId: string;
+  id: string;
+  ticketCode: string;
+  eventId: string;
+  eventTicketTypeId: string;
+  eventTitle: string;
+  ticketTypeName: string;
+  pricePaid: number;
+  status: string;
+  eventDate: string;
+  venue: string;
+  city: string;
+  imageUrl: string;
   isPast: boolean;
 }

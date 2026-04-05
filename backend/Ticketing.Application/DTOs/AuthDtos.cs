@@ -16,5 +16,22 @@ public record UserDto(
     [property: Required] Guid Id,
     [property: Required] string FirstName,
     [property: Required] string LastName,
-    [property: Required] string Email
+    [property: Required] string Email,
+    string? CardHolderName,
+    string? CardLast4,
+    string? CardExpiry,
+    string? CardBrand
+);
+
+public record UpdateProfileRequest(
+    [Required] string FirstName,
+    [Required] string LastName,
+    [Required] string Email
+);
+
+public record UpdateCardRequest(
+    string? CardHolderName,
+    string? CardLast4,
+    string? CardExpiry,
+    string? CardBrand
 );

@@ -8,6 +8,9 @@ public interface IAuthService
 {
     Task<UserDto?> LoginAsync(LoginRequest request);
     Task<UserDto?> RegisterAsync(RegisterRequest request);
+    Task<UserDto?> GetUserByIdAsync(Guid userId);
+    Task<UserDto?> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
+    Task<UserDto?> UpdateCardAsync(Guid userId, UpdateCardRequest? request);
 }
 
 public class AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher) : IAuthService
@@ -20,7 +23,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             return null;
 
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email);
+        return MapToDto(user);
     }
 
     public async Task<UserDto?> RegisterAsync(RegisterRequest request)
@@ -39,6 +42,54 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         await userRepository.AddAsync(user);
         await userRepository.SaveChangesAsync();
 
-        return new UserDto(user.Id, user.FirstName, user.LastName, user.Email);
+        return MapToDto(user);
     }
+
+    public async Task<UserDto?> GetUserByIdAsync(Guid userId)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        return user == null ? null : MapToDto(user);
+    }
+
+    public async Task<UserDto?> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null) return null;
+
+        if (user.Email != request.Email)
+        {
+            var existingUser = await userRepository.GetByEmailAsync(request.Email);
+            if (existingUser != null) return null;
+        }
+
+        user.FirstName = request.FirstName;
+        user.LastName = request.LastName;
+        user.Email = request.Email;
+
+        await userRepository.UpdateAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        return MapToDto(user);
+    }
+
+    public async Task<UserDto?> UpdateCardAsync(Guid userId, UpdateCardRequest? request)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null) return null;
+
+        user.CardHolderName = request?.CardHolderName;
+        user.CardLast4 = request?.CardLast4;
+        user.CardExpiry = request?.CardExpiry;
+        user.CardBrand = request?.CardBrand;
+
+        await userRepository.UpdateAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        return MapToDto(user);
+    }
+
+    private static UserDto MapToDto(User user) => new(
+        user.Id, user.FirstName, user.LastName, user.Email,
+        user.CardHolderName, user.CardLast4, user.CardExpiry, user.CardBrand
+    );
 }

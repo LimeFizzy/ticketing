@@ -1,0 +1,38 @@
+using Microsoft.EntityFrameworkCore;
+using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Entities;
+
+namespace Ticketing.Infrastructure.Persistence;
+
+public class TicketRepository(TicketingDbContext context) : ITicketRepository
+{
+    public async Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId)
+    {
+        return await context.Tickets
+            .Include(t => t.EventTicketType)
+            .Include(t => t.Order)
+                .ThenInclude(o => o.Event)
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<Ticket?> GetByIdAsync(Guid id)
+    {
+        return await context.Tickets
+            .Include(t => t.EventTicketType)
+            .Include(t => t.Order)
+                .ThenInclude(o => o.Event)
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+
+    public Task<bool> ExistsByCodeAsync(string code)
+    {
+        return context.Tickets.AnyAsync(t => t.TicketCode == code);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await context.SaveChangesAsync();
+    }
+}

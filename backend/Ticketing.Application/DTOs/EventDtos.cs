@@ -31,5 +31,7 @@ public record EventsQueryDto(
     EventCategory? Category,
     bool? Featured,
     string? City,
-    string? Search
+    string? Search,
+    string? Date,
+    string? Price
 );
