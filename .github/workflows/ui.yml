@@ -26,7 +26,7 @@ jobs:
       - name: Download OpenAPI Specification
         run: curl https://api.zzzz.lt/swagger/v1/swagger.json -o swagger.json
       - name: Generate API client
-        run: npm run api:gen
+        run: npm ci && npm run api:gen
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Project Artifacts to Vercel
