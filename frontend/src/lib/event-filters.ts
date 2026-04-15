@@ -1,4 +1,4 @@
-import { EventDto } from './api';
+import { type EventCategory, EventDto } from './api';
 import { type CategoryFilter, type SearchParams } from '@/types/filters';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -46,6 +46,21 @@ export const hasActiveFilter = (params: SearchParams): boolean =>
     (params.date && params.date !== 'all') ||
     (params.price && params.price !== 'all')
   );
+
+export const buildEventsQuery = (params: SearchParams) => {
+  const query: {
+    search?: string;
+    category?: EventCategory;
+    date?: string;
+    price?: string;
+  } = {};
+  if (params.q?.trim()) query.search = params.q.trim();
+  if (params.category && params.category !== 'all')
+    query.category = params.category as EventCategory;
+  if (params.date && params.date !== 'all') query.date = params.date;
+  if (params.price && params.price !== 'all') query.price = params.price;
+  return Object.keys(query).length > 0 ? query : undefined;
+};
 
 export const trending = (events: EventDto[]): EventDto[] =>
   [...events]

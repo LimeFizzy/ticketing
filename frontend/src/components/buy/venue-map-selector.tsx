@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   SelectionSummary,
@@ -13,7 +13,7 @@ import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { EventDto } from '@/lib/api';
+import { createCheckoutSession, type EventDto } from '@/lib/api';
 
 interface VenueMapSelectorProps {
   event: EventDto;
@@ -99,6 +99,28 @@ export const VenueMapSelector = ({
     [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
   );
 
+  const handleContinue = useCallback(async () => {
+    setSubmitting(true);
+    try {
+      const items = Object.entries(selection)
+        .filter(([, qty]) => qty > 0)
+        .map(([placeId, quantity]) => ({
+          eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
+          quantity,
+        }));
+      const { data, error } = await createCheckoutSession({
+        body: { eventId: event.id, items },
+      });
+      if (error || !data?.sessionUrl) {
+        console.error('Checkout failed:', error);
+        return;
+      }
+      window.location.href = data.sessionUrl;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [selection, placesById, event.id]);
+
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();
 
@@ -143,28 +165,7 @@ export const VenueMapSelector = ({
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
-        onContinue={async () => {
-          setSubmitting(true);
-          try {
-            const { createCheckoutSession } = await import('@/lib/api');
-            const items = Object.entries(selection)
-              .filter(([, qty]) => qty > 0)
-              .map(([placeId, quantity]) => ({
-                eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
-                quantity,
-              }));
-            const { data, error } = await createCheckoutSession({
-              body: { eventId: event.id, items },
-            });
-            if (error || !data?.sessionUrl) {
-              console.error('Checkout failed:', error);
-              return;
-            }
-            window.location.href = data.sessionUrl;
-          } finally {
-            setSubmitting(false);
-          }
-        }}
+        onContinue={handleContinue}
       />
     </div>
   );

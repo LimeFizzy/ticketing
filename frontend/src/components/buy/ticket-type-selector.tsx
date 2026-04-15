@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
 import {
@@ -8,7 +8,7 @@ import {
   type SelectionLine,
 } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { EventDto } from '@/lib/api';
+import { createCheckoutSession, type EventDto } from '@/lib/api';
 
 interface TicketTypeSelectorProps {
   event: EventDto;
@@ -34,6 +34,28 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
       ),
     [event.ticketTypes, selection]
   );
+
+  const handleContinue = useCallback(async () => {
+    setSubmitting(true);
+    try {
+      const items = Object.entries(selection)
+        .filter(([, qty]) => qty > 0)
+        .map(([ticketTypeId, quantity]) => ({
+          eventTicketTypeId: ticketTypeId,
+          quantity,
+        }));
+      const { data, error } = await createCheckoutSession({
+        body: { eventId: event.id, items },
+      });
+      if (error || !data?.sessionUrl) {
+        console.error('Checkout failed:', error);
+        return;
+      }
+      window.location.href = data.sessionUrl;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [selection, event.id]);
 
   const lines = useMemo<SelectionLine[]>(
     () =>
@@ -91,28 +113,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
-        onContinue={async () => {
-          setSubmitting(true);
-          try {
-            const { createCheckoutSession } = await import('@/lib/api');
-            const items = Object.entries(selection)
-              .filter(([, qty]) => qty > 0)
-              .map(([ticketTypeId, quantity]) => ({
-                eventTicketTypeId: ticketTypeId,
-                quantity,
-              }));
-            const { data, error } = await createCheckoutSession({
-              body: { eventId: event.id, items },
-            });
-            if (error || !data?.sessionUrl) {
-              console.error('Checkout failed:', error);
-              return;
-            }
-            window.location.href = data.sessionUrl;
-          } finally {
-            setSubmitting(false);
-          }
-        }}
+        onContinue={handleContinue}
       />
     </div>
   );

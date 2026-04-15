@@ -10,11 +10,14 @@ import {
 } from 'react';
 import { type AuthContextValue, type User } from '@/types/user';
 import {
+  type UserDto,
   getMe,
   postSignIn,
   postSignOut,
   postSignUp,
 } from '@/lib/api';
+
+const toUser = (dto: UserDto): User => ({ ...dto, role: 'organizer' });
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -25,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     getMe()
       .then(({ data }) => {
-        if (data) setUser(data);
+        if (data) setUser(toUser(data));
       })
       .catch((err) => console.error('Failed to fetch session', err))
       .finally(() => setIsHydrating(false));
@@ -38,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw new Error(error?.title || 'Login failed');
-      if (data) setUser(data);
+      if (data) setUser(toUser(data));
     },
     []
   );
@@ -50,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw new Error(error?.title || 'Registration failed');
-      if (data) setUser(data);
+      if (data) setUser(toUser(data));
     },
     []
   );
@@ -72,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: patch.email ?? user.email,
         },
       });
-      if (res.data) setUser(res.data);
+      if (res.data) setUser(toUser(res.data));
       if (res.error) throw new Error('Profile update failed');
     },
     [user]

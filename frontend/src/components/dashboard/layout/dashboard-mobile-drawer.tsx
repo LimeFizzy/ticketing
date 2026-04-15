@@ -1,20 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { LayoutDashboard, X } from 'lucide-react';
 import { Drawer } from '@base-ui/react/drawer';
-import { CalendarDays, LayoutDashboard, Ticket, User, X } from 'lucide-react';
+import { useSidebar } from '@/hooks/use-sidebar';
+import { NavLink } from '@/components/layout/nav-link';
+import { SidebarAuthSection } from '@/components/layout/sidebar-auth-section';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { useSidebar } from '@/hooks/use-sidebar';
-import { useAuth } from '@/hooks/use-auth';
 import { Route } from '@/lib/routes';
-import { NavLink } from './nav-link';
-import { SidebarAuthSection } from './sidebar-auth-section';
 
-export const MobileDrawer = () => {
+export const DashboardMobileDrawer = () => {
   const { mobileOpen, openMobile, closeMobile } = useSidebar();
-  const { isAuthenticated, user } = useAuth();
 
   return (
     <Drawer.Root
@@ -52,41 +50,18 @@ export const MobileDrawer = () => {
 
             <nav className="flex flex-col gap-1 px-2 py-3">
               <NavLink
-                href={Route.Home}
-                icon={<CalendarDays className="size-4" />}
-                label="Events"
+                href={Route.Dashboard}
+                icon={<LayoutDashboard className="size-4" />}
+                label="My Events"
                 onClick={closeMobile}
               />
-              <NavLink
-                href={Route.Tickets}
-                icon={<Ticket className="size-4" />}
-                label="My Tickets"
-                onClick={closeMobile}
-              />
-              <NavLink
-                href={Route.Account}
-                icon={<User className="size-4" />}
-                label="Account"
-                onClick={closeMobile}
-              />
-              {user?.role === 'organizer' && (
-                <NavLink
-                  href={Route.Dashboard}
-                  icon={<LayoutDashboard className="size-4" />}
-                  label="Dashboard"
-                  onClick={closeMobile}
-                />
-              )}
             </nav>
 
-            {isAuthenticated && (
-              <>
-                <Separator className="bg-sidebar-border" />
-                <div className="flex flex-col gap-1 px-2 py-3">
-                  <SidebarAuthSection onAfterSignOut={closeMobile} />
-                </div>
-              </>
-            )}
+            <Separator className="bg-sidebar-border" />
+
+            <div className="flex flex-col gap-1 px-2 py-3">
+              <SidebarAuthSection onAfterSignOut={closeMobile} />
+            </div>
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>
