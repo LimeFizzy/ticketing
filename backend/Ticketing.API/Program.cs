@@ -56,6 +56,8 @@ builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<IEventTicketTypeRepository, EventTicketTypeRepository>();
+builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 
 builder.Services.AddCors(options =>
 {

@@ -19,11 +19,12 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
 
-  // Mock per-type cap so the user can't oversubscribe a single tier; the real
-  // cap will come from the backend.
-  const perTypeCap = Math.max(
-    1,
-    Math.ceil(event.availableTickets / event.ticketTypes.length)
+  const remaining = useMemo(
+    () =>
+      Object.fromEntries(
+        event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
+      ),
+    [event.ticketTypes]
   );
 
   const totalPrice = useMemo(
@@ -61,16 +62,19 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
     () =>
       event.ticketTypes
         .filter((t) => (selection[t.id] ?? 0) > 0)
-        .map((t) => ({
-          key: t.id,
-          title: t.name,
-          subtitle: t.description,
-          unitPrice: t.price,
-          quantity: selection[t.id] ?? 0,
-          max: perTypeCap,
-          onQuantityChange: (next: number) => setQuantity(t.id, next),
-        })),
-    [event.ticketTypes, selection, perTypeCap, setQuantity]
+        .map((t) => {
+          const typeMax = remaining[t.id] ?? 0;
+          return {
+            key: t.id,
+            title: t.name,
+            subtitle: t.description,
+            unitPrice: t.price,
+            quantity: selection[t.id] ?? 0,
+            max: typeMax,
+            onQuantityChange: (next: number) => setQuantity(t.id, next),
+          };
+        }),
+    [event.ticketTypes, selection, remaining, setQuantity]
   );
 
   return (
@@ -78,7 +82,8 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
       <ul className="flex min-w-0 flex-col gap-3">
         {event.ticketTypes.map((t) => {
           const qty = selection[t.id] ?? 0;
-          const lineMax = Math.min(perTypeCap, qty + capRemaining);
+          const typeMax = remaining[t.id] ?? 0;
+          const lineMax = Math.min(typeMax, qty + capRemaining);
           return (
             <li key={t.id}>
               <Card className="glass border-white/40 shadow-sm">

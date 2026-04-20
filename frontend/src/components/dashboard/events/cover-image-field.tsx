@@ -16,27 +16,20 @@ interface CoverImageFieldProps {
 export const CoverImageField = ({ value, onChange }: CoverImageFieldProps) => {
   const [imgError, setImgError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     setImgError(false);
   }, [value]);
 
-  useEffect(() => {
-    const url = objectUrlRef.current;
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, []);
-
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-      const url = URL.createObjectURL(file);
-      objectUrlRef.current = url;
-      onChange(url);
+      const reader = new FileReader();
+      reader.onload = () => {
+        onChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     },
     [onChange]
   );

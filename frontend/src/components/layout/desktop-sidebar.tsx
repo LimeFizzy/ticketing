@@ -7,6 +7,7 @@ import {
   LogIn,
   PanelLeftClose,
   PanelLeftOpen,
+  Shield,
   Ticket,
   User,
 } from 'lucide-react';
@@ -87,6 +88,22 @@ export const DesktopSidebar = () => {
             label="Dashboard"
             collapsed={collapsed}
           />
+        )}
+        {user?.role === 'admin' && (
+          <>
+            <NavLink
+              href={Route.Dashboard}
+              icon={<LayoutDashboard className="size-4" />}
+              label="Dashboard"
+              collapsed={collapsed}
+            />
+            <NavLink
+              href={Route.Admin}
+              icon={<Shield className="size-4" />}
+              label="Admin"
+              collapsed={collapsed}
+            />
+          </>
         )}
       </nav>
 

@@ -1,23 +1,14 @@
-import type { EventDto, EventTicketTypeDto } from '@/lib/api/types.gen';
+import type { EventCategory } from '@/lib/api/types.gen';
 
-export type OrganizerTicketTypeDto = EventTicketTypeDto & {
-  capacity: number;
-  sold: number;
-};
+export type { EventCategory };
 
-// Organizer view of an event: shared identity and content fields from EventDto,
-// plus status (published/draft) and ticket types enriched with capacity/sales data.
-export type OrganizerEventDto = Pick<
-  EventDto,
-  | 'id'
-  | 'title'
-  | 'category'
-  | 'date'
-  | 'venue'
-  | 'city'
-  | 'description'
-  | 'imageUrl'
-> & {
-  status: 'published' | 'draft';
-  ticketTypes: OrganizerTicketTypeDto[];
-};
+export const CATEGORIES: EventCategory[] = [
+  'Music',
+  'Sports',
+  'Theater',
+  'Comedy',
+  'Festival',
+  'Conference',
+  'Workshop',
+  'Other',
+];

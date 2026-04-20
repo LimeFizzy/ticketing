@@ -5,6 +5,8 @@ export enum Route {
   Account = '/account',
   Tickets = '/tickets',
   Dashboard = '/dashboard',
+  Admin = '/admin',
+  AcceptInvite = '/accept-invite',
 }
 
 export const eventRoute = (id: string) => `/events/${id}` as const;

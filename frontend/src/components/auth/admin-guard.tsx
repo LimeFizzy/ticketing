@@ -6,18 +6,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { Route } from '@/lib/routes';
 import { AuthGuard } from './auth-guard';
 
-export const OrganizerGuard = ({ children }: { children: React.ReactNode }) => {
+export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role !== 'organizer' && user.role !== 'admin')
-      router.replace(Route.Home);
+    if (user && user.role !== 'admin') router.replace(Route.Home);
   }, [user, router]);
 
-  return (
-    <AuthGuard>
-      {user?.role === 'organizer' || user?.role === 'admin' ? children : null}
-    </AuthGuard>
-  );
+  return <AuthGuard>{user?.role === 'admin' ? children : null}</AuthGuard>;
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Link2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
@@ -15,29 +15,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  CATEGORIES,
-  type EventCategory,
-  type OrganizerEvent,
-  deleteOrganizerEvent,
-  getOrganizerEvents,
-} from '@/lib/mocks/dashboard';
+import { deleteEvent, getEvents } from '@/lib/api';
+import type { EventCategory, EventDto } from '@/lib/api/types.gen';
+import { CATEGORIES } from '@/types/event';
 import {
   dashboardEventRoute,
   dashboardEventsNewRoute,
   eventRoute,
 } from '@/lib/routes';
 import { formatEventDateShort } from '@/lib/formatters';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | 'published' | 'draft';
 
 const filterEvents = (
-  events: OrganizerEvent[],
+  events: EventDto[],
   search: string,
   status: StatusFilter,
   category: EventCategory | 'all'
-): OrganizerEvent[] => {
+): EventDto[] => {
   const q = search.trim().toLowerCase();
   return events.filter((e) => {
     if (
@@ -55,21 +52,35 @@ const filterEvents = (
 
 const DashboardPage = () => {
   const router = useRouter();
-  const [events, setEvents] = useState(() => getOrganizerEvents());
+  const { user } = useAuth();
+  const [events, setEvents] = useState<EventDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState<EventCategory | 'all'>('all');
+
+  useEffect(() => {
+    if (!user) return;
+    getEvents({ query: { organizerId: user.id } })
+      .then(({ data }) => {
+        if (data) setEvents(data);
+      })
+      .finally(() => setLoading(false));
+  }, [user]);
 
   const filtered = useMemo(
     () => filterEvents(events, search, status, category),
     [events, search, status, category]
   );
 
-  const handleDelete = useCallback((e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    deleteOrganizerEvent(id);
-    setEvents((prev) => prev.filter((ev) => ev.id !== id));
-  }, []);
+  const handleDelete = useCallback(
+    async (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      await deleteEvent({ path: { id } });
+      setEvents((prev) => prev.filter((ev) => ev.id !== id));
+    },
+    []
+  );
 
   const handleShare = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -84,6 +95,8 @@ const DashboardPage = () => {
     },
     [router]
   );
+
+  if (loading) return null;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
