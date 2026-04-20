@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils';
 interface TicketQRProps {
   ticketId: string;
   eventId: string;
+  checkedInAt?: string | null;
   muted?: boolean;
 }
 
-export const TicketQR = ({ ticketId, eventId, muted }: TicketQRProps) => {
+export const TicketQR = ({ ticketId, eventId, checkedInAt, muted }: TicketQRProps) => {
+  const isUsed = !!checkedInAt;
   const { user } = useAuth();
   const payload = useMemo(
     () =>
@@ -27,12 +29,12 @@ export const TicketQR = ({ ticketId, eventId, muted }: TicketQRProps) => {
       <div
         className={cn(
           'rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5',
-          muted && 'opacity-40 grayscale'
+          (isUsed || muted) && 'opacity-40 grayscale'
         )}
       >
         <QRCodeSVG value={payload} size={220} level="M" />
       </div>
-      {muted && (
+      {(isUsed || muted) && (
         <Badge variant="secondary" className="absolute -top-2 right-0">
           Used
         </Badge>

@@ -26,6 +26,16 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
+    public async Task<Ticket?> GetByCodeWithEventAsync(string ticketCode)
+    {
+        return await context.Tickets
+            .Include(t => t.EventTicketType)
+            .Include(t => t.Order)
+                .ThenInclude(o => o.Event)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.TicketCode == ticketCode);
+    }
+
     public Task<bool> ExistsByCodeAsync(string code)
     {
         return context.Tickets.AnyAsync(t => t.TicketCode == code);

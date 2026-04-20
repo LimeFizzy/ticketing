@@ -8,6 +8,7 @@ public class Ticket
     public Guid OrderId { get; set; }
     public required decimal PricePaid { get; set; }
     public required string Status { get; set; } = "Active";
+    public DateTime? CheckedInAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Guid UserId { get; set; }

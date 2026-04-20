@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Link2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Link2, Pencil, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import { deleteEvent, getEvents } from '@/lib/api';
 import type { EventCategory, EventDto } from '@/lib/api/types.gen';
 import { CATEGORIES } from '@/types/event';
 import {
+  dashboardEventCheckInRoute,
   dashboardEventRoute,
   dashboardEventsNewRoute,
   eventRoute,
@@ -80,6 +81,14 @@ const DashboardPage = () => {
       setEvents((prev) => prev.filter((ev) => ev.id !== id));
     },
     []
+  );
+
+  const handleCheckIn = useCallback(
+    (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      router.push(dashboardEventCheckInRoute(id));
+    },
+    [router]
   );
 
   const handleShare = useCallback((e: React.MouseEvent, id: string) => {
@@ -241,6 +250,14 @@ const DashboardPage = () => {
                         </td>
                         <td className="py-3">
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              title="Check-in"
+                              onClick={(e) => handleCheckIn(e, event.id)}
+                            >
+                              <ScanLine className="size-3.5" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon-sm"
