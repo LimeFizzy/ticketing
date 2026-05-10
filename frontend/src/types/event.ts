@@ -1,5 +1,12 @@
 export type EventCategory = 'Music' | 'Sports' | 'Theater';
 
+export interface EventTicketType {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -7,9 +14,12 @@ export interface Event {
   date: string;
   venue: string;
   city: string;
-  price: number;
+  priceFrom: number;
+  ticketTypes: EventTicketType[];
   imageUrl: string;
   description: string;
   availableTickets: number;
   featured: boolean;
+  disclaimers?: string[];
+  venueMapId?: string;
 }

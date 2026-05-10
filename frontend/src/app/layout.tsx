@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 
@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   description: 'Buy and manage event tickets in Lithuania',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 const RootLayout = ({
   children,
 }: Readonly<{
@@ -30,9 +36,9 @@ const RootLayout = ({
 }>) => (
   <html
     lang="en"
-    className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+    className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
   >
-    <body className="min-h-full flex flex-col">
+    <body className="min-h-dvh">
       {/* Fixed gradient backdrop — always in the viewport compositing layer
           so backdrop-filter on cards blurs it correctly from any scroll container */}
       <div

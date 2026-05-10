@@ -20,6 +20,7 @@ export const MobileDrawer = () => {
     >
       <Drawer.Portal>
         <Drawer.Backdrop className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" />
+        <Drawer.Viewport>
         <Drawer.Popup
           className={cn(
             'fixed inset-x-3 top-3 z-50 flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-sidebar/85 glass shadow-xl',
@@ -80,6 +81,7 @@ export const MobileDrawer = () => {
             </Link>
           </div>
         </Drawer.Popup>
+        </Drawer.Viewport>
       </Drawer.Portal>
     </Drawer.Root>
   );
