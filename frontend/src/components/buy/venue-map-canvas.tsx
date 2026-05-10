@@ -2,11 +2,7 @@
 
 import { type Event } from '@/types/event';
 import { type VenueMap, type VenueMapPlace } from '@/types/venue-map';
-import {
-  SELECTED_FILL,
-  SOLD_FILL,
-  type PlaceColor,
-} from '@/lib/venue-maps';
+import { SELECTED_FILL, SOLD_FILL, type PlaceColor } from '@/lib/venue-maps';
 import { cn } from '@/lib/utils';
 
 interface VenueMapCanvasProps {
@@ -60,7 +56,8 @@ export const VenueMapCanvas = ({
     ))}
 
     {venueMap.places.map((place) => {
-      const color = colors.get(place.ticketTypeId) ?? colors.values().next().value!;
+      const color =
+        colors.get(place.ticketTypeId) ?? colors.values().next().value!;
       const qty = selection[place.id] ?? 0;
       const price = unitPriceFor(place.ticketTypeId);
       const name = unitNameFor(place.ticketTypeId);

@@ -5,7 +5,11 @@ import { type SidebarContextValue } from '@/types/sidebar';
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
 
-export const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
+export const SidebarProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 

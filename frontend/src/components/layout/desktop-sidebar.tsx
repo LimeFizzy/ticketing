@@ -7,15 +7,20 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Ticket,
+  User,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/hooks/use-sidebar';
+import { useAuth } from '@/hooks/use-auth';
 import { NavLink } from './nav-link';
+import { SidebarAuthSection } from './sidebar-auth-section';
 import { cn } from '@/lib/utils';
+import { Route } from '@/lib/routes';
 
 export const DesktopSidebar = () => {
   const { collapsed, toggleCollapsed } = useSidebar();
+  const { isAuthenticated } = useAuth();
 
   return (
     <aside
@@ -26,7 +31,6 @@ export const DesktopSidebar = () => {
         collapsed ? 'w-14' : 'w-56'
       )}
     >
-      {/* Top: logo + collapse toggle */}
       <div
         className={cn(
           'flex h-14 items-center border-b border-sidebar-border/60 px-3',
@@ -34,9 +38,12 @@ export const DesktopSidebar = () => {
         )}
       >
         {!collapsed && (
-          <span className="font-display text-xl tracking-tight text-sidebar-foreground">
+          <Link
+            href={Route.Home}
+            className="font-display text-xl tracking-tight text-sidebar-foreground"
+          >
             TicketFlow
-          </span>
+          </Link>
         )}
         <Button
           variant="ghost"
@@ -53,42 +60,52 @@ export const DesktopSidebar = () => {
         </Button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 space-y-1 px-2 py-3">
         <NavLink
-          href="/"
+          href={Route.Home}
           icon={<CalendarDays className="size-4" />}
           label="Events"
           collapsed={collapsed}
         />
         <NavLink
-          href="/tickets"
+          href={Route.Tickets}
           icon={<Ticket className="size-4" />}
           label="My Tickets"
+          collapsed={collapsed}
+        />
+        <NavLink
+          href={Route.Account}
+          icon={<User className="size-4" />}
+          label="Account"
           collapsed={collapsed}
         />
       </nav>
 
       <Separator className="bg-sidebar-border/60" />
 
-      {/* Auth area */}
       <div className="space-y-2 px-2 py-3">
-        <NavLink
-          href="/sign-in"
-          icon={<LogIn className="size-4" />}
-          label="Sign In"
-          collapsed={collapsed}
-        />
-        {!collapsed && (
-          <Link
-            href="/sign-up"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'sm' }),
-              'w-full justify-center'
+        {isAuthenticated ? (
+          <SidebarAuthSection collapsed={collapsed} />
+        ) : (
+          <>
+            <NavLink
+              href={Route.SignIn}
+              icon={<LogIn className="size-4" />}
+              label="Sign In"
+              collapsed={collapsed}
+            />
+            {!collapsed && (
+              <Link
+                href={Route.SignUp}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'w-full justify-center'
+                )}
+              >
+                Sign Up
+              </Link>
             )}
-          >
-            Sign Up
-          </Link>
+          </>
         )}
       </div>
     </aside>

@@ -6,6 +6,7 @@ import { TicketTypeSelector } from '@/components/buy/ticket-type-selector';
 import { VenueMapSelector } from '@/components/buy/venue-map-selector';
 import { EVENTS } from '@/lib/mock-data';
 import { getVenueMap } from '@/lib/venue-maps';
+import { eventRoute } from '@/lib/routes';
 
 export const generateMetadata = async ({
   params,
@@ -35,7 +36,7 @@ const BuyTicketsPage = async ({
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 p-6">
       <Link
-        href={`/events/${event.id}`}
+        href={eventRoute(event.id)}
         className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft className="size-4" />
