@@ -23,10 +23,7 @@ export interface UseTicketSelectionResult {
 export const useTicketSelection = (event: Event): UseTicketSelectionResult => {
   const [selection, setSelection] = useState<Selection>({});
 
-  const ticketTypeIndex = useMemo(
-    () => buildTicketTypeIndex(event),
-    [event]
-  );
+  const ticketTypeIndex = useMemo(() => buildTicketTypeIndex(event), [event]);
 
   const setQuantity = useCallback(
     (id: string, next: number) =>

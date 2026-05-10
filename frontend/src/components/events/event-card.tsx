@@ -6,6 +6,7 @@ import { type Event } from '@/types/event';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
 import { formatEventDateShort, formatPriceFrom } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { eventRoute } from '@/lib/routes';
 
 interface EventCardProps {
   event: Event;
@@ -17,7 +18,7 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
 
   return (
     <Link
-      href={`/events/${event.id}`}
+      href={eventRoute(event.id)}
       className={cn(
         'group flex h-full focus:outline-none',
         isRail && 'w-[240px] shrink-0 snap-start sm:w-[260px]'
@@ -70,7 +71,9 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
           <div className="flex flex-col gap-0.5 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CalendarDays className="size-3 shrink-0" />
-              <span className="truncate">{formatEventDateShort(event.date)}</span>
+              <span className="truncate">
+                {formatEventDateShort(event.date)}
+              </span>
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="size-3 shrink-0" />

@@ -58,9 +58,7 @@ const zalgirio: VenueMap = {
   name: 'Žalgirio Arena',
   width: 1000,
   height: 600,
-  decorations: [
-    { x: 350, y: 250, width: 300, height: 100, label: 'COURT' },
-  ],
+  decorations: [{ x: 350, y: 250, width: 300, height: 100, label: 'COURT' }],
   places: [
     // Courtside — 1 row of 8 (above court). A few sold for realism.
     ...seatRow('cs', 8, 385, 220, 32, '2-courtside', [2, 5]),

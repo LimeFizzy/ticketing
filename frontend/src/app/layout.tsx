@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google';
+import { AuthProvider } from '@/contexts/auth-context';
 import './globals.css';
 
 const geistSans = Geist({
@@ -53,7 +54,7 @@ const RootLayout = ({
           ].join(', '),
         }}
       />
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </body>
   </html>
 );

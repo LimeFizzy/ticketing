@@ -1,11 +1,7 @@
 import { Suspense } from 'react';
 import { type Metadata } from 'next';
 import { EVENTS } from '@/lib/mock-data';
-import {
-  filterEvents,
-  hasActiveFilter,
-  trending,
-} from '@/lib/event-filters';
+import { filterEvents, hasActiveFilter, trending } from '@/lib/event-filters';
 import { type SearchParams } from '@/types/filters';
 import { EventsGrid } from '@/components/events/events-grid';
 import { FilterBar } from '@/components/events/filter-bar';

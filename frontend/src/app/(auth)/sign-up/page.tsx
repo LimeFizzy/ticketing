@@ -1,6 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import { type Metadata } from 'next';
-import { Field } from '@base-ui/react/field';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -11,86 +13,125 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { FormField } from '@/components/ui/form-field';
+import { useAuth } from '@/hooks/use-auth';
+import { Route } from '@/lib/routes';
 
-export const metadata: Metadata = { title: 'Sign Up — TicketFlow' };
+const SignUpPage = () => {
+  const router = useRouter();
+  const { signUp, isAuthenticated, isHydrating } = useAuth();
 
-const SignUpPage = () => (
-  <Card className="glass w-full max-w-sm border-white/40 shadow-md">
-    <CardHeader className="text-center">
-      <p className="mb-1 text-sm font-semibold text-primary">TicketFlow</p>
-      <CardTitle className="text-xl">Create an account</CardTitle>
-      <CardDescription>
-        Join TicketFlow to buy and manage tickets
-      </CardDescription>
-    </CardHeader>
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-    <CardContent>
-      <form className="flex flex-col gap-4" action="#" method="post">
-        <div className="grid grid-cols-2 gap-3">
-          <Field.Root>
-            <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
-              First name
-            </Field.Label>
-            <Input placeholder="Jonas" autoComplete="given-name" />
-          </Field.Root>
+  useEffect(() => {
+    if (!isHydrating && isAuthenticated) router.replace(Route.Home);
+  }, [isHydrating, isAuthenticated, router]);
 
-          <Field.Root>
-            <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
-              Last name
-            </Field.Label>
-            <Input placeholder="Jonaitis" autoComplete="family-name" />
-          </Field.Root>
-        </div>
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
+      setError('All fields are required');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match');
+      return;
+    }
+    setError(null);
+    signUp({ firstName, lastName, email, password });
+    router.replace(Route.Home);
+  };
 
-        <Field.Root>
-          <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
-            Email
-          </Field.Label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-        </Field.Root>
+  return (
+    <Card className="glass w-full max-w-sm border-white/40 shadow-md">
+      <CardHeader className="text-center">
+        <p className="mb-1 text-sm font-semibold text-primary">TicketFlow</p>
+        <CardTitle className="text-xl">Create an account</CardTitle>
+        <CardDescription>
+          Join TicketFlow to buy and manage tickets
+        </CardDescription>
+      </CardHeader>
 
-        <Field.Root>
-          <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
-            Password
-          </Field.Label>
-          <Input
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-          />
-        </Field.Root>
+      <CardContent>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="First name">
+              <Input
+                placeholder="Jonas"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </FormField>
 
-        <Field.Root>
-          <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
-            Confirm password
-          </Field.Label>
-          <Input
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-          />
-        </Field.Root>
+            <FormField label="Last name">
+              <Input
+                placeholder="Jonaitis"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </FormField>
+          </div>
 
-        <Button type="submit" className="mt-1 w-full">
-          Create account
-        </Button>
-      </form>
-    </CardContent>
+          <FormField label="Email">
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </FormField>
 
-    <CardFooter className="justify-center text-sm text-muted-foreground">
-      Already have an account?{' '}
-      <Link
-        href="/sign-in"
-        className="ml-1 font-medium text-primary hover:underline"
-      >
-        Sign in
-      </Link>
-    </CardFooter>
-  </Card>
-);
+          <FormField label="Password">
+            <Input
+              type="password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Confirm password">
+            <Input
+              type="password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </FormField>
+
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+
+          <Button type="submit" className="mt-1 w-full">
+            Create account
+          </Button>
+        </form>
+      </CardContent>
+
+      <CardFooter className="justify-center text-sm text-muted-foreground">
+        Already have an account?{' '}
+        <Link
+          href={Route.SignIn}
+          className="ml-1 font-medium text-primary hover:underline"
+        >
+          Sign in
+        </Link>
+      </CardFooter>
+    </Card>
+  );
+};
 
 export default SignUpPage;

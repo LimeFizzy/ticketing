@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Route } from '@/lib/routes';
 
 interface NavLinkProps {
   href: string;
@@ -22,7 +23,7 @@ export const NavLink = ({
 }: NavLinkProps) => {
   const pathname = usePathname();
   const isActive =
-    pathname === href || (href !== '/' && pathname.startsWith(href));
+    pathname === href || (href !== Route.Home && pathname.startsWith(href));
 
   return (
     <Link

@@ -10,9 +10,19 @@ export const EVENTS: Event[] = [
     city: 'Vilnius',
     priceFrom: 25,
     ticketTypes: [
-      { id: '1-early', name: 'Early bird', price: 25, description: 'Limited release' },
+      {
+        id: '1-early',
+        name: 'Early bird',
+        price: 25,
+        description: 'Limited release',
+      },
       { id: '1-std', name: 'Standard', price: 35 },
-      { id: '1-vip', name: 'VIP lounge', price: 70, description: 'Reserved seating, complimentary drink' },
+      {
+        id: '1-vip',
+        name: 'VIP lounge',
+        price: 70,
+        description: 'Reserved seating, complimentary drink',
+      },
     ],
     imageUrl: 'https://placehold.co/600x400/1e3a5f/ffffff?text=Jazz+Festival',
     description:
@@ -35,7 +45,12 @@ export const EVENTS: Event[] = [
     ticketTypes: [
       { id: '2-upper', name: 'Upper tier', price: 35 },
       { id: '2-lower', name: 'Lower tier', price: 60 },
-      { id: '2-courtside', name: 'Courtside', price: 180, description: 'Front-row seating' },
+      {
+        id: '2-courtside',
+        name: 'Courtside',
+        price: 180,
+        description: 'Front-row seating',
+      },
     ],
     imageUrl:
       'https://placehold.co/600x400/006400/ffffff?text=Zalgiris+Basketball',
@@ -56,7 +71,12 @@ export const EVENTS: Event[] = [
     ticketTypes: [
       { id: '3-balcony', name: 'Balcony', price: 55 },
       { id: '3-stalls', name: 'Stalls', price: 95 },
-      { id: '3-box', name: 'Private box', price: 160, description: 'Up to 4 guests' },
+      {
+        id: '3-box',
+        name: 'Private box',
+        price: 160,
+        description: 'Up to 4 guests',
+      },
     ],
     imageUrl:
       'https://placehold.co/600x400/4a0072/ffffff?text=Phantom+of+the+Opera',
@@ -79,7 +99,12 @@ export const EVENTS: Event[] = [
     priceFrom: 18,
     ticketTypes: [
       { id: '4-ga', name: 'General admission', price: 18 },
-      { id: '4-pit', name: 'Front pit', price: 32, description: 'Standing, closer to stage' },
+      {
+        id: '4-pit',
+        name: 'Front pit',
+        price: 32,
+        description: 'Standing, closer to stage',
+      },
     ],
     imageUrl: 'https://placehold.co/600x400/8b0000/ffffff?text=Rock+Nights',
     description:
@@ -120,7 +145,12 @@ export const EVENTS: Event[] = [
     priceFrom: 42,
     ticketTypes: [
       { id: '6-ga', name: 'General admission', price: 42 },
-      { id: '6-vip', name: 'VIP', price: 95, description: 'Raised viewing deck, dedicated bar' },
+      {
+        id: '6-vip',
+        name: 'VIP',
+        price: 95,
+        description: 'Raised viewing deck, dedicated bar',
+      },
     ],
     imageUrl:
       'https://placehold.co/600x400/0d1b2a/00ffcc?text=Electronic+Festival',
@@ -128,9 +158,7 @@ export const EVENTS: Event[] = [
       'Celebrate the summer solstice with 12 hours of non-stop electronic music. Four stages, over 30 international and local DJs, and an incredible light show set against a natural lakeside backdrop.',
     availableTickets: 190,
     featured: true,
-    disclaimers: [
-      'Strictly 18+. Photo ID required at the gate.',
-    ],
+    disclaimers: ['Strictly 18+. Photo ID required at the gate.'],
     venueMapId: 'vm-lakeside',
   },
   {
@@ -163,7 +191,12 @@ export const EVENTS: Event[] = [
     ticketTypes: [
       { id: '8-standing', name: 'Standing', price: 15 },
       { id: '8-seated', name: 'Seated', price: 28 },
-      { id: '8-hospitality', name: 'Hospitality', price: 80, description: 'Lounge access, refreshments' },
+      {
+        id: '8-hospitality',
+        name: 'Hospitality',
+        price: 80,
+        description: 'Lounge access, refreshments',
+      },
     ],
     imageUrl:
       'https://placehold.co/600x400/154360/ffffff?text=Football+Cup+Final',
@@ -182,7 +215,12 @@ export const EVENTS: Event[] = [
     priceFrom: 22,
     ticketTypes: [
       { id: '9-ga', name: 'General admission', price: 22 },
-      { id: '9-table', name: 'Reserved table', price: 60, description: 'Seats up to 4' },
+      {
+        id: '9-table',
+        name: 'Reserved table',
+        price: 60,
+        description: 'Seats up to 4',
+      },
     ],
     imageUrl: 'https://placehold.co/600x400/37474f/ffcc00?text=Indie+Sounds',
     description:
@@ -239,8 +277,18 @@ export const EVENTS: Event[] = [
     ticketTypes: [
       { id: '12-upper', name: 'Upper tier', price: 85 },
       { id: '12-lower', name: 'Lower tier', price: 130 },
-      { id: '12-fanpit', name: 'Fan pit', price: 175, description: 'Standing, closest to stage' },
-      { id: '12-vip', name: 'VIP package', price: 250, description: 'Meet & greet, signed merch' },
+      {
+        id: '12-fanpit',
+        name: 'Fan pit',
+        price: 175,
+        description: 'Standing, closest to stage',
+      },
+      {
+        id: '12-vip',
+        name: 'VIP package',
+        price: 250,
+        description: 'Meet & greet, signed merch',
+      },
     ],
     imageUrl:
       'https://placehold.co/600x400/212121/e0e0e0?text=Zilvinas+Zilinskas',
@@ -252,9 +300,3 @@ export const EVENTS: Event[] = [
 ];
 
 export const TODAY = new Date('2026-05-06');
-
-export const PROFILE = {
-  firstName: 'Jonas',
-  lastName: 'Jonaitis',
-  email: 'jonas@example.lt',
-};
