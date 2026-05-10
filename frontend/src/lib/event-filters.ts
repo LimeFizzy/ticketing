@@ -32,8 +32,8 @@ export const filterEvents = (params: SearchParams): Event[] =>
     }
 
     if (params.price && params.price !== 'all') {
-      if (params.price === 'under20' && event.price > 20) return false;
-      if (params.price === 'under60' && event.price > 60) return false;
+      if (params.price === 'under20' && event.priceFrom > 20) return false;
+      if (params.price === 'under60' && event.priceFrom > 60) return false;
     }
 
     return true;

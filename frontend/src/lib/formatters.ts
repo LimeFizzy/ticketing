@@ -28,3 +28,9 @@ export const formatTicketDate = (iso: string) =>
     hour: '2-digit',
     minute: '2-digit',
   });
+
+export const formatPrice = (price: number): string =>
+  price === 0 ? 'Free' : `€${price}`;
+
+export const formatPriceFrom = (price: number): string =>
+  price === 0 ? 'Free' : `From €${price}`;

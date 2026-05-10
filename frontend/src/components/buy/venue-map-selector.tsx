@@ -1,0 +1,150 @@
+'use client';
+
+import { useMemo, useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  SelectionSummary,
+  type SelectionLine,
+} from '@/components/buy/selection-summary';
+import { VenueMapCanvas } from '@/components/buy/venue-map-canvas';
+import { VenueMapLegend } from '@/components/buy/venue-map-legend';
+import { VenueMapZoomControls } from '@/components/buy/venue-map-zoom-controls';
+import { type Event } from '@/types/event';
+import { type VenueMap } from '@/types/venue-map';
+import { buildTicketTypeColors } from '@/lib/venue-maps';
+import { usePanZoom } from '@/hooks/use-pan-zoom';
+import { useTicketSelection } from '@/hooks/use-ticket-selection';
+
+interface VenueMapSelectorProps {
+  event: Event;
+  venueMap: VenueMap;
+}
+
+export const VenueMapSelector = ({
+  event,
+  venueMap,
+}: VenueMapSelectorProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const {
+    selection,
+    setQuantity,
+    total,
+    capRemaining,
+    unitPriceFor,
+    unitNameFor,
+  } = useTicketSelection(event);
+
+  const placesById = useMemo(
+    () => new Map(venueMap.places.map((p) => [p.id, p])),
+    [venueMap.places]
+  );
+
+  const colors = useMemo(() => buildTicketTypeColors(event), [event]);
+
+  const handleTap = (clientX: number, clientY: number) => {
+    const target = document.elementFromPoint(clientX, clientY);
+    const placeEl = target?.closest('[data-place-id]') as HTMLElement | null;
+    if (!placeEl?.dataset.placeId) return;
+    const place = placesById.get(placeEl.dataset.placeId);
+    if (!place || place.available === 0) return;
+    const qty = selection[place.id] ?? 0;
+
+    if (place.kind === 'seat') {
+      if (qty === 1) setQuantity(place.id, 0);
+      else if (capRemaining > 0) setQuantity(place.id, 1);
+      return;
+    }
+    if (qty >= place.available || capRemaining <= 0) return;
+    setQuantity(place.id, qty + 1);
+  };
+
+  const { transform, bindings, zoomIn, zoomOut, reset, canZoomIn, canZoomOut } =
+    usePanZoom({ containerRef, onTap: handleTap });
+
+  const transformStyle = useMemo<React.CSSProperties>(
+    () => ({
+      transform: `translate(${transform.tx}px, ${transform.ty}px) scale(${transform.scale})`,
+      transformOrigin: '0 0',
+    }),
+    [transform]
+  );
+
+  const totalPrice = useMemo(
+    () =>
+      Object.entries(selection).reduce((sum, [placeId, qty]) => {
+        const place = placesById.get(placeId);
+        if (!place) return sum;
+        return sum + qty * unitPriceFor(place.ticketTypeId);
+      }, 0),
+    [selection, placesById, unitPriceFor]
+  );
+
+  const lines = useMemo<SelectionLine[]>(
+    () =>
+      venueMap.places
+        .filter((p) => (selection[p.id] ?? 0) > 0)
+        .map((p) => {
+          const typeName = unitNameFor(p.ticketTypeId);
+          return {
+            key: p.id,
+            title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
+            subtitle: p.kind === 'section' ? typeName : undefined,
+            unitPrice: unitPriceFor(p.ticketTypeId),
+            quantity: selection[p.id] ?? 0,
+            max: p.available,
+            onQuantityChange: (next: number) => setQuantity(p.id, next),
+          };
+        }),
+    [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
+  );
+
+  const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
+    e.stopPropagation();
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
+      <div className="flex min-w-0 flex-col gap-3">
+        <Card className="glass border-white/40 shadow-sm">
+          <CardContent className="flex flex-col gap-4 p-2 sm:p-4">
+            <div
+              ref={containerRef}
+              className="relative w-full cursor-grab touch-none select-none overflow-hidden rounded-xl bg-muted/30 active:cursor-grabbing"
+              style={{ height: 520, minHeight: 520 }}
+              {...bindings}
+            >
+              <VenueMapCanvas
+                event={event}
+                venueMap={venueMap}
+                selection={selection}
+                capRemaining={capRemaining}
+                colors={colors}
+                unitPriceFor={unitPriceFor}
+                unitNameFor={unitNameFor}
+                transformStyle={transformStyle}
+              />
+              <VenueMapZoomControls
+                onZoomIn={zoomIn}
+                onZoomOut={zoomOut}
+                onReset={reset}
+                canZoomIn={canZoomIn}
+                canZoomOut={canZoomOut}
+                onPointerDown={stopDrag}
+              />
+            </div>
+
+            <VenueMapLegend event={event} colors={colors} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <SelectionSummary
+        lines={lines}
+        totalQuantity={total}
+        totalPrice={totalPrice}
+        onContinue={() => {
+          console.log('Continue to payment with selection', selection);
+        }}
+      />
+    </div>
+  );
+};

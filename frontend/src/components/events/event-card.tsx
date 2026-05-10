@@ -4,7 +4,7 @@ import { CalendarDays, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Event } from '@/types/event';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
-import { formatEventDateShort } from '@/lib/formatters';
+import { formatEventDateShort, formatPriceFrom } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 interface EventCardProps {
@@ -58,7 +58,7 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
 
           {/* price chip — bottom-left overlay */}
           <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/85 px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm backdrop-blur-md">
-            {event.price === 0 ? 'Free' : `€${event.price}`}
+            {formatPriceFrom(event.priceFrom)}
           </span>
         </div>
 
