@@ -4,6 +4,6 @@ EXPOSE 8080
 
 WORKDIR /app
 
-COPY ./bin/Release/net10.0/publish/ . 
+COPY ./publish/ . 
 
 ENTRYPOINT ["dotnet", "Ticketing.API.dll"]
