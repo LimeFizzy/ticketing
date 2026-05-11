@@ -1,3 +1,5 @@
+import { UserDto } from "@/lib/api";
+
 export interface PaymentCard {
   cardholderName: string;
   number: string;
@@ -5,11 +7,7 @@ export interface PaymentCard {
   cvc: string;
 }
 
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+export interface User extends UserDto {
   card?: PaymentCard;
 }
 

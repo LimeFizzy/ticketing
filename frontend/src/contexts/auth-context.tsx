@@ -8,67 +8,56 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { type AuthContextValue, type User } from '@/types/user';
+import { type AuthContextValue } from '@/types/user';
+import { getApiAuthMe, postApiAuthSignIn, postApiAuthSignUp, postApiAuthSignOut, UserDto } from '@/lib/api';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDto | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
 
-  // Fetch current session from API
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
-      })
-      .catch((err) => console.error('Failed to fetch session', err))
-      .finally(() => setIsHydrating(false));
+    getApiAuthMe().then(({ data }) => {
+      if (data) setUser(data);
+    }).catch(err => console.error('Failed to fetch session', err)).finally(() => setIsHydrating(false));
   }, []);
 
   const signIn = useCallback<AuthContextValue['signIn']>(async (email, password) => {
-    const res = await fetch('/api/auth/sign-in', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await postApiAuthSignIn({
+      body: { email, password }
     });
 
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Login failed');
+    if (error) {
+        throw new Error(error?.title || 'Login failed');
     }
-
-    const data = await res.json();
-    setUser(data);
+    
+    if (data) {
+        setUser(data);
+    }
   }, []);
 
   const signUp = useCallback<AuthContextValue['signUp']>(async ({ firstName, lastName, email, password }) => {
-    const res = await fetch('/api/auth/sign-up', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+    const { data, error } = await postApiAuthSignUp({
+      body: { firstName, lastName, email, password }
     });
 
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Registration failed');
+    if (error) {
+        throw new Error(error?.title || 'Registration failed');
     }
 
-    const data = await res.json();
-    setUser(data);
+    if (data) {
+        setUser(data);
+    }
   }, []);
 
   const signOut = useCallback<AuthContextValue['signOut']>(async () => {
-    await fetch('/api/auth/sign-out', { method: 'POST' });
+    await postApiAuthSignOut();
     setUser(null);
   }, []);
 
   const updateProfile = useCallback<AuthContextValue['updateProfile']>(
     (patch) => {
-      // Mocked locally until API supports profile updates
       if (!user) return;
       setUser({ ...user, ...patch });
     },

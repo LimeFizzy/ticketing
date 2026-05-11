@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
 using Ticketing.Infrastructure.Auth;
@@ -9,6 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ticketing API", Version = "v1" });
+    c.SupportNonNullableReferenceTypes();
+});
 
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=ticketing.db"));
@@ -55,6 +62,16 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.MapOpenApi();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ticketing API V1");
+    });
+}
+
 app.UseHttpsRedirection();
 
 app.UseCors("FrontendPolicy");

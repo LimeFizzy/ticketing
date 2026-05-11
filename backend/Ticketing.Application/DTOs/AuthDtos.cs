@@ -1,5 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Ticketing.Application.DTOs;
 
-public record LoginRequest(string Email, string Password);
-public record RegisterRequest(string FirstName, string LastName, string Email, string Password);
-public record UserDto(Guid Id, string FirstName, string LastName, string Email);
+public record LoginRequest(
+    [Required] string Email, 
+    [Required] string Password
+);
+public record RegisterRequest(
+    [Required] string FirstName, 
+    [Required] string LastName, 
+    [Required] string Email, 
+    [Required] string Password
+);
+public record UserDto(
+    [Required] Guid Id, 
+    [Required] string FirstName, 
+    [Required] string LastName, 
+    [Required] string Email
+);

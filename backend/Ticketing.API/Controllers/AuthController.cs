@@ -12,26 +12,31 @@ namespace Ticketing.API.Controllers;
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("sign-in")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SignIn([FromBody] LoginRequest request)
     {
         var user = await authService.LoginAsync(request);
-        if (user == null) return Unauthorized(new { message = "Invalid email or password" });
+        if (user == null) return Unauthorized(new ProblemDetails { Title = "Invalid email or password" });
 
         await SignInUserAsync(user);
         return Ok(user);
     }
 
     [HttpPost("sign-up")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignUp([FromBody] RegisterRequest request)
     {
         var user = await authService.RegisterAsync(request);
-        if (user == null) return BadRequest(new { message = "Email already exists" });
+        if (user == null) return BadRequest(new ProblemDetails { Title = "Email already exists" });
 
         await SignInUserAsync(user);
         return Ok(user);
     }
 
     [HttpPost("sign-out")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> SignOutEndpoint()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -39,6 +44,8 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpGet("me")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public IActionResult GetMe()
     {
         if (!User.Identity?.IsAuthenticated ?? true)
