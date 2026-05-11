@@ -32,7 +32,7 @@ const SignUpPage = () => {
     if (!isHydrating && isAuthenticated) router.replace(Route.Home);
   }, [isHydrating, isAuthenticated, router]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
       setError('All fields are required');
@@ -43,8 +43,12 @@ const SignUpPage = () => {
       return;
     }
     setError(null);
-    signUp({ firstName, lastName, email, password });
-    router.replace(Route.Home);
+    try {
+      await signUp({ firstName, lastName, email, password });
+      router.replace(Route.Home);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during registration');
+    }
   };
 
   return (

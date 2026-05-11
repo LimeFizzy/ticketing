@@ -16,8 +16,8 @@ export const SidebarAuthSection = ({
   const { user, signOut } = useAuth();
   if (!user) return null;
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     onAfterSignOut?.();
   };
 
