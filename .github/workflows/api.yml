@@ -41,10 +41,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare lowercase repository owner
+        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/ticketing/backend:latest -f ./backend/Ticketing.API/Dockerfile ./backend
+          docker build -t ghcr.io/${REPO_OWNER}/ticketing/backend:latest -f ./backend/Ticketing.API/Dockerfile ./backend
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/ticketing/backend:latest
+          docker push ghcr.io/${REPO_OWNER}/ticketing/backend:latest
