@@ -1,3 +1,5 @@
+import { UserDto } from "@/lib/api";
+
 export interface PaymentCard {
   cardholderName: string;
   number: string;
@@ -5,11 +7,7 @@ export interface PaymentCard {
   cvc: string;
 }
 
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+export interface User extends UserDto {
   card?: PaymentCard;
 }
 
@@ -17,13 +15,13 @@ export interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isHydrating: boolean;
-  signIn: (email: string, password: string) => void;
+  signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: {
     firstName: string;
     lastName: string;
     email: string;
     password: string;
-  }) => void;
-  signOut: () => void;
+  }) => Promise<void>;
+  signOut: () => Promise<void>;
   updateProfile: (patch: Partial<Omit<User, 'id'>>) => void;
 }

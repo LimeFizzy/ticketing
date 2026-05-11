@@ -4,115 +4,64 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
 } from 'react';
-import { type AuthContextValue, type User } from '@/types/user';
-import { newId, titleCase } from '@/lib/utils';
-
-const STORAGE_KEY = 'ticketflow:user';
-const AUTH_EVENT = 'ticketflow:auth';
-
-let cachedUser: User | null | undefined = undefined;
-
-const isValidStoredUser = (value: unknown): value is User => {
-  if (!value || typeof value !== 'object') return false;
-  const u = value as Partial<User>;
-  return (
-    typeof u.id === 'string' &&
-    typeof u.firstName === 'string' &&
-    typeof u.lastName === 'string' &&
-    typeof u.email === 'string'
-  );
-};
-
-const readUser = (): User | null => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isValidStoredUser(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const writeUser = (user: User | null) => {
-  if (typeof window === 'undefined') return;
-  if (user) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  } else {
-    window.localStorage.removeItem(STORAGE_KEY);
-  }
-  cachedUser = user;
-  window.dispatchEvent(new Event(AUTH_EVENT));
-};
-
-const subscribe = (cb: () => void) => {
-  if (typeof window === 'undefined') return () => {};
-
-  if (cachedUser === undefined) {
-    cachedUser = readUser();
-    queueMicrotask(cb);
-  }
-
-  const handler = () => {
-    cachedUser = readUser();
-    cb();
-  };
-  window.addEventListener('storage', handler);
-  window.addEventListener(AUTH_EVENT, handler);
-  return () => {
-    window.removeEventListener('storage', handler);
-    window.removeEventListener(AUTH_EVENT, handler);
-  };
-};
-
-const getSnapshot = () => cachedUser;
-const getServerSnapshot = (): User | null | undefined => undefined;
+import { type AuthContextValue } from '@/types/user';
+import { UserDto, getMe, postSignIn, postSignOut, postSignUp } from '@/lib/api';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
-  const isHydrating = snapshot === undefined;
-  const user = snapshot ?? null;
+  const [user, setUser] = useState<UserDto | null>(null);
+  const [isHydrating, setIsHydrating] = useState(true);
 
-  const signIn = useCallback<AuthContextValue['signIn']>((email) => {
-    const trimmed = email.trim();
-    const local = trimmed.split('@')[0] ?? 'User';
-    writeUser({
-      id: newId(),
-      firstName: titleCase(local),
-      lastName: '',
-      email: trimmed,
-    });
+  useEffect(() => {
+    getMe().then(({ data }) => {
+      if (data) setUser(data);
+    }).catch(err => console.error('Failed to fetch session', err)).finally(() => setIsHydrating(false));
   }, []);
 
-  const signUp = useCallback<AuthContextValue['signUp']>(
-    ({ firstName, lastName, email }) => {
-      writeUser({
-        id: newId(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-      });
-    },
-    []
-  );
+  const signIn = useCallback<AuthContextValue['signIn']>(async (email, password) => {
+    const { data, error } = await postSignIn({
+      body: { email, password }
+    });
 
-  const signOut = useCallback(() => writeUser(null), []);
+    if (error) {
+        throw new Error(error?.title || 'Login failed');
+    }
+    
+    if (data) {
+        setUser(data);
+    }
+  }, []);
+
+  const signUp = useCallback<AuthContextValue['signUp']>(async ({ firstName, lastName, email, password }) => {
+    const { data, error } = await postSignUp({
+      body: { firstName, lastName, email, password }
+    });
+
+    if (error) {
+        throw new Error(error?.title || 'Registration failed');
+    }
+
+    if (data) {
+        setUser(data);
+    }
+  }, []);
+
+  const signOut = useCallback<AuthContextValue['signOut']>(async () => {
+    await postSignOut();
+    setUser(null);
+  }, []);
 
   const updateProfile = useCallback<AuthContextValue['updateProfile']>(
     (patch) => {
-      if (!cachedUser) return;
-      writeUser({ ...cachedUser, ...patch });
+      if (!user) return;
+      setUser({ ...user, ...patch });
     },
-    []
+    [user]
   );
 
   const value = useMemo<AuthContextValue>(

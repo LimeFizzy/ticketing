@@ -33,15 +33,19 @@ const SignInForm = () => {
     if (!isHydrating && isAuthenticated) router.replace(next);
   }, [isHydrating, isAuthenticated, next, router]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setError('Email and password are required');
       return;
     }
     setError(null);
-    signIn(email, password);
-    router.replace(next);
+    try {
+      await signIn(email, password);
+      router.replace(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+    }
   };
 
   return (
