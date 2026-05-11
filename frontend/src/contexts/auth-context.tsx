@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { type AuthContextValue } from '@/types/user';
-import { getApiAuthMe, postApiAuthSignIn, postApiAuthSignUp, postApiAuthSignOut, UserDto } from '@/lib/api';
+import { UserDto, getMe, postSignIn, postSignOut, postSignUp } from '@/lib/api';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -18,13 +18,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isHydrating, setIsHydrating] = useState(true);
 
   useEffect(() => {
-    getApiAuthMe().then(({ data }) => {
+    getMe().then(({ data }) => {
       if (data) setUser(data);
     }).catch(err => console.error('Failed to fetch session', err)).finally(() => setIsHydrating(false));
   }, []);
 
   const signIn = useCallback<AuthContextValue['signIn']>(async (email, password) => {
-    const { data, error } = await postApiAuthSignIn({
+    const { data, error } = await postSignIn({
       body: { email, password }
     });
 
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signUp = useCallback<AuthContextValue['signUp']>(async ({ firstName, lastName, email, password }) => {
-    const { data, error } = await postApiAuthSignUp({
+    const { data, error } = await postSignUp({
       body: { firstName, lastName, email, password }
     });
 
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = useCallback<AuthContextValue['signOut']>(async () => {
-    await postApiAuthSignOut();
+    await postSignOut();
     setUser(null);
   }, []);
 

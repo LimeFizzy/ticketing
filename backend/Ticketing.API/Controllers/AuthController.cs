@@ -11,7 +11,7 @@ namespace Ticketing.API.Controllers;
 [Route("api/auth")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-    [HttpPost("sign-in")]
+    [HttpPost("sign-in", Name = "postSignIn")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SignIn([FromBody] LoginRequest request)
@@ -23,7 +23,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(user);
     }
 
-    [HttpPost("sign-up")]
+    [HttpPost("sign-up", Name = "postSignUp")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignUp([FromBody] RegisterRequest request)
@@ -35,7 +35,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(user);
     }
 
-    [HttpPost("sign-out")]
+    [HttpPost("sign-out", Name = "postSignOut")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> SignOutEndpoint()
     {
@@ -43,7 +43,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok();
     }
 
-    [HttpGet("me")]
+    [HttpGet("me", Name = "getMe")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public IActionResult GetMe()
