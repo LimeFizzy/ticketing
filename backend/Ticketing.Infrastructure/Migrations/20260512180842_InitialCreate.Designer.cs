@@ -11,7 +11,7 @@ using Ticketing.Infrastructure.Persistence;
 namespace Ticketing.Infrastructure.Migrations
 {
     [DbContext(typeof(TicketingDbContext))]
-    [Migration("20260512180445_InitialCreate")]
+    [Migration("20260512180842_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
