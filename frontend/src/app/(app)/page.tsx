@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { type Metadata } from 'next';
-import { EVENTS } from '@/lib/mock-data';
+import { getEvents } from '@/lib/api';
 import { filterEvents, hasActiveFilter, trending } from '@/lib/event-filters';
 import { type SearchParams } from '@/types/filters';
 import { EventsGrid } from '@/components/events/events-grid';
@@ -15,10 +15,14 @@ const DashboardPage = async ({
   searchParams: Promise<SearchParams>;
 }) => {
   const params = await searchParams;
-  const filtered = filterEvents(params);
+  const { data: events, error } = await getEvents();
+  console.log(error);
+  const eventList = (events || [])
+
+  const filtered = filterEvents(eventList, params)
   const isFiltered = hasActiveFilter(params);
 
-  const featured = EVENTS.filter((e) => e.featured);
+  const featured = eventList.filter((e) => e.featured);
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-10 px-4 py-6 md:px-8 md:py-10">
@@ -38,7 +42,7 @@ const DashboardPage = async ({
       {!isFiltered && (
         <div className="flex flex-col gap-10">
           <CategoryRow title="Featured" events={featured} />
-          <CategoryRow title="Trending now" events={trending(EVENTS)} />
+          <CategoryRow title="Trending now" events={trending(eventList)} />
         </div>
       )}
 

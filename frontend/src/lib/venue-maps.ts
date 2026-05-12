@@ -1,5 +1,5 @@
-import { type Event } from '@/types/event';
 import { type VenueMap, type VenueMapPlace } from '@/types/venue-map';
+import { EventDto } from "./api";
 
 export interface PlaceColor {
   fill: string;
@@ -18,7 +18,7 @@ export const SELECTED_FILL = '#1d4ed8';
 export const SOLD_FILL = '#94a3b8';
 
 export const buildTicketTypeColors = (
-  event: Event
+  event: EventDto
 ): Map<string, PlaceColor> => {
   const map = new Map<string, PlaceColor>();
   event.ticketTypes.forEach((t, i) => {

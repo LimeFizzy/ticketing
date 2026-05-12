@@ -4,10 +4,10 @@ import { type Metadata } from 'next';
 import { CalendarDays, ChevronLeft, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TicketQR } from '@/components/tickets/ticket-qr';
-import { EVENTS, TODAY } from '@/lib/mock-data';
 import { getUserTicketById } from '@/lib/tickets';
 import { formatEventDateLong, formatEventTime } from '@/lib/formatters';
 import { Route } from '@/lib/routes';
+import { getEvents } from '@/lib/api';
 
 export const generateMetadata = async ({
   params,
@@ -24,7 +24,8 @@ const TicketDetailPage = async ({
   params: Promise<{ ticketId: string }>;
 }) => {
   const { ticketId } = await params;
-  const ticket = getUserTicketById(EVENTS, TODAY, ticketId);
+  const { data } = await getEvents();
+  const ticket = getUserTicketById((data || []), new Date(), ticketId);
   if (!ticket) notFound();
 
   const { event, isPast } = ticket;

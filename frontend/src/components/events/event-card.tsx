@@ -2,14 +2,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Event } from '@/types/event';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
 import { formatEventDateShort, formatPriceFrom } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { eventRoute } from '@/lib/routes';
+import { EventDto } from '@/lib/api';
 
 interface EventCardProps {
-  event: Event;
+  event: EventDto;
   variant?: 'default' | 'rail';
 }
 

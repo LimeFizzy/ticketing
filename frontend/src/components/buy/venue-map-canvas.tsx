@@ -1,12 +1,12 @@
 'use client';
 
-import { type Event } from '@/types/event';
 import { type VenueMap, type VenueMapPlace } from '@/types/venue-map';
 import { SELECTED_FILL, SOLD_FILL, type PlaceColor } from '@/lib/venue-maps';
 import { cn } from '@/lib/utils';
+import { EventDto } from '@/lib/api';
 
 interface VenueMapCanvasProps {
-  event: Event;
+  event: EventDto;
   venueMap: VenueMap;
   selection: Record<string, number>;
   capRemaining: number;

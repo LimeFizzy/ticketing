@@ -1,8 +1,8 @@
 import { SearchX } from 'lucide-react';
-import { type Event } from '@/types/event';
 import { EventCard } from './event-card';
+import { EventDto } from '@/lib/api';
 
-export const EventsGrid = ({ events }: { events: Event[] }) => {
+export const EventsGrid = ({ events }: { events: EventDto[] }) => {
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">

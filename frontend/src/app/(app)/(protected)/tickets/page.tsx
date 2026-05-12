@@ -1,21 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import { EVENTS, TODAY } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import { getEvents } from '@/lib/api';
 import { getUserTickets } from '@/lib/tickets';
-import { type Tab } from '@/types/tickets';
+import { type Tab, type UserTicket } from '@/types/tickets';
 import { TicketCard } from '@/components/tickets/ticket-card';
 import { cn } from '@/lib/utils';
 
-const { upcoming: upcomingTickets, past: pastTickets } = getUserTickets(
-  EVENTS,
-  TODAY
-);
 
 const TicketsPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('upcoming');
+  const [ticketsData, setTicketsData] = useState<{ upcoming: UserTicket[]; past: UserTicket[] }>({ upcoming: [], past: [] });
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    getEvents().then(({ data }) => {
+      if (data) {
+        setTicketsData(getUserTickets(data, new Date()));
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const { upcoming: upcomingTickets, past: pastTickets } = ticketsData;
   const tickets = activeTab === 'upcoming' ? upcomingTickets : pastTickets;
+
+  if (loading) {
+    return <div className="p-6 text-muted-foreground">Loading tickets...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">

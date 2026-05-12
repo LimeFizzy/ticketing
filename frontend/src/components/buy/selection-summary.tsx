@@ -10,7 +10,7 @@ import { MAX_PLACES_PER_ORDER } from '@/lib/buy-utils';
 export interface SelectionLine {
   key: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string | null;
   unitPrice: number;
   quantity: number;
   max: number;

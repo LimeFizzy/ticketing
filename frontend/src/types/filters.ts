@@ -1,4 +1,4 @@
-import { type EventCategory } from '@/types/event';
+import { EventCategory } from "@/lib/api";
 
 export interface SearchParams {
   q?: string;
