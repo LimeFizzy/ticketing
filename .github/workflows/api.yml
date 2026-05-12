@@ -64,4 +64,4 @@ jobs:
       - name: Trigger Railway redeploy
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway redeploy
+        run: railway redeploy --yes
