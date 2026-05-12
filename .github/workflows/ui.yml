@@ -1,4 +1,8 @@
-name: Next.JS CI/CD
+name: Next.JS CI/Cd
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 on:
   push:
@@ -7,67 +11,20 @@ on:
     branches: [ "master" ]
 
 jobs:
-  ci:
+  Deploy-Production:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: ./frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download Swagger spec
+      - uses: actions/checkout@v2
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Download OpenAPI Specification
         run: curl https://api.zzzz.lt/swagger/v1/swagger.json -o swagger.json
-
       - name: Generate API client
         run: npm run api:gen
-
-      - name: Pull Vercel project settings
-        run: npx vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
-        env:
-            VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-            VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build
-        run: npx vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
-        env:
-            VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-            VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-            INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
-
-      - name: Upload build output
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Project Artifacts to Vercel
         if: github.ref_name == 'master'
-        uses: actions/upload-artifact@v4
-        with:
-            name: vercel-output
-            path: frontend/.vercel
-            include-hidden-files: true
-
-  cd:
-    needs: ci
-    if: github.ref_name == 'master'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-            name: vercel-output
-            path: .
-
-      - name: Deploy to Vercel (prebuilt)
-        working-directory: frontend
-        run: npx vercel@latest deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
-        env:
-            VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-            VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
