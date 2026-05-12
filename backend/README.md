@@ -14,11 +14,7 @@ Setup `appsettings.Development.json`:
     "ConnectionStrings": {
         "DefaultConnection": "Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=postgres"
     },
-    "CORS": {
-        "AllowedOrigins": [
-            "http://localhost:3000"
-        ]
-    }
+    "AllowedOrigin": "http://localhost:3000"
 }
 ```
 
