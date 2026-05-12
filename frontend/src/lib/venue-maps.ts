@@ -1,5 +1,5 @@
 import { type VenueMap, type VenueMapPlace } from '@/types/venue-map';
-import { EventDto } from "./api";
+import { EventDto } from './api';
 
 export interface PlaceColor {
   fill: string;

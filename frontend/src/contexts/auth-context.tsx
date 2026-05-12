@@ -18,38 +18,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isHydrating, setIsHydrating] = useState(true);
 
   useEffect(() => {
-    getMe().then(({ data }) => {
-      if (data) setUser(data);
-    }).catch(err => console.error('Failed to fetch session', err)).finally(() => setIsHydrating(false));
+    getMe()
+      .then(({ data }) => {
+        if (data) setUser(data);
+      })
+      .catch((err) => console.error('Failed to fetch session', err))
+      .finally(() => setIsHydrating(false));
   }, []);
 
-  const signIn = useCallback<AuthContextValue['signIn']>(async (email, password) => {
-    const { data, error } = await postSignIn({
-      body: { email, password }
-    });
+  const signIn = useCallback<AuthContextValue['signIn']>(
+    async (email, password) => {
+      const { data, error } = await postSignIn({
+        body: { email, password },
+      });
 
-    if (error) {
+      if (error) {
         throw new Error(error?.title || 'Login failed');
-    }
-    
-    if (data) {
+      }
+
+      if (data) {
         setUser(data);
-    }
-  }, []);
+      }
+    },
+    []
+  );
 
-  const signUp = useCallback<AuthContextValue['signUp']>(async ({ firstName, lastName, email, password }) => {
-    const { data, error } = await postSignUp({
-      body: { firstName, lastName, email, password }
-    });
+  const signUp = useCallback<AuthContextValue['signUp']>(
+    async ({ firstName, lastName, email, password }) => {
+      const { data, error } = await postSignUp({
+        body: { firstName, lastName, email, password },
+      });
 
-    if (error) {
+      if (error) {
         throw new Error(error?.title || 'Registration failed');
-    }
+      }
 
-    if (data) {
+      if (data) {
         setUser(data);
-    }
-  }, []);
+      }
+    },
+    []
+  );
 
   const signOut = useCallback<AuthContextValue['signOut']>(async () => {
     await postSignOut();

@@ -1,4 +1,4 @@
-import { EventCategory } from "./api";
+import { EventCategory } from './api';
 
 export const CATEGORY_COLORS: Record<EventCategory, string> = {
   Music: 'bg-blue-500/15 text-blue-700 border-blue-300/40',

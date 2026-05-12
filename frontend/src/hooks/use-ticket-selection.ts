@@ -21,7 +21,9 @@ export interface UseTicketSelectionResult {
   unitNameFor: (ticketTypeId: string) => string;
 }
 
-export const useTicketSelection = (event: EventDto): UseTicketSelectionResult => {
+export const useTicketSelection = (
+  event: EventDto
+): UseTicketSelectionResult => {
   const [selection, setSelection] = useState<Selection>({});
 
   const ticketTypeIndex = useMemo(() => buildTicketTypeIndex(event), [event]);

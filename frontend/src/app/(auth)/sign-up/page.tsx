@@ -47,7 +47,11 @@ const SignUpPage = () => {
       await signUp({ firstName, lastName, email, password });
       router.replace(Route.Home);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during registration');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during registration'
+      );
     }
   };
 

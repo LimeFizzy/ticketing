@@ -1,4 +1,4 @@
-import { UserDto } from "@/lib/api";
+import { UserDto } from '@/lib/api';
 
 export interface PaymentCard {
   cardholderName: string;

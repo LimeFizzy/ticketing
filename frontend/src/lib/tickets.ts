@@ -1,5 +1,5 @@
 import { type UserTicket } from '@/types/tickets';
-import { EventDto } from "./api";
+import { EventDto } from './api';
 
 export const USER_TICKET_IDS = ['1', '2', '3', '6'];
 
