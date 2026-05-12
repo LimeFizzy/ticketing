@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
             name: next-build
-            path: frontend/.vercel/output
+            path: frontend/.vercel
 
   cd:
     needs: ci
@@ -63,7 +63,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
             name: next-build
-            path: frontend/.vercel/output
+            path: frontend/.vercel
 
       - name: Deploy to Vercel (prebuilt)
         run: npx vercel@latest deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
