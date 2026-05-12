@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations;
 namespace Ticketing.Application.DTOs;
 
 public record LoginRequest(
-    [property: Required] string Email,
-    [property: Required] string Password
+    [Required] string Email,
+    [Required] string Password
 );
 public record RegisterRequest(
-    [property: Required] string FirstName,
-    [property: Required] string LastName,
-    [property: Required] string Email,
-    [property: Required] string Password
+    [Required] string FirstName,
+    [Required] string LastName,
+    [Required] string Email,
+    [Required] string Password
 );
 public record UserDto(
     [property: Required] Guid Id,
