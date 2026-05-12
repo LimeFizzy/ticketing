@@ -1,11 +1,10 @@
-import { EVENTS, TODAY } from '@/lib/mock-data';
-import { type Event } from '@/types/event';
+import { EventDto }  from "./api";
 import { type CategoryFilter, type SearchParams } from '@/types/filters';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export const filterEvents = (params: SearchParams): Event[] =>
-  EVENTS.filter((event) => {
+export const filterEvents = (events: EventDto[], params: SearchParams): EventDto[] =>
+  events.filter((event) => {
     const eventDate = new Date(event.date);
 
     if (params.q) {
@@ -22,6 +21,7 @@ export const filterEvents = (params: SearchParams): Event[] =>
     }
 
     if (params.date && params.date !== 'all') {
+      const TODAY = new Date();
       const days = (eventDate.getTime() - TODAY.getTime()) / MS_PER_DAY;
       if (params.date === 'today' && (days < 0 || days >= 1)) return false;
       if (params.date === 'week' && (days < 0 || days > 7)) return false;
@@ -44,7 +44,7 @@ export const hasActiveFilter = (params: SearchParams): boolean =>
     (params.price && params.price !== 'all')
   );
 
-export const trending = (events: Event[]): Event[] =>
+export const trending = (events: EventDto[]): EventDto[] =>
   [...events]
     .sort((a, b) => b.availableTickets - a.availableTickets)
     .slice(0, 6);

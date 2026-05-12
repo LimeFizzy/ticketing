@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin, QrCode } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Event } from '@/types/event';
 import { formatTicketDate } from '@/lib/formatters';
 import { ticketRoute } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import { EventDto } from '@/lib/api';
 
 interface TicketCardProps {
-  event: Event;
+  event: EventDto;
   ticketId: string;
   isPast: boolean;
 }

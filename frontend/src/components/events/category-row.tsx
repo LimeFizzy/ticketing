@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { type Event } from '@/types/event';
 import { EventCard } from './event-card';
 import { buildScrollerMask, MIN_SCROLL_PX } from '@/lib/category-row';
 import { cn } from '@/lib/utils';
+import { EventDto } from '@/lib/api';
 
 interface CategoryRowProps {
   title: string;
-  events: Event[];
+  events: EventDto[];
   viewAllHref?: string;
 }
 

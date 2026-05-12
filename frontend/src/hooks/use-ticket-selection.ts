@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { type Event } from '@/types/event';
+
 import {
   buildTicketTypeIndex,
   MAX_PLACES_PER_ORDER,
@@ -9,6 +9,7 @@ import {
   totalSelected,
   type Selection,
 } from '@/lib/buy-utils';
+import { EventDto } from '@/lib/api/types.gen';
 
 export interface UseTicketSelectionResult {
   selection: Selection;
@@ -20,7 +21,7 @@ export interface UseTicketSelectionResult {
   unitNameFor: (ticketTypeId: string) => string;
 }
 
-export const useTicketSelection = (event: Event): UseTicketSelectionResult => {
+export const useTicketSelection = (event: EventDto): UseTicketSelectionResult => {
   const [selection, setSelection] = useState<Selection>({});
 
   const ticketTypeIndex = useMemo(() => buildTicketTypeIndex(event), [event]);

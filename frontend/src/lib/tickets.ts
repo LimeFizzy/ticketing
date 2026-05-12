@@ -1,10 +1,10 @@
-import { type Event } from '@/types/event';
 import { type UserTicket } from '@/types/tickets';
+import { EventDto } from "./api";
 
 export const USER_TICKET_IDS = ['1', '2', '3', '6'];
 
 export const getUserTickets = (
-  events: Event[],
+  events: EventDto[],
   today: Date
 ): { upcoming: UserTicket[]; past: UserTicket[] } => {
   const tickets: UserTicket[] = events
@@ -22,7 +22,7 @@ export const getUserTickets = (
 };
 
 export const getUserTicketById = (
-  events: Event[],
+  events: EventDto[],
   today: Date,
   ticketId: string
 ): UserTicket | undefined => {
