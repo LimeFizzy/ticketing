@@ -45,9 +45,6 @@ jobs:
             VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
             INTERNAL_API_BASE_URL: ${{ secrets.INTERNAL_API_BASE_URL }}
 
-      - name: Debug
-        run: find /home/runner/work -name ".vercel" -type d 2>/dev/null
-
       - name: Upload build output
         if: github.ref_name == 'master'
         uses: actions/upload-artifact@v4
