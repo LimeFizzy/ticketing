@@ -1,4 +1,4 @@
-import { EventDto } from "@/lib/api";
+import { EventDto } from '@/lib/api';
 
 export type Tab = 'upcoming' | 'past';
 

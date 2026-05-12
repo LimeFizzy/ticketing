@@ -25,7 +25,7 @@ const TicketDetailPage = async ({
 }) => {
   const { ticketId } = await params;
   const { data } = await getEvents();
-  const ticket = getUserTicketById((data || []), new Date(), ticketId);
+  const ticket = getUserTicketById(data || [], new Date(), ticketId);
   if (!ticket) notFound();
 
   const { event, isPast } = ticket;

@@ -1,33 +1,15 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { type Metadata } from 'next';
 import { getEvents } from '@/lib/api';
 import { getUserTickets } from '@/lib/tickets';
-import { type Tab, type UserTicket } from '@/types/tickets';
-import { TicketCard } from '@/components/tickets/ticket-card';
-import { cn } from '@/lib/utils';
+import { TicketsTabs } from '@/components/tickets/tickets-tabs';
 
+export const metadata: Metadata = { title: 'My Tickets — TicketFlow' };
 
-const TicketsPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('upcoming');
-  const [ticketsData, setTicketsData] = useState<{ upcoming: UserTicket[]; past: UserTicket[] }>({ upcoming: [], past: [] });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getEvents().then(({ data }) => {
-      if (data) {
-        setTicketsData(getUserTickets(data, new Date()));
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  const { upcoming: upcomingTickets, past: pastTickets } = ticketsData;
-  const tickets = activeTab === 'upcoming' ? upcomingTickets : pastTickets;
-
-  if (loading) {
-    return <div className="p-6 text-muted-foreground">Loading tickets...</div>;
-  }
+const TicketsPage = async () => {
+  const { data, error } = await getEvents();
+  if (error) throw error;
+  
+  const { upcoming, past } = getUserTickets(data ?? [], new Date());
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -38,50 +20,7 @@ const TicketsPage = () => {
         </p>
       </div>
 
-      {/* Tab bar */}
-      <div className="relative border-b border-border">
-        <div className="flex" role="tablist">
-          {(['upcoming', 'past'] as Tab[]).map((tab) => (
-            <button
-              key={tab}
-              role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'relative px-4 py-2 text-sm font-medium capitalize transition-colors outline-none cursor-pointer',
-                activeTab === tab
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {tab === 'upcoming'
-                ? `Upcoming (${upcomingTickets.length})`
-                : `Past (${pastTickets.length})`}
-              {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Ticket list */}
-      <div role="tabpanel" className="flex flex-col gap-3">
-        {tickets.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            No {activeTab} tickets.
-          </p>
-        ) : (
-          tickets.map((t) => (
-            <TicketCard
-              key={t.ticketId}
-              event={t.event}
-              ticketId={t.ticketId}
-              isPast={t.isPast}
-            />
-          ))
-        )}
-      </div>
+      <TicketsTabs upcoming={upcoming} past={past} />
     </div>
   );
 };

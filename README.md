@@ -4,7 +4,10 @@
 
 ### 1. Run the Backend API
 ```bash
-cd backend/Ticketing.API
+cb backend/Ticketing.Infrastructure
+dotnet ef database update --startup-project=../Ticketing.API
+
+cd ../Ticketing.API
 dotnet run
 ```
 
@@ -16,6 +19,8 @@ Open a new terminal session, grab the openapi spec, compile the SDK, and start N
 cd frontend
 
 curl http://localhost:8080/swagger/v1/swagger.json -o swagger.json
+
+npm i
 
 npm run api:gen
 

@@ -1,9 +1,12 @@
-import { EventDto }  from "./api";
+import { EventDto } from './api';
 import { type CategoryFilter, type SearchParams } from '@/types/filters';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export const filterEvents = (events: EventDto[], params: SearchParams): EventDto[] =>
+export const filterEvents = (
+  events: EventDto[],
+  params: SearchParams
+): EventDto[] =>
   events.filter((event) => {
     const eventDate = new Date(event.date);
 
