@@ -6,8 +6,10 @@ import { TicketsTabs } from '@/components/tickets/tickets-tabs';
 export const metadata: Metadata = { title: 'My Tickets — TicketFlow' };
 
 const TicketsPage = async () => {
-  const { data } = await getEvents();
-  const { upcoming, past } = getUserTickets(data || [], new Date());
+  const { data, error } = await getEvents();
+  if (error) throw error;
+  
+  const { upcoming, past } = getUserTickets(data ?? [], new Date());
 
   return (
     <div className="flex flex-col gap-6 p-6">

@@ -16,8 +16,9 @@ const DashboardPage = async ({
 }) => {
   const params = await searchParams;
   const { data: events, error } = await getEvents();
-  console.log(error);
-  const eventList = events || [];
+  if (error) throw error;
+
+  const eventList = events ?? [];
 
   const filtered = filterEvents(eventList, params);
   const isFiltered = hasActiveFilter(params);
