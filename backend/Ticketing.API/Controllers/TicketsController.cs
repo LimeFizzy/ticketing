@@ -1,14 +1,16 @@
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Ticketing.Application.DTOs;
+using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
 
 namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/tickets")]
-public class TicketsController(ITicketService ticketService) : ControllerBase
+public class TicketsController(ITicketService ticketService, IEmailService emailService) : ControllerBase
 {
     [HttpGet(Name = "getMyTickets")]
     [Authorize]
@@ -41,6 +43,10 @@ public class TicketsController(ITicketService ticketService) : ControllerBase
     {
         var organizerId = GetUserIdFromClaims();
         var result = await ticketService.CheckInAsync(organizerId, request);
+
+        if (!result.WasAlreadyCheckedIn)
+            BackgroundJob.Enqueue(() => emailService.SendCheckInConfirmationAsync(result.Ticket.Id));
+
         return Ok(result);
     }
 

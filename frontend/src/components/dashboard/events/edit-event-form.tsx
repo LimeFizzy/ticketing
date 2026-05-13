@@ -115,7 +115,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
           <EventFormFields form={form} patch={patch} />
-          <VenueCard venue={form.venue} city={form.city} />
+          <VenueCard venue={form.venue} city={form.city} eventId={id} venueMapId={event.venueMapId} />
           <EventTicketTypesCard
             eventId={id}
             ticketTypes={event.ticketTypes}

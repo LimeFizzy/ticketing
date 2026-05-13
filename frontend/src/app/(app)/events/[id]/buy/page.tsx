@@ -4,9 +4,8 @@ import { type Metadata } from 'next';
 import { ChevronLeft } from 'lucide-react';
 import { TicketTypeSelector } from '@/components/buy/ticket-type-selector';
 import { VenueMapSelector } from '@/components/buy/venue-map-selector';
-import { getVenueMap } from '@/lib/venue-maps';
 import { eventRoute } from '@/lib/routes';
-import { getEventById } from '@/lib/api';
+import { getEventById, getEventVenueMap, getEventVenueMapPlaces } from '@/lib/api';
 
 export const generateMetadata = async ({
   params,
@@ -31,7 +30,47 @@ const BuyTicketsPage = async ({
   const { data: event } = await getEventById({ path: { id } });
   if (!event) notFound();
 
-  const venueMap = event.venueMapId ? getVenueMap(event.venueMapId) : undefined;
+  let venueMapWithTicketTypes: import('@/types/venue-map').VenueMap | undefined;
+
+  if (event.venueMapId) {
+    const [mapRes, mappingsRes] = await Promise.all([
+      getEventVenueMap({ path: { id: event.id } }),
+      getEventVenueMapPlaces({ path: { eventId: event.id } }).catch(() => ({ data: null })),
+    ]);
+
+    if (mapRes.data && mappingsRes.data) {
+      const mappingByPlaceId = new Map(
+        mappingsRes.data.map((m) => [m.venueMapPlaceId, m.eventTicketTypeId]),
+      );
+
+      venueMapWithTicketTypes = {
+        id: mapRes.data.id,
+        name: mapRes.data.name,
+        width: mapRes.data.width,
+        height: mapRes.data.height,
+        decorations: mapRes.data.decorations.map((d) => ({
+          id: d.id,
+          x: d.x,
+          y: d.y,
+          width: d.width,
+          height: d.height,
+          label: d.label,
+        })),
+        places: mapRes.data.places.map((p) => ({
+          id: p.id,
+          kind: p.kind as 'seat' | 'section',
+          label: p.label,
+          x: p.x,
+          y: p.y,
+          width: p.width ?? undefined,
+          height: p.height ?? undefined,
+          capacity: p.capacity,
+          available: p.available,
+          ticketTypeId: mappingByPlaceId.get(p.id) ?? '',
+        })),
+      };
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 p-6">
@@ -50,8 +89,8 @@ const BuyTicketsPage = async ({
         <p className="text-sm text-muted-foreground">{event.title}</p>
       </div>
 
-      {venueMap ? (
-        <VenueMapSelector event={event} venueMap={venueMap} />
+      {venueMapWithTicketTypes ? (
+        <VenueMapSelector event={event} venueMap={venueMapWithTicketTypes} />
       ) : (
         <TicketTypeSelector event={event} />
       )}

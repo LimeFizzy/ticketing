@@ -14,6 +14,8 @@ public static class DataSeederExtensions
         var context = scope.ServiceProvider.GetRequiredService<TicketingDbContext>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
+        Guid adminId = Guid.Empty;
+
         if (!await context.Users.AnyAsync(u => u.Role == "admin"))
         {
             var admin = new User
@@ -25,6 +27,21 @@ public static class DataSeederExtensions
                 Role = "admin"
             };
             await context.Users.AddAsync(admin);
+            await context.SaveChangesAsync();
+            adminId = admin.Id;
+        }
+        else
+        {
+            adminId = await context.Users
+                .Where(u => u.Role == "admin")
+                .Select(u => u.Id)
+                .FirstAsync();
+        }
+
+        if (!await context.VenueMaps.AnyAsync())
+        {
+            var venueMaps = DataSeeder.GetMockVenueMaps(adminId);
+            await context.VenueMaps.AddRangeAsync(venueMaps);
         }
 
         if (!await context.Events.AnyAsync())

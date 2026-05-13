@@ -12,6 +12,7 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.EventTicketType)
             .Include(t => t.Order)
                 .ThenInclude(o => o.Event)
+            .Include(t => t.VenueMapPlace)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
@@ -23,6 +24,7 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.EventTicketType)
             .Include(t => t.Order)
                 .ThenInclude(o => o.Event)
+            .Include(t => t.VenueMapPlace)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
@@ -33,6 +35,7 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.Order)
                 .ThenInclude(o => o.Event)
             .Include(t => t.User)
+            .Include(t => t.VenueMapPlace)
             .FirstOrDefaultAsync(t => t.TicketCode == ticketCode);
     }
 

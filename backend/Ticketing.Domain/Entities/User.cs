@@ -12,4 +12,5 @@ public class User
     public DateTime? InviteTokenExpires { get; set; }
 
     public ICollection<Ticket> Tickets { get; set; } = [];
+    public ICollection<Review> Reviews { get; set; } = [];
 }

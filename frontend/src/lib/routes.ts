@@ -29,3 +29,11 @@ export const dashboardEventTicketRoute = (eventId: string, ticketId: string) =>
 
 export const dashboardEventCheckInRoute = (id: string) =>
   `/dashboard/events/${id}/check-in` as const;
+
+export const dashboardVenueMapsRoute = () => '/dashboard/venue-maps' as const;
+
+export const dashboardVenueMapRoute = (id: string) =>
+  `/dashboard/venue-maps/${id}` as const;
+
+export const dashboardEventVenueMapRoute = (eventId: string) =>
+  `/dashboard/events/${eventId}/venue-map` as const;

@@ -6,16 +6,18 @@ namespace Ticketing.Application.Services;
 
 public interface IOrderService
 {
-    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null);
+    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null, Guid? promoCodeId = null, decimal discountAmount = 0);
 }
 
 public class OrderService(
     IOrderRepository orderRepository,
     ITicketRepository ticketRepository,
     IEventRepository eventRepository,
-    IEventTicketTypeRepository eventTicketTypeRepository) : IOrderService
+    IEventTicketTypeRepository eventTicketTypeRepository,
+    IVenueMapRepository venueMapRepository,
+    IEventVenueMapPlaceRepository eventVenueMapPlaceRepository) : IOrderService
 {
-    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null)
+    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null, Guid? promoCodeId = null, decimal discountAmount = 0)
     {
         var @event = await eventRepository.GetByIdAsync(request.EventId)
             ?? throw new InvalidOperationException("Event not found");
@@ -31,9 +33,26 @@ public class OrderService(
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
 
-            var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
-            if (soldCount + item.Quantity > tt.Capacity)
-                throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
+            if (item.VenueMapPlaceId.HasValue)
+            {
+                var mapping = await eventVenueMapPlaceRepository
+                    .GetByEventAndPlaceAsync(request.EventId, item.VenueMapPlaceId.Value);
+                if (mapping == null)
+                    throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to this event");
+
+                if (mapping.EventTicketTypeId != item.EventTicketTypeId)
+                    throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to ticket type {tt.Name}");
+
+                var placeSold = await venueMapRepository.GetSoldCountForPlaceAsync(item.VenueMapPlaceId.Value);
+                if (placeSold + item.Quantity > await GetPlaceCapacityAsync(item.VenueMapPlaceId.Value))
+                    throw new InvalidOperationException($"Not enough capacity for place");
+            }
+            else
+            {
+                var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
+                if (soldCount + item.Quantity > tt.Capacity)
+                    throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
+            }
 
             total += tt.Price * item.Quantity;
 
@@ -46,7 +65,8 @@ public class OrderService(
                     EventTicketTypeId = tt.Id,
                     UserId = userId,
                     PricePaid = tt.Price,
-                    Status = "Active"
+                    Status = "Active",
+                    VenueMapPlaceId = item.VenueMapPlaceId
                 });
             }
         }
@@ -55,9 +75,11 @@ public class OrderService(
         {
             UserId = userId,
             EventId = request.EventId,
-            TotalAmount = total,
+            TotalAmount = total - discountAmount,
             Status = "Confirmed",
             StripeSessionId = stripeSessionId,
+            PromoCodeId = promoCodeId,
+            DiscountAmount = discountAmount,
             Tickets = ticketsToCreate
         };
 
@@ -66,6 +88,13 @@ public class OrderService(
         await orderRepository.SaveChangesAsync();
 
         return MapToDto(order, @event);
+    }
+
+    private async Task<int> GetPlaceCapacityAsync(Guid placeId)
+    {
+        var place = await venueMapRepository.GetPlaceByIdAsync(placeId)
+            ?? throw new InvalidOperationException($"Place {placeId} not found");
+        return place.Capacity;
     }
 
     private async Task<string> GenerateUniqueCodeAsync()
@@ -100,7 +129,10 @@ public class OrderService(
                 @event.Date,
                 @event.Venue,
                 @event.City,
-                @event.ImageUrl
+                @event.ImageUrl,
+                null,
+                t.VenueMapPlaceId,
+                t.VenueMapPlace?.Label
             )).ToArray()
         );
     }
