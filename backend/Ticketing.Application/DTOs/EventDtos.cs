@@ -29,6 +29,7 @@ public record EventDto(
     Guid? VenueMapId,
     [property: Required] string Status,
     Guid? OrganizerId,
+    string? TimeZone,
     double? AverageRating = null,
     int ReviewCount = 0
 );
@@ -53,7 +54,8 @@ public record CreateEventRequest(
     string? ImageUrl,
     string? Description,
     string Status,
-    CreateEventTicketTypeRequest[]? TicketTypes
+    CreateEventTicketTypeRequest[]? TicketTypes,
+    string? TimeZone
 );
 
 public record UpdateEventRequest(
@@ -67,7 +69,8 @@ public record UpdateEventRequest(
     bool Featured,
     string? Disclaimers,
     Guid? VenueMapId,
-    [Required] string Status
+    [Required] string Status,
+    string? TimeZone
 );
 
 public record CreateEventTicketTypeRequest(

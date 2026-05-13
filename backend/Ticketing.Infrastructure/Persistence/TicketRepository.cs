@@ -44,6 +44,15 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
         return context.Tickets.AnyAsync(t => t.TicketCode == code);
     }
 
+    public async Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId)
+    {
+        return await context.Tickets
+            .Include(t => t.EventTicketType)
+            .Include(t => t.VenueMapPlace)
+            .Where(t => t.UserId == userId && t.Order.EventId == eventId && t.Status == "Active")
+            .ToListAsync();
+    }
+
     public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();
