@@ -89,6 +89,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.Services.SeedDataAsync();
+if (!builder.Environment.IsEnvironment("SwaggerGen"))
+    await app.Services.SeedDataAsync();
 
 app.Run();
