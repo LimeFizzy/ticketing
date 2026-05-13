@@ -1,12 +1,6 @@
 import type { EventCategory } from '@/lib/api/types.gen';
 import type { OrganizerEventDto, OrganizerTicketTypeDto } from '@/types/event';
 
-/** Emails that are treated as organizers while the real role API is absent. */
-export const MOCK_ORGANIZER_EMAILS = new Set([
-  'organizer@ticketflow.lt',
-  'leonardas.sinkevicius@kiloverse.com',
-]);
-
 export type { EventCategory };
 export type { OrganizerEventDto as OrganizerEvent };
 export type { OrganizerTicketTypeDto as OrganizerTicketType };

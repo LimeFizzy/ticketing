@@ -22,8 +22,6 @@ import {
   updateCard,
   updateProfile as updateProfileApi,
 } from '@/lib/api';
-import { MOCK_ORGANIZER_EMAILS } from '@/lib/mocks/dashboard';
-
 const inferBrand = (number?: string): string | null => {
   if (!number) return null;
   const cleaned = number.replace(/\s/g, '');
@@ -35,7 +33,7 @@ const inferBrand = (number?: string): string | null => {
 
 const toUser = (dto: UserDto): User => ({
   ...dto,
-  role: MOCK_ORGANIZER_EMAILS.has(dto.email) ? 'organizer' : 'attendee',
+  role: 'organizer',
   card: cardFromUserDto(dto),
 });
 
