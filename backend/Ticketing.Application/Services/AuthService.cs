@@ -10,7 +10,6 @@ public interface IAuthService
     Task<UserDto?> RegisterAsync(RegisterRequest request);
     Task<UserDto?> GetUserByIdAsync(Guid userId);
     Task<UserDto?> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
-    Task<UserDto?> UpdateCardAsync(Guid userId, UpdateCardRequest? request);
 }
 
 public class AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher) : IAuthService
@@ -72,24 +71,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         return MapToDto(user);
     }
 
-    public async Task<UserDto?> UpdateCardAsync(Guid userId, UpdateCardRequest? request)
-    {
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user == null) return null;
-
-        user.CardHolderName = request?.CardHolderName;
-        user.CardLast4 = request?.CardLast4;
-        user.CardExpiry = request?.CardExpiry;
-        user.CardBrand = request?.CardBrand;
-
-        await userRepository.UpdateAsync(user);
-        await userRepository.SaveChangesAsync();
-
-        return MapToDto(user);
-    }
-
     private static UserDto MapToDto(User user) => new(
-        user.Id, user.FirstName, user.LastName, user.Email,
-        user.CardHolderName, user.CardLast4, user.CardExpiry, user.CardBrand
+        user.Id, user.FirstName, user.LastName, user.Email
     );
 }

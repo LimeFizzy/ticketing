@@ -72,16 +72,6 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("card", Name = "updateCard")]
-    [Authorize]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateCard([FromBody] UpdateCardRequest? request)
-    {
-        var userId = GetUserIdFromClaims();
-        var result = await authService.UpdateCardAsync(userId, request);
-        return Ok(result);
-    }
-
     private Guid GetUserIdFromClaims() =>
         Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 

@@ -3,24 +3,41 @@
 ## Local Setup Workflow
 
 ### 1. Run the Backend API
+#### Database
 ```bash
 docker run -itd -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 --name postgresql postgres
-
-cd Ticketing.API
 ```
 
-Setup `appsettings.Development.json`:
+#### Stripe
+```bash
+brew install stripe/stripe-cli/stripe
+
+stripe login
+stripe listen --forward-to localhost:8080/api/webhooks/stripe
+```
+
+#### `Ticketing.API/appsettings.Development.json`:
 ```json
 {
     "ConnectionStrings": {
         "DefaultConnection": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres"
     },
-    "AllowedOrigin": "http://localhost:3000"
+    "AllowedOrigin": "http://localhost:3000",
+    "Stripe": {
+        "SecretKey": "sk_test_XXXX",
+        "PublishableKey": "pk_test_XXXX",
+        "WebhookSecret": "whsec_XXXX",
+        "SuccessUrl": "http://localhost:3000/tickets?order=confirmed",
+        "CancelUrl": "http://localhost:3000/tickets?order=cancelled"
+    }
 }
 ```
+`SecretKey` & `PublishableKey` - should be retrieved from Stripe UI; </br>
+`WebhookSecret` - will be displayed, when `strip listen` is ran.
 
-Lastly run the following:
+#### API
 ```bash
+cd Ticketing.API
 dotnet run
 ```
 

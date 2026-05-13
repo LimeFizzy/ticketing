@@ -6,9 +6,9 @@ public class Order
     public required Guid UserId { get; set; }
     public required Guid EventId { get; set; }
     public required decimal TotalAmount { get; set; }
-    public required string Status { get; set; } = "Confirmed";
+    public required string Status { get; set; } = "Pending";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? PaymentMethod { get; set; }
+    public string? StripeSessionId { get; set; }
 
     public User User { get; set; } = null!;
     public Event Event { get; set; } = null!;
