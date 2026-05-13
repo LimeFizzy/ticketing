@@ -29,6 +29,9 @@ public class StripeService(
         var lineItems = new List<SessionLineItemOptions>();
         foreach (var item in request.Items)
         {
+            if (item.Quantity <= 0)
+                throw new InvalidOperationException("Quantity must be greater than 0");
+
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
 
@@ -37,7 +40,7 @@ public class StripeService(
                 PriceData = new SessionLineItemPriceDataOptions
                 {
                     Currency = "eur",
-                    UnitAmount = (long)(tt.Price * 100),
+                    UnitAmount = (long)Math.Round(tt.Price * 100, MidpointRounding.AwayFromZero),
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
                         Name = $"{@event.Title} — {tt.Name}",
@@ -68,6 +71,9 @@ public class StripeService(
 
         var service = new SessionService();
         var session = await service.CreateAsync(sessionOptions);
+
+        if (string.IsNullOrWhiteSpace(session.Url))
+            throw new InvalidOperationException("Stripe checkout session was created without a session URL.");
 
         return new CheckoutSessionDto(session.Url);
     }

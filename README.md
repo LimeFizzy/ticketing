@@ -32,8 +32,8 @@ stripe listen --forward-to localhost:8080/api/webhooks/stripe
     }
 }
 ```
-`SecretKey` & `PublishableKey` - should be retrieved from Stripe UI; </br>
-`WebhookSecret` - will be displayed, when `strip listen` is ran.
+`SecretKey` & `PublishableKey` - should be retrieved from Stripe UI; <br />
+`WebhookSecret` - will be displayed, when `stripe listen` is ran.
 
 #### API
 ```bash

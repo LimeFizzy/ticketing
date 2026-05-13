@@ -35,8 +35,13 @@ if (builder.Environment.IsEnvironment("SwaggerGen"))
     return;
 }
 
-builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
-StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+var stripeSection = builder.Configuration.GetRequiredSection("Stripe");
+var stripeSecretKey = stripeSection["SecretKey"];
+if (string.IsNullOrWhiteSpace(stripeSecretKey))
+    throw new InvalidOperationException("Stripe configuration is missing or invalid. Please configure 'Stripe:SecretKey'.");
+
+builder.Services.Configure<StripeSettings>(stripeSection);
+StripeConfiguration.ApiKey = stripeSecretKey;
 
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
