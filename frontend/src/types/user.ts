@@ -11,6 +11,16 @@ export interface User extends UserDto {
   card?: PaymentCard;
 }
 
+export const cardFromUserDto = (user: UserDto): PaymentCard | undefined => {
+  if (!user.cardLast4) return undefined;
+  return {
+    cardholderName: user.cardHolderName ?? '',
+    number: user.cardLast4,
+    expiry: user.cardExpiry ?? '',
+    cvc: '',
+  };
+};
+
 export interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
@@ -23,5 +33,5 @@ export interface AuthContextValue {
     password: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (patch: Partial<Omit<User, 'id'>>) => void;
+  updateProfile: (patch: Partial<Omit<User, 'id'>>) => Promise<void>;
 }

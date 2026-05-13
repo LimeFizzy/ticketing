@@ -15,9 +15,11 @@ public class EventsController(IEventService eventService) : ControllerBase
         [FromQuery] EventCategory? category,
         [FromQuery] bool? featured,
         [FromQuery] string? city,
-        [FromQuery] string? search)
+        [FromQuery] string? search,
+        [FromQuery] string? date,
+        [FromQuery] string? price)
     {
-        var filter = new EventsQueryDto(category, featured, city, search);
+        var filter = new EventsQueryDto(category, featured, city, search, date, price);
         var events = await eventService.GetAllAsync(filter);
         return Ok(events);
     }

@@ -33,11 +33,41 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
 
             if (!string.IsNullOrEmpty(filter.Search))
             {
-                var searchTerm = filter.Search.ToLower();
+                var searchTerm = $"%{filter.Search}%";
                 query = query.Where(e =>
-                    e.Title.ToLower().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
-                    e.Venue.ToLower().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
-                    e.Description.ToLower().Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase));
+                    EF.Functions.ILike(e.Title, searchTerm) ||
+                    EF.Functions.ILike(e.Venue, searchTerm) ||
+                    EF.Functions.ILike(e.Description, searchTerm));
+            }
+
+            if (!string.IsNullOrEmpty(filter.Date))
+            {
+                var now = DateTime.UtcNow;
+                switch (filter.Date)
+                {
+                    case "today":
+                        query = query.Where(e => e.Date >= now && e.Date < now.AddDays(1));
+                        break;
+                    case "week":
+                        query = query.Where(e => e.Date >= now && e.Date < now.AddDays(7));
+                        break;
+                    case "month":
+                        query = query.Where(e => e.Date >= now && e.Date < now.AddDays(30));
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.Price))
+            {
+                switch (filter.Price)
+                {
+                    case "under20":
+                        query = query.Where(e => e.PriceFrom < 20);
+                        break;
+                    case "under60":
+                        query = query.Where(e => e.PriceFrom < 60);
+                        break;
+                }
             }
         }
 
@@ -47,5 +77,10 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
     public async Task<bool> ExistsAsync(Guid id)
     {
         return await context.Events.AnyAsync(e => e.Id == id);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await context.SaveChangesAsync();
     }
 }

@@ -61,17 +61,17 @@ const zalgirio: VenueMap = {
   decorations: [{ x: 350, y: 250, width: 300, height: 100, label: 'COURT' }],
   places: [
     // Courtside — 1 row of 8 (above court). A few sold for realism.
-    ...seatRow('cs', 8, 385, 220, 32, '2-courtside', [2, 5]),
+    ...seatRow('cs', 8, 385, 220, 32, '00000000-0000-0000-0000-000000000023', [2, 5]),
 
     // Lower tier — 3 rows × 12 seats (below court).
-    ...seatRow('lwr-a', 12, 320, 400, 35, '2-lower', [3]),
-    ...seatRow('lwr-b', 12, 320, 430, 35, '2-lower', [7, 8]),
-    ...seatRow('lwr-c', 12, 320, 460, 35, '2-lower', []),
+    ...seatRow('lwr-a', 12, 320, 400, 35, '00000000-0000-0000-0000-000000000022', [3]),
+    ...seatRow('lwr-b', 12, 320, 430, 35, '00000000-0000-0000-0000-000000000022', [7, 8]),
+    ...seatRow('lwr-c', 12, 320, 460, 35, '00000000-0000-0000-0000-000000000022', []),
 
     // Upper tier — 3 rows × 20 seats (outer ring).
-    ...seatRow('upr-a', 20, 150, 495, 35, '2-upper', [4, 11]),
-    ...seatRow('upr-b', 20, 150, 525, 35, '2-upper', [0, 19]),
-    ...seatRow('upr-c', 20, 150, 555, 35, '2-upper', [9, 14, 15]),
+    ...seatRow('upr-a', 20, 150, 495, 35, '00000000-0000-0000-0000-000000000021', [4, 11]),
+    ...seatRow('upr-b', 20, 150, 525, 35, '00000000-0000-0000-0000-000000000021', [0, 19]),
+    ...seatRow('upr-c', 20, 150, 555, 35, '00000000-0000-0000-0000-000000000021', [9, 14, 15]),
   ],
 };
 
@@ -86,7 +86,7 @@ const lakeside: VenueMap = {
       id: 'vip-deck',
       kind: 'section',
       label: 'VIP Deck',
-      ticketTypeId: '6-vip',
+      ticketTypeId: '00000000-0000-0000-0000-000000000062',
       x: 300,
       y: 110,
       width: 200,
@@ -98,7 +98,7 @@ const lakeside: VenueMap = {
       id: 'ga-floor',
       kind: 'section',
       label: 'General Admission',
-      ticketTypeId: '6-ga',
+      ticketTypeId: '00000000-0000-0000-0000-000000000061',
       x: 100,
       y: 220,
       width: 600,
