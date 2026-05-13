@@ -21,6 +21,16 @@ builder.Services.AddSwaggerGen(c =>
     c.SupportNonNullableReferenceTypes();
 });
 
+if (builder.Environment.IsEnvironment("SwaggerGen"))
+{
+    var swaggerApp = builder.Build();
+
+    swaggerApp.UseSwagger();
+    swaggerApp.Run();
+
+    return;
+}
+
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
