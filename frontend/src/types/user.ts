@@ -1,5 +1,7 @@
 import { UserDto } from '@/lib/api';
 
+export type UserRole = 'attendee' | 'organizer';
+
 export interface PaymentCard {
   cardholderName: string;
   number: string;
@@ -8,6 +10,7 @@ export interface PaymentCard {
 }
 
 export interface User extends UserDto {
+  role: UserRole;
   card?: PaymentCard;
 }
 
