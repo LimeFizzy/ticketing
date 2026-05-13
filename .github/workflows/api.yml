@@ -28,6 +28,18 @@ jobs:
       - name: Build
         run: dotnet build ./backend/Ticketing.slnx --configuration Release --no-restore
 
+      - name: Generate Swagger JSON
+        run: |
+          dotnet tool install -g Swashbuckle.AspNetCore.Cli
+          swagger tofile --output ./swagger.json ./backend/Ticketing.API/bin/Release/net10.0/Ticketing.API.dll v1
+
+      - name: Upload Swagger JSON artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swagger-json
+          path: ./swagger.json
+          retention-days: 1
+
       - name: Publish
         run: dotnet publish ./backend/Ticketing.API/Ticketing.API.csproj --configuration Release --no-build --verbosity normal --output ./backend/publish
 
