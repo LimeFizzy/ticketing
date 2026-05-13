@@ -28,7 +28,7 @@ public class VenueMapService(
     public async Task<IEnumerable<VenueMapSummaryDto>> GetAllAsync()
     {
         var maps = await venueMapRepository.GetAllAsync();
-        return maps.Select(m => new VenueMapSummaryDto(m.Id, m.Name, m.Places.Count));
+        return maps.Select(m => new VenueMapSummaryDto(m.Id, m.Name, m.Places.Sum(p => p.Capacity)));
     }
 
     public async Task<VenueMapDto> CreateAsync(Guid adminUserId, CreateVenueMapRequest request)
