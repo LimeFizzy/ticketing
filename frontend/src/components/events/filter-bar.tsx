@@ -20,9 +20,8 @@ export const FilterBar = () => {
 
   const searchValue = params.get('q') ?? '';
   const [draft, setDraft] = useState(searchValue);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Sync draft when URL changes externally (e.g. back navigation)
   useEffect(() => {
     setDraft(searchValue);
   }, [searchValue]);
