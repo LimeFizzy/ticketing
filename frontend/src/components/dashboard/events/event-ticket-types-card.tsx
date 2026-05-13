@@ -38,10 +38,7 @@ export const EventTicketTypesCard = ({
               Add ticket types so attendees can purchase tickets.
             </p>
           </div>
-          <Link
-            href={manageRoute}
-            className={buttonVariants({ size: 'sm' })}
-          >
+          <Link href={manageRoute} className={buttonVariants({ size: 'sm' })}>
             Add ticket types
           </Link>
         </div>

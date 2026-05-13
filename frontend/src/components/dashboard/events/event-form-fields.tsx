@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +27,11 @@ interface EventFormFieldsProps {
   errors?: Partial<Record<keyof EventFormValues, string>>;
 }
 
-export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) => (
+export const EventFormFields = ({
+  form,
+  patch,
+  errors,
+}: EventFormFieldsProps) => (
   <>
     <Card className="glass border-white/40 shadow-sm">
       <CardHeader>
@@ -35,7 +40,11 @@ export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) =
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Title" className="sm:col-span-2" error={errors?.title}>
+        <FormField
+          label="Title"
+          className="sm:col-span-2"
+          error={errors?.title}
+        >
           <Input
             value={form.title}
             onChange={(e) => patch({ title: e.target.value })}
@@ -80,20 +89,22 @@ export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) =
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Date & Time" className="sm:col-span-2" error={errors?.date}>
-          <Input
-            type="datetime-local"
+        <FormField
+          label="Date & Time"
+          className="sm:col-span-2"
+          error={errors?.date}
+        >
+          <DateTimePicker
             value={form.date}
-            onChange={(e) => patch({ date: e.target.value })}
-            required
+            onChange={(date) => patch({ date })}
           />
         </FormField>
 
-        <FormField label="Venue" error={errors?.venue}>
+        <FormField label="Location" error={errors?.venue}>
           <Input
             value={form.venue}
             onChange={(e) => patch({ venue: e.target.value })}
-            placeholder="Venue name"
+            placeholder="Location name"
             required
           />
         </FormField>

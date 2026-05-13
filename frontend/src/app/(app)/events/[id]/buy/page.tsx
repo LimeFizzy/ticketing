@@ -5,7 +5,12 @@ import { ChevronLeft } from 'lucide-react';
 import { TicketTypeSelector } from '@/components/buy/ticket-type-selector';
 import { VenueMapSelector } from '@/components/buy/venue-map-selector';
 import { eventRoute } from '@/lib/routes';
-import { getEventById, getEventVenueMap, getEventVenueMapPlaces } from '@/lib/api';
+import {
+  getEventById,
+  getEventVenueMap,
+  getEventVenueMapPlaces,
+} from '@/lib/api';
+import type { VenueMap } from '@/types/venue-map';
 
 export const generateMetadata = async ({
   params,
@@ -30,17 +35,19 @@ const BuyTicketsPage = async ({
   const { data: event } = await getEventById({ path: { id } });
   if (!event) notFound();
 
-  let venueMapWithTicketTypes: import('@/types/venue-map').VenueMap | undefined;
+  let venueMapWithTicketTypes: VenueMap | undefined;
 
   if (event.venueMapId) {
     const [mapRes, mappingsRes] = await Promise.all([
       getEventVenueMap({ path: { id: event.id } }),
-      getEventVenueMapPlaces({ path: { eventId: event.id } }).catch(() => ({ data: null })),
+      getEventVenueMapPlaces({ path: { eventId: event.id } }).catch(() => ({
+        data: null,
+      })),
     ]);
 
     if (mapRes.data && mappingsRes.data) {
       const mappingByPlaceId = new Map(
-        mappingsRes.data.map((m) => [m.venueMapPlaceId, m.eventTicketTypeId]),
+        mappingsRes.data.map((m) => [m.venueMapPlaceId, m.eventTicketTypeId])
       );
 
       venueMapWithTicketTypes = {

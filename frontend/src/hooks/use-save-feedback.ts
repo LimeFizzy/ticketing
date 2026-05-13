@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export const useSaveFeedback = () => {
   const [saved, setSaved] = useState(false);
@@ -10,11 +10,11 @@ export const useSaveFeedback = () => {
     };
   }, []);
 
-  const showSaved = useCallback(() => {
+  const showSaved = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setSaved(true);
     timerRef.current = setTimeout(() => setSaved(false), 1500);
-  }, []);
+  };
 
   return { saved, showSaved };
 };

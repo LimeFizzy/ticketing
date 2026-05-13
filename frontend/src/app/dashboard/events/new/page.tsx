@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Globe, Lock } from 'lucide-react';
@@ -48,7 +48,7 @@ const validate = (form: EventForm): FieldErrors => {
   const errors: FieldErrors = {};
   if (!form.title.trim()) errors.title = 'Title is required';
   if (!form.date) errors.date = 'Date is required';
-  if (!form.venue.trim()) errors.venue = 'Venue is required';
+  if (!form.venue.trim()) errors.venue = 'Location is required';
   if (!form.city.trim()) errors.city = 'City is required';
   return errors;
 };
@@ -60,7 +60,17 @@ const NewEventPage = () => {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleCreate = useCallback(async () => {
+  const patchAndClearError = (values: Partial<EventForm>) => {
+    patch(values);
+    const clearedKeys = Object.keys(values) as (keyof FieldErrors)[];
+    setErrors((prev) => {
+      const next = { ...prev };
+      clearedKeys.forEach((k) => delete next[k]);
+      return next;
+    });
+  };
+
+  const handleCreate = async () => {
     const validationErrors = validate(form);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
@@ -82,7 +92,11 @@ const NewEventPage = () => {
     });
 
     if (error) {
-      setApiError(typeof error === 'object' && 'title' in error ? String(error.title) : 'Failed to create event');
+      setApiError(
+        typeof error === 'object' && 'title' in error
+          ? String(error.title)
+          : 'Failed to create event'
+      );
       setSubmitting(false);
       return;
     }
@@ -92,7 +106,7 @@ const NewEventPage = () => {
     } else {
       setSubmitting(false);
     }
-  }, [form, router]);
+  };
 
   const hasErrors = Object.keys(errors).length > 0;
 
@@ -112,10 +126,14 @@ const NewEventPage = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
-          <EventFormFields form={form} patch={patch} errors={errors} />
+          <EventFormFields
+            form={form}
+            patch={patchAndClearError}
+            errors={errors}
+          />
         </div>
 
-        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
+        <div className="flex flex-col gap-6 order-first lg:order-last lg:sticky lg:top-6 lg:self-start">
           <Card className="glass border-white/40 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -169,7 +187,11 @@ const NewEventPage = () => {
                 onClick={handleCreate}
                 disabled={submitting}
               >
-                {submitting ? 'Creating…' : hasErrors ? 'Fix errors above' : 'Create event'}
+                {submitting
+                  ? 'Creating…'
+                  : hasErrors
+                    ? 'Fix errors above'
+                    : 'Create event'}
               </Button>
             </CardContent>
           </Card>

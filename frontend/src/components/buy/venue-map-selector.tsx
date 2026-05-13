@@ -1,11 +1,8 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  SelectionSummary,
-  type SelectionLine,
-} from '@/components/buy/selection-summary';
+import { SelectionSummary } from '@/components/buy/selection-summary';
 import { VenueMapCanvas } from '@/components/buy/venue-map-canvas';
 import { VenueMapLegend } from '@/components/buy/venue-map-legend';
 import { VenueMapZoomControls } from '@/components/buy/venue-map-zoom-controls';
@@ -25,6 +22,7 @@ export const VenueMapSelector = ({
   venueMap,
 }: VenueMapSelectorProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const {
     selection,
@@ -35,12 +33,9 @@ export const VenueMapSelector = ({
     unitNameFor,
   } = useTicketSelection(event);
 
-  const placesById = useMemo(
-    () => new Map(venueMap.places.map((p) => [p.id, p])),
-    [venueMap.places]
-  );
+  const placesById = new Map(venueMap.places.map((p) => [p.id, p]));
 
-  const colors = useMemo(() => buildTicketTypeColors(event), [event]);
+  const colors = buildTicketTypeColors(event);
 
   const handleTap = (clientX: number, clientY: number) => {
     const target = document.elementFromPoint(clientX, clientY);
@@ -62,45 +57,35 @@ export const VenueMapSelector = ({
   const { transform, bindings, zoomIn, zoomOut, reset, canZoomIn, canZoomOut } =
     usePanZoom({ containerRef, onTap: handleTap });
 
-  const transformStyle = useMemo<React.CSSProperties>(
-    () => ({
-      transform: `translate(${transform.tx}px, ${transform.ty}px) scale(${transform.scale})`,
-      transformOrigin: '0 0',
-    }),
-    [transform]
-  );
+  const transformStyle = {
+    transform: `translate(${transform.tx}px, ${transform.ty}px) scale(${transform.scale})`,
+    transformOrigin: '0 0',
+  };
 
-  const totalPrice = useMemo(
-    () =>
-      Object.entries(selection).reduce((sum, [placeId, qty]) => {
-        const place = placesById.get(placeId);
-        if (!place) return sum;
-        return sum + qty * unitPriceFor(place.ticketTypeId);
-      }, 0),
-    [selection, placesById, unitPriceFor]
-  );
+  const totalPrice = Object.entries(selection).reduce((sum, [placeId, qty]) => {
+    const place = placesById.get(placeId);
+    if (!place) return sum;
+    return sum + qty * unitPriceFor(place.ticketTypeId);
+  }, 0);
 
-  const lines = useMemo<SelectionLine[]>(
-    () =>
-      venueMap.places
-        .filter((p) => (selection[p.id] ?? 0) > 0)
-        .map((p) => {
-          const typeName = unitNameFor(p.ticketTypeId);
-          return {
-            key: p.id,
-            title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
-            subtitle: p.kind === 'section' ? typeName : undefined,
-            unitPrice: unitPriceFor(p.ticketTypeId),
-            quantity: selection[p.id] ?? 0,
-            max: p.available,
-            onQuantityChange: (next: number) => setQuantity(p.id, next),
-          };
-        }),
-    [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
-  );
+  const lines = venueMap.places
+    .filter((p) => (selection[p.id] ?? 0) > 0)
+    .map((p) => {
+      const typeName = unitNameFor(p.ticketTypeId);
+      return {
+        key: p.id,
+        title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
+        subtitle: p.kind === 'section' ? typeName : undefined,
+        unitPrice: unitPriceFor(p.ticketTypeId),
+        quantity: selection[p.id] ?? 0,
+        max: p.available,
+        onQuantityChange: (next: number) => setQuantity(p.id, next),
+      };
+    });
 
-  const handleContinue = useCallback(async () => {
+  const handleContinue = async () => {
     setSubmitting(true);
+    setCheckoutError(null);
     try {
       const items = Object.entries(selection)
         .filter(([, qty]) => qty > 0)
@@ -113,14 +98,14 @@ export const VenueMapSelector = ({
         body: { eventId: event.id, items },
       });
       if (error || !data?.sessionUrl) {
-        console.error('Checkout failed:', error);
+        setCheckoutError('Something went wrong. Please try again.');
         return;
       }
       window.location.href = data.sessionUrl;
     } finally {
       setSubmitting(false);
     }
-  }, [selection, placesById, event.id]);
+  };
 
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();
@@ -166,6 +151,7 @@ export const VenueMapSelector = ({
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
+        checkoutError={checkoutError}
         onContinue={handleContinue}
       />
     </div>

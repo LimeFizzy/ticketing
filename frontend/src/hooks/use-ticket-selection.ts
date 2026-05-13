@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import {
   buildTicketTypeIndex,
@@ -26,27 +26,19 @@ export const useTicketSelection = (
 ): UseTicketSelectionResult => {
   const [selection, setSelection] = useState<Selection>({});
 
-  const ticketTypeIndex = useMemo(() => buildTicketTypeIndex(event), [event]);
+  const ticketTypeIndex = buildTicketTypeIndex(event);
 
-  const setQuantity = useCallback(
-    (id: string, next: number) =>
-      setSelection((prev) => setSelectionQuantity(prev, id, next)),
-    []
-  );
+  const setQuantity = (id: string, next: number) =>
+    setSelection((prev) => setSelectionQuantity(prev, id, next));
 
   const total = totalSelected(selection);
   const capRemaining = MAX_PLACES_PER_ORDER - total;
 
-  const unitPriceFor = useCallback(
-    (ticketTypeId: string) => ticketTypeIndex.get(ticketTypeId)?.price ?? 0,
-    [ticketTypeIndex]
-  );
+  const unitPriceFor = (ticketTypeId: string) =>
+    ticketTypeIndex.get(ticketTypeId)?.price ?? 0;
 
-  const unitNameFor = useCallback(
-    (ticketTypeId: string) =>
-      ticketTypeIndex.get(ticketTypeId)?.name ?? 'Ticket',
-    [ticketTypeIndex]
-  );
+  const unitNameFor = (ticketTypeId: string) =>
+    ticketTypeIndex.get(ticketTypeId)?.name ?? 'Ticket';
 
   return {
     selection,

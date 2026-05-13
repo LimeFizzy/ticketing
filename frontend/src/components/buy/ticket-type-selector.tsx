@@ -1,12 +1,9 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
-import {
-  SelectionSummary,
-  type SelectionLine,
-} from '@/components/buy/selection-summary';
+import { SelectionSummary } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
 import { createCheckoutSession, type EventDto } from '@/lib/api';
 
@@ -16,28 +13,22 @@ interface TicketTypeSelectorProps {
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
 
-  const remaining = useMemo(
-    () =>
-      Object.fromEntries(
-        event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
-      ),
-    [event.ticketTypes]
+  const remaining = Object.fromEntries(
+    event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
   );
 
-  const totalPrice = useMemo(
-    () =>
-      event.ticketTypes.reduce(
-        (sum, t) => sum + (selection[t.id] ?? 0) * t.price,
-        0
-      ),
-    [event.ticketTypes, selection]
+  const totalPrice = event.ticketTypes.reduce(
+    (sum, t) => sum + (selection[t.id] ?? 0) * t.price,
+    0
   );
 
-  const handleContinue = useCallback(async () => {
+  const handleContinue = async () => {
     setSubmitting(true);
+    setCheckoutError(null);
     try {
       const items = Object.entries(selection)
         .filter(([, qty]) => qty > 0)
@@ -49,33 +40,26 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         body: { eventId: event.id, items },
       });
       if (error || !data?.sessionUrl) {
-        console.error('Checkout failed:', error);
+        setCheckoutError('Something went wrong. Please try again.');
         return;
       }
       window.location.href = data.sessionUrl;
     } finally {
       setSubmitting(false);
     }
-  }, [selection, event.id]);
+  };
 
-  const lines = useMemo<SelectionLine[]>(
-    () =>
-      event.ticketTypes
-        .filter((t) => (selection[t.id] ?? 0) > 0)
-        .map((t) => {
-          const typeMax = remaining[t.id] ?? 0;
-          return {
-            key: t.id,
-            title: t.name,
-            subtitle: t.description,
-            unitPrice: t.price,
-            quantity: selection[t.id] ?? 0,
-            max: typeMax,
-            onQuantityChange: (next: number) => setQuantity(t.id, next),
-          };
-        }),
-    [event.ticketTypes, selection, remaining, setQuantity]
-  );
+  const lines = event.ticketTypes
+    .filter((t) => (selection[t.id] ?? 0) > 0)
+    .map((t) => ({
+      key: t.id,
+      title: t.name,
+      subtitle: t.description,
+      unitPrice: t.price,
+      quantity: selection[t.id] ?? 0,
+      max: remaining[t.id] ?? 0,
+      onQuantityChange: (next: number) => setQuantity(t.id, next),
+    }));
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
@@ -118,6 +102,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
+        checkoutError={checkoutError}
         onContinue={handleContinue}
       />
     </div>
