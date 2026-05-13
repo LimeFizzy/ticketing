@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import {
   CalendarDays,
+  LayoutDashboard,
   LogIn,
   PanelLeftClose,
   PanelLeftOpen,
@@ -20,7 +21,7 @@ import { Route } from '@/lib/routes';
 
 export const DesktopSidebar = () => {
   const { collapsed, toggleCollapsed } = useSidebar();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <aside
@@ -79,6 +80,14 @@ export const DesktopSidebar = () => {
           label="Account"
           collapsed={collapsed}
         />
+        {user?.role === 'organizer' && (
+          <NavLink
+            href={Route.Dashboard}
+            icon={<LayoutDashboard className="size-4" />}
+            label="Dashboard"
+            collapsed={collapsed}
+          />
+        )}
       </nav>
 
       <Separator className="bg-sidebar-border/60" />

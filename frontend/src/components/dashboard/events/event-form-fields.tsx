@@ -1,0 +1,111 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CATEGORIES, type EventCategory } from '@/lib/mocks/dashboard';
+
+type EventFormValues = {
+  title: string;
+  category: EventCategory;
+  date: string;
+  venue: string;
+  city: string;
+  description: string;
+};
+
+interface EventFormFieldsProps {
+  form: EventFormValues;
+  patch: (values: Partial<EventFormValues>) => void;
+}
+
+export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
+  <>
+    <Card className="glass border-white/40 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Basic Information
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
+        <FormField label="Title" className="sm:col-span-2">
+          <Input
+            value={form.title}
+            onChange={(e) => patch({ title: e.target.value })}
+            placeholder="Event name"
+            required
+          />
+        </FormField>
+
+        <FormField label="Category" className="sm:col-span-2">
+          <Select
+            value={form.category}
+            onValueChange={(v) => patch({ category: v as EventCategory })}
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue>{() => form.category}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+
+        <FormField label="Description" className="sm:col-span-2">
+          <Textarea
+            value={form.description}
+            onChange={(e) => patch({ description: e.target.value })}
+            placeholder="Describe what attendees can expect…"
+            rows={5}
+          />
+        </FormField>
+      </CardContent>
+    </Card>
+
+    <Card className="glass border-white/40 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Date & Location
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
+        <FormField label="Date & Time" className="sm:col-span-2">
+          <Input
+            type="datetime-local"
+            value={form.date}
+            onChange={(e) => patch({ date: e.target.value })}
+            required
+          />
+        </FormField>
+
+        <FormField label="Venue">
+          <Input
+            value={form.venue}
+            onChange={(e) => patch({ venue: e.target.value })}
+            placeholder="Venue name"
+            required
+          />
+        </FormField>
+
+        <FormField label="City">
+          <Input
+            value={form.city}
+            onChange={(e) => patch({ city: e.target.value })}
+            placeholder="City"
+            required
+          />
+        </FormField>
+      </CardContent>
+    </Card>
+  </>
+);
