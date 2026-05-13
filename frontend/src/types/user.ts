@@ -1,25 +1,6 @@
 import { UserDto } from '@/lib/api';
 
-export interface PaymentCard {
-  cardholderName: string;
-  number: string;
-  expiry: string;
-  cvc: string;
-}
-
-export interface User extends UserDto {
-  card?: PaymentCard;
-}
-
-export const cardFromUserDto = (user: UserDto): PaymentCard | undefined => {
-  if (!user.cardLast4) return undefined;
-  return {
-    cardholderName: user.cardHolderName ?? '',
-    number: user.cardLast4,
-    expiry: user.cardExpiry ?? '',
-    cvc: '',
-  };
-};
+export type User = UserDto;
 
 export interface AuthContextValue {
   user: User | null;
@@ -33,5 +14,5 @@ export interface AuthContextValue {
     password: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (patch: Partial<Omit<User, 'id'>>) => Promise<void>;
+  updateProfile: (patch: Partial<Pick<User, 'firstName' | 'lastName' | 'email'>>) => Promise<void>;
 }

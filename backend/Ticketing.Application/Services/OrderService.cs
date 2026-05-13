@@ -6,7 +6,7 @@ namespace Ticketing.Application.Services;
 
 public interface IOrderService
 {
-    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request);
+    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null);
 }
 
 public class OrderService(
@@ -14,7 +14,7 @@ public class OrderService(
     ITicketRepository ticketRepository,
     IEventRepository eventRepository) : IOrderService
 {
-    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request)
+    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null)
     {
         var @event = await eventRepository.GetByIdAsync(request.EventId)
             ?? throw new InvalidOperationException("Event not found");
@@ -55,7 +55,7 @@ public class OrderService(
             EventId = request.EventId,
             TotalAmount = total,
             Status = "Confirmed",
-            PaymentMethod = "mock",
+            StripeSessionId = stripeSessionId,
             Tickets = ticketsToCreate
         };
 
@@ -70,11 +70,10 @@ public class OrderService(
 
     private async Task<string> GenerateUniqueCodeAsync()
     {
-        var random = new Random();
         string code;
         do
         {
-            code = $"TF-{random.Next(1000, 9999)}";
+            code = $"TF-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
         } while (await ticketRepository.ExistsByCodeAsync(code));
         return code;
     }

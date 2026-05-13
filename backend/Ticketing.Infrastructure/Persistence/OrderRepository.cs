@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
 
@@ -9,6 +10,11 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
     {
         await context.Orders.AddAsync(order);
         return order;
+    }
+
+    public Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId)
+    {
+        return context.Orders.FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId);
     }
 
     public async Task SaveChangesAsync()

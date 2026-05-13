@@ -1,22 +1,15 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { CreditCard, User as UserIcon } from 'lucide-react';
+import { User as UserIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { useAuth } from '@/hooks/use-auth';
-import { type PaymentCard, type User } from '@/types/user';
+import { type User } from '@/types/user';
 
-const emptyCard: PaymentCard = {
-  cardholderName: '',
-  number: '',
-  expiry: '',
-  cvc: '',
-};
-
-type SavedSection = 'profile' | 'card' | null;
+type SavedSection = 'profile' | null;
 
 const AccountForm = ({ user }: { user: User }) => {
   const { updateProfile } = useAuth();
@@ -24,8 +17,6 @@ const AccountForm = ({ user }: { user: User }) => {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
-
-  const [card, setCard] = useState<PaymentCard>(user.card ?? emptyCard);
 
   const [saved, setSaved] = useState<SavedSection>(null);
 
@@ -39,17 +30,6 @@ const AccountForm = ({ user }: { user: User }) => {
     e.preventDefault();
     updateProfile({ firstName, lastName, email });
     setSaved('profile');
-  };
-
-  const submitCard = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    updateProfile({ card });
-    setSaved('card');
-  };
-
-  const removeCard = () => {
-    setCard(emptyCard);
-    updateProfile({ card: undefined });
   };
 
   return (
@@ -107,72 +87,6 @@ const AccountForm = ({ user }: { user: User }) => {
             <div className="flex items-center gap-3 sm:col-span-2">
               <Button type="submit">Save changes</Button>
               {saved === 'profile' && (
-                <span className="text-sm text-muted-foreground">Saved</span>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="glass border-white/40 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CreditCard className="size-4 text-primary" />
-            Saved card
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <form
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-            onSubmit={submitCard}
-          >
-            <FormField label="Cardholder name" className="sm:col-span-2">
-              <Input
-                value={card.cardholderName}
-                onChange={(e) =>
-                  setCard({ ...card, cardholderName: e.target.value })
-                }
-                autoComplete="cc-name"
-              />
-            </FormField>
-
-            <FormField label="Card number" className="sm:col-span-2">
-              <Input
-                value={card.number}
-                onChange={(e) => setCard({ ...card, number: e.target.value })}
-                inputMode="numeric"
-                placeholder="1234 5678 9012 3456"
-                autoComplete="cc-number"
-              />
-            </FormField>
-
-            <FormField label="Expiry (MM/YY)">
-              <Input
-                value={card.expiry}
-                onChange={(e) => setCard({ ...card, expiry: e.target.value })}
-                placeholder="08/29"
-                autoComplete="cc-exp"
-              />
-            </FormField>
-
-            <FormField label="CVC">
-              <Input
-                value={card.cvc}
-                onChange={(e) => setCard({ ...card, cvc: e.target.value })}
-                inputMode="numeric"
-                placeholder="123"
-                autoComplete="cc-csc"
-              />
-            </FormField>
-
-            <div className="flex items-center gap-3 sm:col-span-2">
-              <Button type="submit">Save card</Button>
-              {user.card && (
-                <Button type="button" variant="ghost" onClick={removeCard}>
-                  Remove card
-                </Button>
-              )}
-              {saved === 'card' && (
                 <span className="text-sm text-muted-foreground">Saved</span>
               )}
             </div>

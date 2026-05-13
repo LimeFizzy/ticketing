@@ -4,6 +4,7 @@ export const formatEventDateShort = (iso: string) =>
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   });
 
 export const formatEventDateLong = (iso: string) =>
@@ -12,12 +13,14 @@ export const formatEventDateLong = (iso: string) =>
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
   });
 
 export const formatEventTime = (iso: string) =>
   new Date(iso).toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   });
 
 export const formatTicketDate = (iso: string) =>
@@ -27,6 +30,7 @@ export const formatTicketDate = (iso: string) =>
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   });
 
 export const formatPrice = (price: number): string =>

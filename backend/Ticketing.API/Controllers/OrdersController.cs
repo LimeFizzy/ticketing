@@ -2,23 +2,32 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Services;
+using Ticketing.API.Services;
 
 namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/orders")]
-public class OrdersController(IOrderService orderService) : ControllerBase
+public class OrdersController(IStripeService stripeService) : ControllerBase
 {
-    [HttpPost(Name = "createOrder")]
+    [HttpPost("checkout", Name = "createCheckoutSession")]
     [Authorize]
-    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CheckoutSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+    public async Task<IActionResult> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest request)
     {
         var userId = GetUserIdFromClaims();
-        var order = await orderService.CreateOrderAsync(userId, request);
-        return CreatedAtAction(nameof(CreateOrder), new { id = order.Id }, order);
+        var email = User.FindFirst(ClaimTypes.Email)?.Value!;
+
+        try
+        {
+            var session = await stripeService.CreateCheckoutSessionAsync(userId, email, request);
+            return Ok(session);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ProblemDetails { Title = ex.Message });
+        }
     }
 
     private Guid GetUserIdFromClaims() =>

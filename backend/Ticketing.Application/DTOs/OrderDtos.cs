@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Ticketing.Application.DTOs;
 
-public record CreateOrderRequest(
+public record CreateCheckoutSessionRequest(
     [Required] Guid EventId,
     [Required] OrderItemRequest[] Items
 );
@@ -10,6 +10,15 @@ public record CreateOrderRequest(
 public record OrderItemRequest(
     [Required] Guid EventTicketTypeId,
     [Required] int Quantity
+);
+
+public record CheckoutSessionDto(
+    [property: Required] string SessionUrl
+);
+
+public record CreateOrderRequest(
+    [Required] Guid EventId,
+    [Required] OrderItemRequest[] Items
 );
 
 public record OrderDto(
