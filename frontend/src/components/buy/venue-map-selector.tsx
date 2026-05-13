@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   SelectionSummary,
@@ -14,8 +13,7 @@ import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { createOrder, type EventDto } from '@/lib/api';
-import { Route } from '@/lib/routes';
+import {createCheckoutSession, type EventDto } from '@/lib/api';
 
 interface VenueMapSelectorProps {
   event: EventDto;
@@ -26,7 +24,6 @@ export const VenueMapSelector = ({
   event,
   venueMap,
 }: VenueMapSelectorProps) => {
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const {
@@ -111,18 +108,18 @@ export const VenueMapSelector = ({
           eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
           quantity,
         }));
-      const { error } = await createOrder({
+      const { data, error } = await createCheckoutSession({
         body: { eventId: event.id, items },
       });
-      if (error) {
-        console.error('Order failed:', error);
+      if (error || !data?.sessionUrl) {
+        console.error('Checkout failed:', error);
         return;
       }
-      router.push(Route.Tickets);
+      window.location.href = data.sessionUrl;
     } finally {
       setSubmitting(false);
     }
-  }, [selection, placesById, event.id, router]);
+  }, [selection, placesById, event.id]);
 
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();

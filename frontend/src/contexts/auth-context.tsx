@@ -8,34 +8,16 @@ import {
   useMemo,
   useState,
 } from 'react';
-import {
-  type AuthContextValue,
-  cardFromUserDto,
-  type User,
-} from '@/types/user';
+import { type AuthContextValue, type User } from '@/types/user';
 import {
   type UserDto,
   getMe,
   postSignIn,
   postSignOut,
   postSignUp,
-  updateCard,
-  updateProfile as updateProfileApi,
 } from '@/lib/api';
-const inferBrand = (number?: string): string | null => {
-  if (!number) return null;
-  const cleaned = number.replace(/\s/g, '');
-  if (cleaned.startsWith('4')) return 'Visa';
-  if (cleaned.startsWith('5') || cleaned.startsWith('2')) return 'Mastercard';
-  if (cleaned.startsWith('3')) return 'Amex';
-  return null;
-};
 
-const toUser = (dto: UserDto): User => ({
-  ...dto,
-  role: 'organizer',
-  card: cardFromUserDto(dto),
-});
+const toUser = (dto: UserDto): User => ({ ...dto, role: 'organizer' });
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -85,34 +67,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     async (patch) => {
       if (!user) return;
 
-      if (patch.firstName !== undefined || patch.email !== undefined) {
-        const res = await updateProfileApi({
-          body: {
-            firstName: patch.firstName ?? user.firstName,
-            lastName: patch.lastName ?? user.lastName,
-            email: patch.email ?? user.email,
-          },
-        });
-        if (res.data) setUser(toUser(res.data));
-        if (res.error) throw new Error('Profile update failed');
-        return;
-      }
-
-      if (patch.card !== undefined) {
-        const card = patch.card;
-        const res = await updateCard({
-          body: card
-            ? {
-                cardHolderName: card.cardholderName || undefined,
-                cardLast4: card.number?.slice(-4) || undefined,
-                cardExpiry: card.expiry || undefined,
-                cardBrand: inferBrand(card.number) || undefined,
-              }
-            : undefined,
-        });
-        if (res.data) setUser(toUser(res.data));
-        if (res.error) throw new Error('Card update failed');
-      }
+      const api = await import('@/lib/api');
+      const res = await api.updateProfile({
+        body: {
+          firstName: patch.firstName ?? user.firstName,
+          lastName: patch.lastName ?? user.lastName,
+          email: patch.email ?? user.email,
+        },
+      });
+      if (res.data) setUser(toUser(res.data));
+      if (res.error) throw new Error('Profile update failed');
     },
     [user]
   );

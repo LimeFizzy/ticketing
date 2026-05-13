@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
 import {
@@ -9,15 +8,13 @@ import {
   type SelectionLine,
 } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { createOrder, type EventDto } from '@/lib/api';
-import { Route } from '@/lib/routes';
+import { createCheckoutSession, type EventDto } from '@/lib/api';
 
 interface TicketTypeSelectorProps {
   event: EventDto;
 }
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
@@ -47,18 +44,18 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
           eventTicketTypeId: ticketTypeId,
           quantity,
         }));
-      const { error } = await createOrder({
+      const { data, error } = await createCheckoutSession({
         body: { eventId: event.id, items },
       });
-      if (error) {
-        console.error('Order failed:', error);
+      if (error || !data?.sessionUrl) {
+        console.error('Checkout failed:', error);
         return;
       }
-      router.push(Route.Tickets);
+      window.location.href = data.sessionUrl;
     } finally {
       setSubmitting(false);
     }
-  }, [selection, event.id, router]);
+  }, [selection, event.id]);
 
   const lines = useMemo<SelectionLine[]>(
     () =>

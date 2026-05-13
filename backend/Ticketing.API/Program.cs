@@ -2,10 +2,14 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using Stripe;
 using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
+using Ticketing.Domain.Constants;
 using Ticketing.Infrastructure.Auth;
 using Ticketing.Infrastructure.Persistence;
+using Ticketing.API.Services;
+using EventService = Ticketing.Application.Services.EventService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +35,14 @@ if (builder.Environment.IsEnvironment("SwaggerGen"))
     return;
 }
 
+var stripeSection = builder.Configuration.GetRequiredSection("Stripe");
+var stripeSecretKey = stripeSection["SecretKey"];
+if (string.IsNullOrWhiteSpace(stripeSecretKey))
+    throw new InvalidOperationException("Stripe configuration is missing or invalid. Please configure 'Stripe:SecretKey'.");
+
+builder.Services.Configure<StripeSettings>(stripeSection);
+StripeConfiguration.ApiKey = stripeSecretKey;
+
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -43,6 +55,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IStripeService, StripeService>();
 
 builder.Services.AddCors(options =>
 {
@@ -59,12 +72,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-            ? CookieSecurePolicy.SameAsRequest 
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
             : CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.Name = "TicketingAuth";
-        
+
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
