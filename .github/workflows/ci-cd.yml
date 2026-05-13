@@ -1,8 +1,12 @@
-name: .NET CI/CD
+name: CI/CD
 
 permissions:
   contents: read
   packages: write
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 on:
   push:
@@ -11,9 +15,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  ci:
+  dotnet-ci:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -60,18 +63,15 @@ jobs:
         run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${REPO_OWNER}/ticketing/backend:latest -f ./backend/Ticketing.API/Dockerfile ./backend
+        run: docker build -t ghcr.io/${REPO_OWNER}/ticketing/backend:latest -f ./backend/Ticketing.API/Dockerfile ./backend
 
       - name: Push Docker image
-        run: |
-          docker push ghcr.io/${REPO_OWNER}/ticketing/backend:latest
+        run: docker push ghcr.io/${REPO_OWNER}/ticketing/backend:latest
 
-  cd:
-    needs: ci
+  dotnet-cd:
+    needs: dotnet-ci
     if: github.ref_name == 'master'
     runs-on: ubuntu-latest
-
     steps:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
@@ -80,3 +80,34 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway redeploy --yes
+
+  nextjs-ci-cd:
+    needs: dotnet-ci
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Download Swagger JSON artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: swagger-json
+          path: ./frontend
+
+      - name: Generate API client
+        run: npm ci && npm run api:gen
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        if: github.ref_name == 'master'
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
