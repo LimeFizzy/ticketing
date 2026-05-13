@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -17,9 +17,12 @@ import { FormField } from '@/components/ui/form-field';
 import { useAuth } from '@/hooks/use-auth';
 import { Route } from '@/lib/routes';
 
-const SignUpPage = () => {
+const SignUpForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp, isAuthenticated, isHydrating } = useAuth();
+
+  const next = searchParams.get('next') ?? Route.Home;
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -29,8 +32,8 @@ const SignUpPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isHydrating && isAuthenticated) router.replace(Route.Home);
-  }, [isHydrating, isAuthenticated, router]);
+    if (!isHydrating && isAuthenticated) router.replace(next);
+  }, [isHydrating, isAuthenticated, next, router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,7 +48,7 @@ const SignUpPage = () => {
     setError(null);
     try {
       await signUp({ firstName, lastName, email, password });
-      router.replace(Route.Home);
+      router.replace(next);
     } catch (err) {
       setError(
         err instanceof Error
@@ -132,7 +135,7 @@ const SignUpPage = () => {
       <CardFooter className="justify-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link
-          href={Route.SignIn}
+          href={`${Route.SignIn}${next !== Route.Home ? `?next=${encodeURIComponent(next)}` : ''}`}
           className="ml-1 font-medium text-primary hover:underline"
         >
           Sign in
@@ -141,5 +144,11 @@ const SignUpPage = () => {
     </Card>
   );
 };
+
+const SignUpPage = () => (
+  <Suspense fallback={null}>
+    <SignUpForm />
+  </Suspense>
+);
 
 export default SignUpPage;

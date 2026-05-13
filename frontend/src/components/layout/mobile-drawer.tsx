@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Drawer } from '@base-ui/react/drawer';
 import {
+  BarChart2,
   CalendarDays,
   LayoutDashboard,
   Shield,
@@ -15,7 +16,11 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/hooks/use-sidebar';
 import { useAuth } from '@/hooks/use-auth';
-import { Route } from '@/lib/routes';
+import {
+  dashboardAnalyticsRoute,
+  dashboardVenueMapsRoute,
+  Route,
+} from '@/lib/routes';
 import { NavLink } from './nav-link';
 import { SidebarAuthSection } from './sidebar-auth-section';
 
@@ -77,12 +82,21 @@ export const MobileDrawer = () => {
                 onClick={closeMobile}
               />
               {user?.role === 'organizer' && (
-                <NavLink
-                  href={Route.Dashboard}
-                  icon={<LayoutDashboard className="size-4" />}
-                  label="Dashboard"
-                  onClick={closeMobile}
-                />
+                <>
+                  <NavLink
+                    href={Route.Dashboard}
+                    icon={<LayoutDashboard className="size-4" />}
+                    label="Dashboard"
+                    excludePrefixes={[dashboardAnalyticsRoute()]}
+                    onClick={closeMobile}
+                  />
+                  <NavLink
+                    href={dashboardAnalyticsRoute()}
+                    icon={<BarChart2 className="size-4" />}
+                    label="Analytics"
+                    onClick={closeMobile}
+                  />
+                </>
               )}
               {user?.role === 'admin' && (
                 <>
@@ -90,6 +104,16 @@ export const MobileDrawer = () => {
                     href={Route.Dashboard}
                     icon={<LayoutDashboard className="size-4" />}
                     label="Dashboard"
+                    excludePrefixes={[
+                      dashboardAnalyticsRoute(),
+                      dashboardVenueMapsRoute(),
+                    ]}
+                    onClick={closeMobile}
+                  />
+                  <NavLink
+                    href={dashboardAnalyticsRoute()}
+                    icon={<BarChart2 className="size-4" />}
+                    label="Analytics"
                     onClick={closeMobile}
                   />
                   <NavLink

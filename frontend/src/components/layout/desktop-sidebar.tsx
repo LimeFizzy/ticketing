@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import {
+  BarChart2,
   CalendarDays,
   LayoutDashboard,
   LogIn,
@@ -19,7 +20,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { NavLink } from './nav-link';
 import { SidebarAuthSection } from './sidebar-auth-section';
 import { cn } from '@/lib/utils';
-import { dashboardVenueMapsRoute, Route } from '@/lib/routes';
+import {
+  dashboardAnalyticsRoute,
+  dashboardVenueMapsRoute,
+  Route,
+} from '@/lib/routes';
 
 export const DesktopSidebar = () => {
   const { collapsed, toggleCollapsed } = useSidebar();
@@ -83,12 +88,21 @@ export const DesktopSidebar = () => {
           collapsed={collapsed}
         />
         {user?.role === 'organizer' && (
-          <NavLink
-            href={Route.Dashboard}
-            icon={<LayoutDashboard className="size-4" />}
-            label="Dashboard"
-            collapsed={collapsed}
-          />
+          <>
+            <NavLink
+              href={Route.Dashboard}
+              icon={<LayoutDashboard className="size-4" />}
+              label="Dashboard"
+              collapsed={collapsed}
+              excludePrefixes={[dashboardAnalyticsRoute()]}
+            />
+            <NavLink
+              href={dashboardAnalyticsRoute()}
+              icon={<BarChart2 className="size-4" />}
+              label="Analytics"
+              collapsed={collapsed}
+            />
+          </>
         )}
         {user?.role === 'admin' && (
           <>
@@ -97,12 +111,21 @@ export const DesktopSidebar = () => {
               icon={<LayoutDashboard className="size-4" />}
               label="Dashboard"
               collapsed={collapsed}
-              excludePrefixes={[dashboardVenueMapsRoute()]}
+              excludePrefixes={[
+                dashboardVenueMapsRoute(),
+                dashboardAnalyticsRoute(),
+              ]}
             />
             <NavLink
               href={dashboardVenueMapsRoute()}
               icon={<Map className="size-4" />}
               label="Venue Maps"
+              collapsed={collapsed}
+            />
+            <NavLink
+              href={dashboardAnalyticsRoute()}
+              icon={<BarChart2 className="size-4" />}
+              label="Analytics"
               collapsed={collapsed}
             />
             <NavLink
