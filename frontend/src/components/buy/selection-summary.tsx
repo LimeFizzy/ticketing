@@ -21,6 +21,7 @@ interface SelectionSummaryProps {
   lines: SelectionLine[];
   totalQuantity: number;
   totalPrice: number;
+  submitting?: boolean;
   onContinue: () => void;
 }
 
@@ -28,6 +29,7 @@ export const SelectionSummary = ({
   lines,
   totalQuantity,
   totalPrice,
+  submitting,
   onContinue,
 }: SelectionSummaryProps) => {
   const capRemaining = MAX_PLACES_PER_ORDER - totalQuantity;
@@ -100,7 +102,7 @@ export const SelectionSummary = ({
         <Button
           size="lg"
           className="w-full gap-2"
-          disabled={totalQuantity === 0}
+          disabled={totalQuantity === 0 || submitting}
           onClick={onContinue}
         >
           <Ticket className="size-4" />

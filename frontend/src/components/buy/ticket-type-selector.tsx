@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
 import {
@@ -9,12 +10,15 @@ import {
 } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
 import { EventDto } from '@/lib/api';
+import { Route } from '@/lib/routes';
 
 interface TicketTypeSelectorProps {
   event: EventDto;
 }
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
 
@@ -89,8 +93,28 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         lines={lines}
         totalQuantity={total}
         totalPrice={totalPrice}
-        onContinue={() => {
-          console.log('Continue to payment with selection', selection);
+        submitting={submitting}
+        onContinue={async () => {
+          setSubmitting(true);
+          try {
+            const { createOrder } = await import('@/lib/api');
+            const items = Object.entries(selection)
+              .filter(([, qty]) => qty > 0)
+              .map(([ticketTypeId, quantity]) => ({
+                eventTicketTypeId: ticketTypeId,
+                quantity,
+              }));
+            const { error } = await createOrder({
+              body: { eventId: event.id, items },
+            });
+            if (error) {
+              console.error('Order failed:', error);
+              return;
+            }
+            router.push(Route.Tickets);
+          } finally {
+            setSubmitting(false);
+          }
         }}
       />
     </div>

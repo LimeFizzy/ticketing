@@ -7,4 +7,11 @@ public class User
     public required string LastName { get; set; }
     public required string Email { get; set; }
     public required string PasswordHash { get; set; }
+
+    public string? CardHolderName { get; set; }
+    public string? CardLast4 { get; set; }
+    public string? CardExpiry { get; set; }
+    public string? CardBrand { get; set; }
+
+    public ICollection<Ticket> Tickets { get; set; } = [];
 }

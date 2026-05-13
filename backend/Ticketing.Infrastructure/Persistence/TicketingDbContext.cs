@@ -8,6 +8,8 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
     public DbSet<User> Users => Set<User>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventTicketType> EventTicketTypes => Set<EventTicketType>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,5 +23,21 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
 
         modelBuilder.Entity<EventTicketType>()
             .HasIndex(et => new { et.EventId, et.Name });
+
+        modelBuilder.Entity<Order>()
+            .HasIndex(o => o.UserId);
+
+        modelBuilder.Entity<Order>()
+            .HasIndex(o => new { o.EventId, o.CreatedAt });
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.UserId);
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.TicketCode)
+            .IsUnique();
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => new { t.EventTicketTypeId, t.Status });
     }
 }

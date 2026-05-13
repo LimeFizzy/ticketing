@@ -8,19 +8,30 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { type AuthContextValue } from '@/types/user';
-import { UserDto, getMe, postSignIn, postSignOut, postSignUp } from '@/lib/api';
+import { type AuthContextValue, cardFromUserDto, type User } from '@/types/user';
+import {
+  type UserDto,
+  getMe,
+  postSignIn,
+  postSignOut,
+  postSignUp,
+} from '@/lib/api';
+
+const toUser = (dto: UserDto): User => ({
+  ...dto,
+  card: cardFromUserDto(dto),
+});
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<UserDto | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
 
   useEffect(() => {
     getMe()
       .then(({ data }) => {
-        if (data) setUser(data);
+        if (data) setUser(toUser(data));
       })
       .catch((err) => console.error('Failed to fetch session', err))
       .finally(() => setIsHydrating(false));
@@ -32,13 +43,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: { email, password },
       });
 
-      if (error) {
-        throw new Error(error?.title || 'Login failed');
-      }
-
-      if (data) {
-        setUser(data);
-      }
+      if (error) throw new Error(error?.title || 'Login failed');
+      if (data) setUser(toUser(data));
     },
     []
   );
@@ -49,13 +55,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: { firstName, lastName, email, password },
       });
 
-      if (error) {
-        throw new Error(error?.title || 'Registration failed');
-      }
-
-      if (data) {
-        setUser(data);
-      }
+      if (error) throw new Error(error?.title || 'Registration failed');
+      if (data) setUser(toUser(data));
     },
     []
   );
@@ -66,9 +67,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const updateProfile = useCallback<AuthContextValue['updateProfile']>(
-    (patch) => {
+    async (patch) => {
       if (!user) return;
-      setUser({ ...user, ...patch });
+
+      // Dynamic import for new endpoints added to SDK after regeneration
+      const api = await import('@/lib/api');
+
+      if (patch.firstName !== undefined || patch.email !== undefined) {
+        const res = await api.updateProfile({
+          body: {
+            firstName: patch.firstName ?? user.firstName,
+            lastName: patch.lastName ?? user.lastName,
+            email: patch.email ?? user.email,
+          },
+        });
+        if (res.data) setUser(toUser(res.data));
+        if (res.error) throw new Error('Profile update failed');
+        return;
+      }
+
+      if (patch.card !== undefined) {
+        const card = patch.card;
+        const res = await api.updateCard({
+          body: card
+            ? {
+                cardHolderName: card.cardholderName || undefined,
+                cardLast4: card.number?.slice(-4) || undefined,
+                cardExpiry: card.expiry || undefined,
+                cardBrand: inferBrand(card.number) || undefined,
+              }
+            : undefined,
+        });
+        if (res.data) setUser(toUser(res.data));
+        if (res.error) throw new Error('Card update failed');
+      }
     },
     [user]
   );
@@ -93,4 +125,13 @@ export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
+};
+
+const inferBrand = (number?: string): string | null => {
+  if (!number) return null;
+  const cleaned = number.replace(/\s/g, '');
+  if (cleaned.startsWith('4')) return 'Visa';
+  if (cleaned.startsWith('5') || cleaned.startsWith('2')) return 'Mastercard';
+  if (cleaned.startsWith('3')) return 'Amex';
+  return null;
 };

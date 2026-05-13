@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Ticketing.Application.DTOs;
@@ -46,20 +47,43 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpGet("me", Name = "getMe")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public IActionResult GetMe()
+    public async Task<IActionResult> GetMe()
     {
         if (!User.Identity?.IsAuthenticated ?? true)
-        {
             return Unauthorized();
-        }
 
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var email = User.FindFirst(ClaimTypes.Email)?.Value;
-        var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
-        var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
+        var userId = GetUserIdFromClaims();
+        var user = await authService.GetUserByIdAsync(userId);
+        if (user == null) return Unauthorized();
 
-        return Ok(new UserDto(Guid.Parse(userId!), firstName!, lastName!, email!));
+        return Ok(user);
     }
+
+    [HttpPut("profile", Name = "updateProfile")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var userId = GetUserIdFromClaims();
+        var result = await authService.UpdateProfileAsync(userId, request);
+        if (result == null) return NotFound(new ProblemDetails { Title = "User not found or email already taken" });
+
+        return Ok(result);
+    }
+
+    [HttpPut("card", Name = "updateCard")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateCard([FromBody] UpdateCardRequest? request)
+    {
+        var userId = GetUserIdFromClaims();
+        var result = await authService.UpdateCardAsync(userId, request);
+        return Ok(result);
+    }
+
+    private Guid GetUserIdFromClaims() =>
+        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
     private async Task SignInUserAsync(UserDto user)
     {

@@ -11,9 +11,20 @@ public class UserRepository(TicketingDbContext context) : IUserRepository
         return context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public Task<User?> GetByIdAsync(Guid id)
+    {
+        return context.Users.FirstOrDefaultAsync(u => u.Id == id);
+    }
+
     public async Task AddAsync(User user)
     {
         await context.Users.AddAsync(user);
+    }
+
+    public Task UpdateAsync(User user)
+    {
+        context.Users.Update(user);
+        return Task.CompletedTask;
     }
 
     public async Task SaveChangesAsync()
