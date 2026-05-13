@@ -13,7 +13,7 @@ import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import {createCheckoutSession, type EventDto } from '@/lib/api';
+import { createCheckoutSession, type EventDto } from '@/lib/api';
 
 interface VenueMapSelectorProps {
   event: EventDto;

@@ -18,5 +18,7 @@ export interface AuthContextValue {
     password: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (patch: Partial<Pick<User, 'firstName' | 'lastName' | 'email'>>) => Promise<void>;
+  updateProfile: (
+    patch: Partial<Pick<User, 'firstName' | 'lastName' | 'email'>>
+  ) => Promise<void>;
 }
