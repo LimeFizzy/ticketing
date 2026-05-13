@@ -9,7 +9,7 @@ import {
   totalSelected,
   type Selection,
 } from '@/lib/buy-utils';
-import { EventDto } from '@/lib/api/types.gen';
+import { type EventDto } from '@/lib/api';
 
 export interface UseTicketSelectionResult {
   selection: Selection;

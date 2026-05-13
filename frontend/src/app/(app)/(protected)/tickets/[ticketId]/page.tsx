@@ -51,7 +51,8 @@ const TicketDetailPage = async ({
             </h1>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <CalendarDays className="size-4 shrink-0" />
-              {formatEventDateLong(ticket.eventDate)} · {formatEventTime(ticket.eventDate)}
+              {formatEventDateLong(ticket.eventDate)} ·{' '}
+              {formatEventTime(ticket.eventDate)}
             </p>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="size-4 shrink-0" />

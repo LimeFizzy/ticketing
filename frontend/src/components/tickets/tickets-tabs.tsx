@@ -49,12 +49,7 @@ export const TicketsTabs = ({ upcoming, past }: TicketsTabsProps) => {
             No {activeTab} tickets.
           </p>
         ) : (
-          tickets.map((t) => (
-            <TicketCard
-              key={t.id}
-              ticket={t}
-            />
-          ))
+          tickets.map((t) => <TicketCard key={t.id} ticket={t} />)
         )}
       </div>
     </>

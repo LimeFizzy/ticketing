@@ -8,14 +8,29 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { type AuthContextValue, cardFromUserDto, type User } from '@/types/user';
+import {
+  type AuthContextValue,
+  cardFromUserDto,
+  type User,
+} from '@/types/user';
 import {
   type UserDto,
   getMe,
   postSignIn,
   postSignOut,
   postSignUp,
+  updateCard,
+  updateProfile as updateProfileApi,
 } from '@/lib/api';
+
+const inferBrand = (number?: string): string | null => {
+  if (!number) return null;
+  const cleaned = number.replace(/\s/g, '');
+  if (cleaned.startsWith('4')) return 'Visa';
+  if (cleaned.startsWith('5') || cleaned.startsWith('2')) return 'Mastercard';
+  if (cleaned.startsWith('3')) return 'Amex';
+  return null;
+};
 
 const toUser = (dto: UserDto): User => ({
   ...dto,
@@ -70,11 +85,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     async (patch) => {
       if (!user) return;
 
-      // Dynamic import for new endpoints added to SDK after regeneration
-      const api = await import('@/lib/api');
-
       if (patch.firstName !== undefined || patch.email !== undefined) {
-        const res = await api.updateProfile({
+        const res = await updateProfileApi({
           body: {
             firstName: patch.firstName ?? user.firstName,
             lastName: patch.lastName ?? user.lastName,
@@ -88,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (patch.card !== undefined) {
         const card = patch.card;
-        const res = await api.updateCard({
+        const res = await updateCard({
           body: card
             ? {
                 cardHolderName: card.cardholderName || undefined,
@@ -125,13 +137,4 @@ export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
-};
-
-const inferBrand = (number?: string): string | null => {
-  if (!number) return null;
-  const cleaned = number.replace(/\s/g, '');
-  if (cleaned.startsWith('4')) return 'Visa';
-  if (cleaned.startsWith('5') || cleaned.startsWith('2')) return 'Mastercard';
-  if (cleaned.startsWith('3')) return 'Amex';
-  return null;
 };

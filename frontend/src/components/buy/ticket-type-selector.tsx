@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
@@ -9,7 +9,7 @@ import {
   type SelectionLine,
 } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { EventDto } from '@/lib/api';
+import { createOrder, type EventDto } from '@/lib/api';
 import { Route } from '@/lib/routes';
 
 interface TicketTypeSelectorProps {
@@ -37,6 +37,28 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
       ),
     [event.ticketTypes, selection]
   );
+
+  const handleContinue = useCallback(async () => {
+    setSubmitting(true);
+    try {
+      const items = Object.entries(selection)
+        .filter(([, qty]) => qty > 0)
+        .map(([ticketTypeId, quantity]) => ({
+          eventTicketTypeId: ticketTypeId,
+          quantity,
+        }));
+      const { error } = await createOrder({
+        body: { eventId: event.id, items },
+      });
+      if (error) {
+        console.error('Order failed:', error);
+        return;
+      }
+      router.push(Route.Tickets);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [selection, event.id, router]);
 
   const lines = useMemo<SelectionLine[]>(
     () =>
@@ -94,28 +116,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
-        onContinue={async () => {
-          setSubmitting(true);
-          try {
-            const { createOrder } = await import('@/lib/api');
-            const items = Object.entries(selection)
-              .filter(([, qty]) => qty > 0)
-              .map(([ticketTypeId, quantity]) => ({
-                eventTicketTypeId: ticketTypeId,
-                quantity,
-              }));
-            const { error } = await createOrder({
-              body: { eventId: event.id, items },
-            });
-            if (error) {
-              console.error('Order failed:', error);
-              return;
-            }
-            router.push(Route.Tickets);
-          } finally {
-            setSubmitting(false);
-          }
-        }}
+        onContinue={handleContinue}
       />
     </div>
   );

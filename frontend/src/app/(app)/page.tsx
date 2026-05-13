@@ -1,8 +1,11 @@
 import { Suspense } from 'react';
 import { type Metadata } from 'next';
-import { type EventCategory } from '@/lib/api';
 import { getCachedEvents } from '@/lib/event-cache';
-import { hasActiveFilter, trending } from '@/lib/event-filters';
+import {
+  buildEventsQuery,
+  hasActiveFilter,
+  trending,
+} from '@/lib/event-filters';
 import { type SearchParams } from '@/types/filters';
 import { EventsGrid } from '@/components/events/events-grid';
 import { FilterBar } from '@/components/events/filter-bar';
@@ -18,15 +21,8 @@ const DashboardPage = async ({
   const params = await searchParams;
   const isFiltered = hasActiveFilter(params);
 
-  // Build API query from active filters
-  const query: NonNullable<Parameters<typeof getCachedEvents>[0]> = {};
-  if (params.q?.trim()) query.search = params.q.trim();
-  if (params.category && params.category !== 'all') query.category = params.category as EventCategory;
-  if (params.date && params.date !== 'all') query.date = params.date;
-  if (params.price && params.price !== 'all') query.price = params.price;
-
   const { data: events, error } = await getCachedEvents(
-    Object.keys(query).length > 0 ? query : undefined
+    buildEventsQuery(params)
   );
   if (error) throw error;
 

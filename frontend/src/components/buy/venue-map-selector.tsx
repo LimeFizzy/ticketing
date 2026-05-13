@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -14,7 +14,7 @@ import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
-import { EventDto } from '@/lib/api';
+import { createOrder, type EventDto } from '@/lib/api';
 import { Route } from '@/lib/routes';
 
 interface VenueMapSelectorProps {
@@ -102,6 +102,28 @@ export const VenueMapSelector = ({
     [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
   );
 
+  const handleContinue = useCallback(async () => {
+    setSubmitting(true);
+    try {
+      const items = Object.entries(selection)
+        .filter(([, qty]) => qty > 0)
+        .map(([placeId, quantity]) => ({
+          eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
+          quantity,
+        }));
+      const { error } = await createOrder({
+        body: { eventId: event.id, items },
+      });
+      if (error) {
+        console.error('Order failed:', error);
+        return;
+      }
+      router.push(Route.Tickets);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [selection, placesById, event.id, router]);
+
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();
 
@@ -146,28 +168,7 @@ export const VenueMapSelector = ({
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
-        onContinue={async () => {
-          setSubmitting(true);
-          try {
-            const { createOrder } = await import('@/lib/api');
-            const items = Object.entries(selection)
-              .filter(([, qty]) => qty > 0)
-              .map(([placeId, quantity]) => ({
-                eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
-                quantity,
-              }));
-            const { error } = await createOrder({
-              body: { eventId: event.id, items },
-            });
-            if (error) {
-              console.error('Order failed:', error);
-              return;
-            }
-            router.push(Route.Tickets);
-          } finally {
-            setSubmitting(false);
-          }
-        }}
+        onContinue={handleContinue}
       />
     </div>
   );
