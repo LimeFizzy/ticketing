@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Search, Tag, Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,16 @@ export const FilterBar = () => {
   const router = useRouter();
   const params = useSearchParams();
 
-  const update = (key: string, value: string | null) => {
+  const searchValue = params.get('q') ?? '';
+  const [draft, setDraft] = useState(searchValue);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Sync draft when URL changes externally (e.g. back navigation)
+  useEffect(() => {
+    setDraft(searchValue);
+  }, [searchValue]);
+
+  const update = useCallback((key: string, value: string | null) => {
     const next = new URLSearchParams(params.toString());
     if (value && value !== 'all') {
       next.set(key, value);
@@ -26,7 +36,13 @@ export const FilterBar = () => {
     }
     const qs = next.toString();
     router.replace(qs ? `${Route.Home}?${qs}` : Route.Home);
-  };
+  }, [params, router]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setDraft(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => update('q', value || null), 300);
+  }, [update]);
 
   return (
     <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
@@ -36,9 +52,9 @@ export const FilterBar = () => {
         <Input
           type="search"
           placeholder="Search events, venues, cities…"
-          value={params.get('q') ?? ''}
+          value={draft}
           className="h-10 rounded-xl bg-white/95 border-border pl-9 backdrop-blur-md"
-          onChange={(e) => update('q', e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
 
