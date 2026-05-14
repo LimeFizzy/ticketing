@@ -13,5 +13,6 @@ export interface UserTicket {
   venue: string;
   city: string;
   imageUrl: string;
+  checkedInAt?: string | null;
   isPast: boolean;
 }

@@ -63,6 +63,7 @@ const TicketDetailPage = async ({
           <TicketQR
             ticketId={ticket.id}
             eventId={ticket.eventId}
+            checkedInAt={ticket.checkedInAt}
             muted={isPast}
           />
 

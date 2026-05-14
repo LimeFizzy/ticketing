@@ -14,5 +14,16 @@ public record TicketDto(
     [property: Required] DateTime EventDate,
     [property: Required] string Venue,
     [property: Required] string City,
-    [property: Required] string ImageUrl
+    [property: Required] string ImageUrl,
+    DateTime? CheckedInAt = null
+);
+
+public record CheckInRequest(
+    [property: Required] string TicketCode,
+    [property: Required] Guid EventId
+);
+
+public record CheckInResponse(
+    [property: Required] TicketDto Ticket,
+    [property: Required] bool WasAlreadyCheckedIn
 );
