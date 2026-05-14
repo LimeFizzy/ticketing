@@ -6,6 +6,7 @@ public interface ITicketRepository
 {
     Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId);
     Task<Ticket?> GetByIdAsync(Guid id);
+    Task<Ticket?> GetByCodeWithEventAsync(string ticketCode);
     Task<bool> ExistsByCodeAsync(string code);
     Task SaveChangesAsync();
 }

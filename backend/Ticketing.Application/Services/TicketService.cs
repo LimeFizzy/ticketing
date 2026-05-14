@@ -8,6 +8,7 @@ public interface ITicketService
 {
     Task<IEnumerable<TicketDto>> GetByUserIdAsync(Guid userId);
     Task<TicketDto?> GetByIdAsync(Guid id);
+    Task<CheckInResponse> CheckInAsync(Guid organizerId, CheckInRequest request);
 }
 
 public class TicketService(ITicketRepository ticketRepository) : ITicketService
@@ -25,6 +26,29 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
         return MapToDto(ticket);
     }
 
+    public async Task<CheckInResponse> CheckInAsync(Guid organizerId, CheckInRequest request)
+    {
+        var ticket = await ticketRepository.GetByCodeWithEventAsync(request.TicketCode)
+            ?? throw new KeyNotFoundException("Ticket not found.");
+
+        var @event = ticket.Order.Event;
+
+        if (@event.Id != request.EventId)
+            throw new InvalidOperationException("Ticket does not belong to this event.");
+
+        if (@event.OrganizerId != organizerId)
+            throw new UnauthorizedAccessException("You are not the organizer of this event.");
+
+        if (ticket.CheckedInAt.HasValue)
+            return new CheckInResponse(MapToDto(ticket), WasAlreadyCheckedIn: true);
+
+        ticket.Status = "CheckedIn";
+        ticket.CheckedInAt = DateTime.UtcNow;
+        await ticketRepository.SaveChangesAsync();
+
+        return new CheckInResponse(MapToDto(ticket), WasAlreadyCheckedIn: false);
+    }
+
     private static TicketDto MapToDto(Ticket ticket)
     {
         var @event = ticket.Order.Event;
@@ -40,7 +64,8 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
             @event.Date,
             @event.Venue,
             @event.City,
-            @event.ImageUrl
+            @event.ImageUrl,
+            ticket.CheckedInAt
         );
     }
 }

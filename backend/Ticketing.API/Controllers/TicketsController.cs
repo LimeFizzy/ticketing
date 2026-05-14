@@ -31,6 +31,19 @@ public class TicketsController(ITicketService ticketService) : ControllerBase
         return Ok(ticket);
     }
 
+    [HttpPost("check-in", Name = "checkInTicket")]
+    [Authorize]
+    [ProducesResponseType(typeof(CheckInResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CheckIn([FromBody] CheckInRequest request)
+    {
+        var organizerId = GetUserIdFromClaims();
+        var result = await ticketService.CheckInAsync(organizerId, request);
+        return Ok(result);
+    }
+
     private Guid GetUserIdFromClaims() =>
         Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }
