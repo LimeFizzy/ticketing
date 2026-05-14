@@ -17,6 +17,7 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
     public DbSet<VenueMapPlace> VenueMapPlaces => Set<VenueMapPlace>();
     public DbSet<VenueMapDecoration> VenueMapDecorations => Set<VenueMapDecoration>();
     public DbSet<EventVenueMapPlace> EventVenueMapPlaces => Set<EventVenueMapPlace>();
+    public DbSet<EventScanner> EventScanners => Set<EventScanner>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -177,5 +178,35 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<EventVenueMapPlace>()
             .HasIndex(evmp => new { evmp.EventId, evmp.VenueMapPlaceId })
             .IsUnique();
+
+        // EventScanner
+        modelBuilder.Entity<EventScanner>()
+            .HasOne(es => es.Event)
+            .WithMany()
+            .HasForeignKey(es => es.EventId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+
+        modelBuilder.Entity<EventScanner>()
+            .HasOne(es => es.Organizer)
+            .WithMany()
+            .HasForeignKey(es => es.OrganizerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EventScanner>()
+            .HasOne(es => es.ScannerUser)
+            .WithMany()
+            .HasForeignKey(es => es.ScannerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EventScanner>()
+            .HasIndex(es => new { es.ScannerUserId, es.EventId })
+            .IsUnique();
+
+        modelBuilder.Entity<EventScanner>()
+            .HasIndex(es => es.OrganizerId);
+
+        modelBuilder.Entity<EventScanner>()
+            .HasIndex(es => es.ScannerUserId);
     }
 }
