@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { type Metadata } from 'next';
-export const dynamic = 'force-dynamic';
 import { CalendarDays, ChevronLeft, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
