@@ -111,11 +111,10 @@ const CheckInPage = ({
 
       try {
         const payload = JSON.parse(decodedText);
-        if (payload.ticketId) {
-          performCheckIn(payload.ticketId);
+        if (payload.ticketCode) {
+          performCheckIn(payload.ticketCode);
         }
       } catch {
-        // If it's not JSON, try using the raw text as a ticket code
         if (decodedText.startsWith('TF-')) {
           performCheckIn(decodedText);
         }

@@ -7,19 +7,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 interface TicketQRProps {
-  ticketId: string;
+  ticketCode: string;
   eventId: string;
   checkedInAt?: string | null;
   muted?: boolean;
 }
 
-export const TicketQR = ({ ticketId, eventId, checkedInAt, muted }: TicketQRProps) => {
+export const TicketQR = ({ ticketCode, eventId, checkedInAt, muted }: TicketQRProps) => {
   const isUsed = !!checkedInAt;
   const { user } = useAuth();
   const payload = useMemo(
     () =>
-      user ? JSON.stringify({ ticketId, eventId, userId: user.id }) : null,
-    [user, ticketId, eventId]
+      user ? JSON.stringify({ ticketCode, eventId }) : null,
+    [user, ticketCode, eventId]
   );
 
   if (!payload) return null;
