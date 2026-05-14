@@ -11,17 +11,25 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
     {
         return await context.Events
             .Include(e => e.TicketTypes)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
     }
 
     public async Task<IEnumerable<Event>> GetAllAsync(EventsQueryDto? filter = null)
     {
         var query = context.Events
             .Include(e => e.TicketTypes)
-            .AsQueryable();
+            .Where(e => !e.IsDeleted);
 
         if (filter != null)
         {
+            if (filter.OrganizerId.HasValue)
+                query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value);
+
+            if (!string.IsNullOrEmpty(filter.Status))
+                query = query.Where(e => e.Status == filter.Status);
+            else if (!filter.OrganizerId.HasValue)
+                query = query.Where(e => e.Status == "published");
+
             if (filter.Category.HasValue)
                 query = query.Where(e => e.Category == filter.Category.Value);
 
@@ -70,13 +78,40 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                 }
             }
         }
+        else
+        {
+            query = query.Where(e => e.Status == "published");
+        }
 
         return await query.ToListAsync();
     }
 
     public async Task<bool> ExistsAsync(Guid id)
     {
-        return await context.Events.AnyAsync(e => e.Id == id);
+        return await context.Events.AnyAsync(e => e.Id == id && !e.IsDeleted);
+    }
+
+    public async Task<Event> CreateAsync(Event @event)
+    {
+        await context.Events.AddAsync(@event);
+        await context.SaveChangesAsync();
+        return @event;
+    }
+
+    public async Task UpdateAsync(Event @event)
+    {
+        context.Events.Update(@event);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task SoftDeleteAsync(Guid id)
+    {
+        var @event = await context.Events.FindAsync(id);
+        if (@event != null)
+        {
+            @event.IsDeleted = true;
+            await context.SaveChangesAsync();
+        }
     }
 
     public async Task SaveChangesAsync()

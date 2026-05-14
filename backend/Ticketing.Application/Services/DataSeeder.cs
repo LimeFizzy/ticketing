@@ -23,6 +23,7 @@ public static class DataSeeder
                 AvailableTickets = 480,
                 Featured = true,
                 Disclaimers = "Outdoor event — performances continue rain or shine.|No professional cameras or recording equipment.",
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
@@ -30,20 +31,23 @@ public static class DataSeeder
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000011"),
                         Name = "Early bird",
                         Price = 25m,
-                        Description = "Limited release"
+                        Description = "Limited release",
+                        Capacity = 200
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000012"),
                         Name = "Standard",
-                        Price = 35m
+                        Price = 35m,
+                        Capacity = 200
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000013"),
                         Name = "VIP lounge",
                         Price = 70m,
-                        Description = "Reserved seating, complimentary drink"
+                        Description = "Reserved seating, complimentary drink",
+                        Capacity = 80
                     }
                 ]
             },
@@ -61,26 +65,30 @@ public static class DataSeeder
                 AvailableTickets = 92,
                 Featured = true,
                 VenueMapId = "vm-zalgirio",
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000021"),
                         Name = "Upper tier",
-                        Price = 35m
+                        Price = 35m,
+                        Capacity = 800
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000022"),
                         Name = "Lower tier",
-                        Price = 60m
+                        Price = 60m,
+                        Capacity = 300
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000023"),
                         Name = "Courtside",
                         Price = 180m,
-                        Description = "Front-row seating"
+                        Description = "Front-row seating",
+                        Capacity = 40
                     }
                 ]
             },
@@ -98,26 +106,30 @@ public static class DataSeeder
                 AvailableTickets = 220,
                 Featured = false,
                 Disclaimers = "Recommended age 12+. Latecomers admitted at a suitable break.|Smart-casual dress code observed.",
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000031"),
                         Name = "Balcony",
-                        Price = 55m
+                        Price = 55m,
+                        Capacity = 120
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000032"),
                         Name = "Stalls",
-                        Price = 95m
+                        Price = 95m,
+                        Capacity = 80
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000033"),
                         Name = "Private box",
                         Price = 160m,
-                        Description = "Up to 4 guests"
+                        Description = "Up to 4 guests",
+                        Capacity = 20
                     }
                 ]
             },
@@ -134,20 +146,23 @@ public static class DataSeeder
                 Description = "A night of high-energy rock music featuring the best Lithuanian rock bands. Expect electric performances, crowd surfing, and an unforgettable evening of pure rock and roll.",
                 AvailableTickets = 650,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000041"),
                         Name = "General admission",
-                        Price = 18m
+                        Price = 18m,
+                        Capacity = 500
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000042"),
                         Name = "Front pit",
                         Price = 32m,
-                        Description = "Standing, closer to stage"
+                        Description = "Standing, closer to stage",
+                        Capacity = 150
                     }
                 ]
             },
@@ -165,31 +180,36 @@ public static class DataSeeder
                 AvailableTickets = 3000,
                 Featured = false,
                 Disclaimers = "Medical certificate required for the half and full marathon distances.",
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000051"),
                         Name = "5 km",
-                        Price = 12m
+                        Price = 12m,
+                        Capacity = 1000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000052"),
                         Name = "10 km",
-                        Price = 18m
+                        Price = 18m,
+                        Capacity = 1000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000053"),
                         Name = "Half marathon",
-                        Price = 28m
+                        Price = 28m,
+                        Capacity = 500
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000054"),
                         Name = "Full marathon",
-                        Price = 38m
+                        Price = 38m,
+                        Capacity = 500
                     }
                 ]
             },
@@ -208,20 +228,23 @@ public static class DataSeeder
                 Featured = true,
                 Disclaimers = "Strictly 18+. Photo ID required at the gate.",
                 VenueMapId = "vm-lakeside",
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000061"),
                         Name = "General admission",
-                        Price = 42m
+                        Price = 42m,
+                        Capacity = 200
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000062"),
                         Name = "VIP",
                         Price = 95m,
-                        Description = "Raised viewing deck, dedicated bar"
+                        Description = "Raised viewing deck, dedicated bar",
+                        Capacity = 50
                     }
                 ]
             },
@@ -238,25 +261,29 @@ public static class DataSeeder
                 Description = "Tchaikovsky's Swan Lake performed by the renowned Klaipėda State Musical Theatre ballet company. A classic tale of love and transformation brought to life with graceful choreography and lush orchestral music.",
                 AvailableTickets = 180,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000071"),
                         Name = "Balcony",
-                        Price = 65m
+                        Price = 65m,
+                        Capacity = 80
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000072"),
                         Name = "Stalls",
-                        Price = 110m
+                        Price = 110m,
+                        Capacity = 70
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000073"),
                         Name = "Premium centre",
-                        Price = 150m
+                        Price = 150m,
+                        Capacity = 30
                     }
                 ]
             },
@@ -273,26 +300,30 @@ public static class DataSeeder
                 Description = "The biggest football event of the Lithuanian calendar. Two of the country's finest clubs battle it out for the national cup title in front of a packed and electric atmosphere.",
                 AvailableTickets = 4200,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000081"),
                         Name = "Standing",
-                        Price = 15m
+                        Price = 15m,
+                        Capacity = 3000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000082"),
                         Name = "Seated",
-                        Price = 28m
+                        Price = 28m,
+                        Capacity = 1000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000083"),
                         Name = "Hospitality",
                         Price = 80m,
-                        Description = "Lounge access, refreshments"
+                        Description = "Lounge access, refreshments",
+                        Capacity = 200
                     }
                 ]
             },
@@ -309,20 +340,23 @@ public static class DataSeeder
                 Description = "A curated evening of independent music showcasing the best emerging artists from Lithuania and the wider Baltic region. Intimate setting, great acoustics, craft beer, and good vibes.",
                 AvailableTickets = 320,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000091"),
                         Name = "General admission",
-                        Price = 22m
+                        Price = 22m,
+                        Capacity = 280
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000092"),
                         Name = "Reserved table",
                         Price = 60m,
-                        Description = "Seats up to 4"
+                        Description = "Seats up to 4",
+                        Capacity = 40
                     }
                 ]
             },
@@ -339,19 +373,22 @@ public static class DataSeeder
                 Description = "Shakespeare's beloved comedy reimagined in a contemporary Lithuanian setting. A magical production that blends folk tradition with modern theatrical innovation.",
                 AvailableTickets = 95,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000101"),
                         Name = "Standard",
-                        Price = 30m
+                        Price = 30m,
+                        Capacity = 65
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000102"),
                         Name = "Front rows",
-                        Price = 48m
+                        Price = 48m,
+                        Capacity = 30
                     }
                 ]
             },
@@ -368,25 +405,29 @@ public static class DataSeeder
                 Description = "A spectacular cycling race set against the stunning backdrop of Trakai Island Castle. Amateur and professional categories available. Enjoy the scenery and cheer on the cyclists.",
                 AvailableTickets = 5000,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000111"),
                         Name = "Spectator pass",
-                        Price = 8m
+                        Price = 8m,
+                        Capacity = 3000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000112"),
                         Name = "Amateur entry",
-                        Price = 25m
+                        Price = 25m,
+                        Capacity = 1500
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000113"),
                         Name = "Pro entry",
-                        Price = 55m
+                        Price = 55m,
+                        Capacity = 500
                     }
                 ]
             },
@@ -403,33 +444,38 @@ public static class DataSeeder
                 Description = "Lithuania's most celebrated pop star returns for a spectacular solo concert at Siemens Arena. An evening of hits, new material, and stunning production values. The must-see concert of the year.",
                 AvailableTickets = 8500,
                 Featured = false,
+                Status = "published",
                 TicketTypes =
                 [
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000121"),
                         Name = "Upper tier",
-                        Price = 85m
+                        Price = 85m,
+                        Capacity = 5000
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000122"),
                         Name = "Lower tier",
-                        Price = 130m
+                        Price = 130m,
+                        Capacity = 2500
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000123"),
                         Name = "Fan pit",
                         Price = 175m,
-                        Description = "Standing, closest to stage"
+                        Description = "Standing, closest to stage",
+                        Capacity = 500
                     },
                     new EventTicketType
                     {
                         Id = Guid.Parse("00000000-0000-0000-0000-000000000124"),
                         Name = "VIP package",
                         Price = 250m,
-                        Description = "Meet & greet, signed merch"
+                        Description = "Meet & greet, signed merch",
+                        Capacity = 500
                     }
                 ]
             }

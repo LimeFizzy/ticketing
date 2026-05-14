@@ -5,12 +5,13 @@ import { Check, Plus, Pencil, Search, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { type OrganizerTicketType } from '@/lib/mocks/dashboard';
-import { newId } from '@/lib/utils';
+import { createTicketType, deleteTicketType } from '@/lib/api';
+import type { OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
 
 interface TicketTypesListProps {
-  ticketTypes: OrganizerTicketType[];
-  onChange: (ticketTypes: OrganizerTicketType[]) => void;
+  eventId: string;
+  ticketTypes: OrganizerEventTicketTypeDto[];
+  onChange: (ticketTypes: OrganizerEventTicketTypeDto[]) => void;
   onEdit: (id: string) => void;
 }
 
@@ -32,6 +33,7 @@ const isValid = (d: Draft) =>
   d.name.trim().length > 0 && Number(d.price) >= 0 && Number(d.capacity) >= 1;
 
 export const TicketTypesList = ({
+  eventId,
   ticketTypes,
   onChange,
   onEdit,
@@ -53,25 +55,28 @@ export const TicketTypesList = ({
   const patchDraft = (patch: Partial<Draft>) =>
     setDraft((prev) => ({ ...prev, ...patch }));
 
-  const commitAdd = () => {
+  const commitAdd = async () => {
     if (!isValid(draft)) return;
-    onChange([
-      ...ticketTypes,
-      {
-        id: newId(),
+
+    const { data } = await createTicketType({
+      path: { eventId },
+      body: {
         name: draft.name.trim(),
         description: draft.description.trim() || undefined,
         price: Number(draft.price),
         capacity: Number(draft.capacity),
-        sold: 0,
       },
-    ]);
+    });
+
+    if (data) onChange([...ticketTypes, data]);
     setAdding(false);
     setDraft(emptyDraft());
   };
 
-  const handleDelete = (id: string) =>
+  const handleDelete = async (id: string) => {
+    await deleteTicketType({ path: { eventId, ticketTypeId: id } });
     onChange(ticketTypes.filter((t) => t.id !== id));
+  };
 
   return (
     <Card className="glass border-white/40 shadow-sm">

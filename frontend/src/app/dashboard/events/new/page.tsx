@@ -13,15 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  type EventCategory,
-  createOrganizerEvent,
-} from '@/lib/mocks/dashboard';
+import type { EventCategory } from '@/lib/api/types.gen';
+import { createEvent } from '@/lib/api';
 import { dashboardEventRoute, Route } from '@/lib/routes';
 import { CoverImageField } from '@/components/dashboard/events/cover-image-field';
 import { EventFormFields } from '@/components/dashboard/events/event-form-fields';
 import { useFormState } from '@/hooks/use-form-state';
-import { newId } from '@/lib/utils';
 
 type EventForm = {
   title: string;
@@ -45,24 +42,59 @@ const INITIAL_FORM: EventForm = {
   status: 'draft',
 };
 
+type FieldErrors = Partial<Record<'title' | 'date' | 'venue' | 'city', string>>;
+
+const validate = (form: EventForm): FieldErrors => {
+  const errors: FieldErrors = {};
+  if (!form.title.trim()) errors.title = 'Title is required';
+  if (!form.date) errors.date = 'Date is required';
+  if (!form.venue.trim()) errors.venue = 'Venue is required';
+  if (!form.city.trim()) errors.city = 'City is required';
+  return errors;
+};
+
 const NewEventPage = () => {
   const router = useRouter();
   const [form, patch] = useFormState<EventForm>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleCreate = useCallback(() => {
-    if (
-      !form.title.trim() ||
-      !form.date ||
-      !form.venue.trim() ||
-      !form.city.trim()
-    )
-      return;
+  const handleCreate = useCallback(async () => {
+    const validationErrors = validate(form);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     setSubmitting(true);
-    const event = { id: newId(), ...form, ticketTypes: [] };
-    createOrganizerEvent(event);
-    router.push(dashboardEventRoute(event.id));
+    setApiError(null);
+
+    const { data, error } = await createEvent({
+      body: {
+        title: form.title.trim(),
+        category: form.category,
+        date: new Date(form.date).toISOString(),
+        venue: form.venue.trim(),
+        city: form.city.trim(),
+        imageUrl: form.imageUrl || undefined,
+        description: form.description || undefined,
+        status: form.status,
+      },
+    });
+
+    if (error) {
+      setApiError(typeof error === 'object' && 'title' in error ? String(error.title) : 'Failed to create event');
+      setSubmitting(false);
+      return;
+    }
+
+    if (data) {
+      router.push(dashboardEventRoute(data.id));
+    } else {
+      setSubmitting(false);
+    }
   }, [form, router]);
+
+  const hasErrors = Object.keys(errors).length > 0;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">
@@ -80,7 +112,7 @@ const NewEventPage = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
-          <EventFormFields form={form} patch={patch} />
+          <EventFormFields form={form} patch={patch} errors={errors} />
         </div>
 
         <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
@@ -128,18 +160,16 @@ const NewEventPage = () => {
                 </SelectContent>
               </Select>
 
+              {apiError && (
+                <p className="text-sm text-destructive">{apiError}</p>
+              )}
+
               <Button
                 className="w-full"
                 onClick={handleCreate}
-                disabled={
-                  submitting ||
-                  !form.title.trim() ||
-                  !form.date ||
-                  !form.venue.trim() ||
-                  !form.city.trim()
-                }
+                disabled={submitting}
               >
-                {submitting ? 'Creating…' : 'Create event'}
+                {submitting ? 'Creating…' : hasErrors ? 'Fix errors above' : 'Create event'}
               </Button>
             </CardContent>
           </Card>

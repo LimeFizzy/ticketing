@@ -4,15 +4,19 @@ import { cn } from '@/lib/utils';
 interface FormFieldProps {
   label: string;
   className?: string;
+  error?: string;
   children: React.ReactNode;
 }
 
-export const FormField = ({ label, className, children }: FormFieldProps) => (
+export const FormField = ({ label, className, error, children }: FormFieldProps) => (
   <Field.Root className={className}>
     <Field.Label className="mb-1.5 block text-sm font-medium text-foreground">
       {label}
     </Field.Label>
     {children}
+    {error && (
+      <Field.Error className="mt-1 text-xs text-destructive">{error}</Field.Error>
+    )}
   </Field.Root>
 );
 
