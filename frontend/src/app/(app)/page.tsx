@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { type Metadata } from 'next';
-import { getCachedEvents } from '@/lib/event-cache';
+import { getEvents } from '@/lib/api';
 import {
   buildEventsQuery,
   hasActiveFilter,
@@ -21,8 +21,8 @@ const DashboardPage = async ({
   const params = await searchParams;
   const isFiltered = hasActiveFilter(params);
 
-  const { data: events, error } = await getCachedEvents(
-    buildEventsQuery(params)
+  const { data: events, error } = await getEvents(
+    buildEventsQuery(params) ? { query: buildEventsQuery(params) } : undefined
   );
   if (error) throw error;
 
