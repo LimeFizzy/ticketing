@@ -31,7 +31,7 @@ const TicketDetailPage = async ({
   });
   if (error || !ticket) notFound();
 
-  const isPast = new Date(ticket!.eventDate) < new Date();
+  const isPast = new Date(ticket.eventDate) < new Date();
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
