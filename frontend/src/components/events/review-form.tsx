@@ -34,7 +34,7 @@ export const ReviewForm = ({ eventId, existingReview }: Props) => {
       if (existingReview) {
         const { error: err } = await updateReview({
           path: { reviewId: existingReview.id },
-          body,
+          body: { ...body, rowVersion: existingReview.rowVersion },
         });
         if (err) throw err;
       } else {

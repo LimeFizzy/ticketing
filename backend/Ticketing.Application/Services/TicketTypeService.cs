@@ -6,18 +6,18 @@ namespace Ticketing.Application.Services;
 
 public interface ITicketTypeService
 {
-    Task<OrganizerEventTicketTypeDto> CreateAsync(Guid eventId, Guid organizerId, CreateEventTicketTypeRequest request);
-    Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request);
-    Task DeleteAsync(Guid ticketTypeId, Guid organizerId);
+    Task<OrganizerEventTicketTypeDto> CreateAsync(Guid eventId, Guid organizerId, CreateEventTicketTypeRequest request, CancellationToken cancellationToken = default);
+    Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, CancellationToken cancellationToken = default);
 }
 
 public class TicketTypeService(
     IEventTicketTypeRepository ticketTypeRepository,
     IEventRepository eventRepository) : ITicketTypeService
 {
-    public async Task<OrganizerEventTicketTypeDto> CreateAsync(Guid eventId, Guid organizerId, CreateEventTicketTypeRequest request)
+    public async Task<OrganizerEventTicketTypeDto> CreateAsync(Guid eventId, Guid organizerId, CreateEventTicketTypeRequest request, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId)
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken)
             ?? throw new InvalidOperationException("Event not found");
 
         if (@event.OrganizerId != organizerId)
@@ -32,53 +32,62 @@ public class TicketTypeService(
             EventId = eventId
         };
 
-        var created = await ticketTypeRepository.CreateAsync(ticketType);
+        var created = await ticketTypeRepository.CreateAsync(ticketType, cancellationToken);
 
         return new OrganizerEventTicketTypeDto(
-            created.Id, created.Name, created.Price, created.Description, created.Capacity, 0
+            created.Id, created.Name, created.Price, created.Description, created.Capacity, 0,
+            created.RowVersion
         );
     }
 
-    public async Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request)
+    public async Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request, CancellationToken cancellationToken = default)
     {
-        var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId);
+        var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId, cancellationToken);
         if (ticketType == null) return null;
 
-        var @event = await eventRepository.GetByIdAsync(ticketType.EventId);
+        if (ticketType.EventId != eventId)
+            throw new UnauthorizedAccessException("Ticket type does not belong to this event");
+
+        var @event = await eventRepository.GetByIdAsync(ticketType.EventId, cancellationToken);
         if (@event == null || @event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("Not your event");
 
-        var sold = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId);
+        var sold = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId, cancellationToken);
         if (request.Capacity < sold)
             throw new InvalidOperationException($"Capacity cannot be less than {sold} (tickets already sold)");
 
+        ticketType.RowVersion = request.RowVersion;
         ticketType.Name = request.Name;
         ticketType.Price = request.Price;
         ticketType.Description = request.Description;
         ticketType.Capacity = request.Capacity;
 
-        await ticketTypeRepository.UpdateAsync(ticketType);
+        await ticketTypeRepository.UpdateAsync(ticketType, cancellationToken);
 
-        var soldAfterUpdate = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId);
+        var soldAfterUpdate = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId, cancellationToken);
 
         return new OrganizerEventTicketTypeDto(
-            ticketType.Id, ticketType.Name, ticketType.Price, ticketType.Description, ticketType.Capacity, soldAfterUpdate
+            ticketType.Id, ticketType.Name, ticketType.Price, ticketType.Description, ticketType.Capacity, soldAfterUpdate,
+            ticketType.RowVersion
         );
     }
 
-    public async Task DeleteAsync(Guid ticketTypeId, Guid organizerId)
+    public async Task DeleteAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, CancellationToken cancellationToken = default)
     {
-        var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId)
+        var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId, cancellationToken)
             ?? throw new InvalidOperationException("Ticket type not found");
 
-        var @event = await eventRepository.GetByIdAsync(ticketType.EventId);
+        if (ticketType.EventId != eventId)
+            throw new UnauthorizedAccessException("Ticket type does not belong to this event");
+
+        var @event = await eventRepository.GetByIdAsync(ticketType.EventId, cancellationToken);
         if (@event == null || @event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("Not your event");
 
-        var sold = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId);
+        var sold = await ticketTypeRepository.GetSoldCountAsync(ticketTypeId, cancellationToken);
         if (sold > 0)
             throw new InvalidOperationException($"Cannot delete ticket type with {sold} sold tickets");
 
-        await ticketTypeRepository.DeleteAsync(ticketTypeId);
+        await ticketTypeRepository.DeleteAsync(ticketTypeId, cancellationToken);
     }
 }

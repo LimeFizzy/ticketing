@@ -1,6 +1,7 @@
 import { Check, Globe, Loader2, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EventStatus } from '@/lib/api/types.gen';
 
 export const EventPublishingCard = ({
   status,
@@ -10,7 +11,7 @@ export const EventPublishingCard = ({
   onPublish,
   onUnpublish,
 }: {
-  status: 'published' | 'draft';
+  status: EventStatus;
   saved: boolean;
   saving?: 'save' | 'publish' | 'unpublish' | null;
   onSave: () => void;
@@ -25,17 +26,17 @@ export const EventPublishingCard = ({
     </CardHeader>
     <CardContent className="flex flex-col gap-3 p-6 pt-0">
       <div className="flex items-center gap-2.5 rounded-lg bg-muted/40 px-3 py-2.5">
-        {status === 'published' ? (
+        {status === 'Published' ? (
           <Globe className="size-4 shrink-0 text-primary" />
         ) : (
           <Lock className="size-4 shrink-0 text-muted-foreground" />
         )}
         <div>
           <p className="text-sm font-medium text-foreground">
-            {status === 'published' ? 'Published' : 'Draft'}
+            {status === 'Published' ? 'Published' : 'Draft'}
           </p>
           <p className="text-xs text-muted-foreground">
-            {status === 'published'
+            {status === 'Published'
               ? 'Visible to the public'
               : 'Not visible to the public'}
           </p>
@@ -51,7 +52,7 @@ export const EventPublishingCard = ({
         {saving === 'save' ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
       </Button>
 
-      {status === 'draft' ? (
+      {status === 'Draft' ? (
         <Button
           className="w-full gap-1.5"
           onClick={onPublish}

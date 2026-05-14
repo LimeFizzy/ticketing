@@ -7,21 +7,23 @@ public record ReviewDto(
     [property: Required] Guid EventId,
     [property: Required] Guid UserId,
     [property: Required] string UserName,
-    [property: Required] int Rating,
-    string? Comment,
+    [property: Required, Range(1, 5)] int Rating,
+    [MaxLength(2000)] string? Comment,
     [property: Required] DateTime CreatedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    [property: Required] uint RowVersion
 );
 
 public record CreateReviewRequest(
     [Required] Guid EventId,
-    [Range(1, 5)] int Rating,
-    string? Comment
+    [Required, Range(1, 5)] int Rating,
+    [MaxLength(2000)] string? Comment
 );
 
 public record UpdateReviewRequest(
-    [Range(1, 5)] int Rating,
-    string? Comment
+    [Required, Range(1, 5)] int Rating,
+    [MaxLength(2000)] string? Comment,
+    [Required] uint RowVersion
 );
 
 public record EventReviewsSummaryDto(

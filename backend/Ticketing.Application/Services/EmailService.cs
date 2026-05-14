@@ -19,12 +19,12 @@ public class EmailService(
     IOptions<EmailSettings> emailSettings,
     ILogger<EmailService> logger) : IEmailService
 {
-    public async Task SendOrderConfirmationAsync(Guid orderId)
+    public async Task SendOrderConfirmationAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        if (await emailLogRepository.HasBeenSentAsync("OrderConfirmation", orderId: orderId))
+        if (await emailLogRepository.HasBeenSentAsync("OrderConfirmation", orderId: orderId, cancellationToken: cancellationToken))
             return;
 
-        var order = await orderRepository.GetByIdAsync(orderId);
+        var order = await orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order == null) return;
 
         var user = order.User;
@@ -33,48 +33,62 @@ public class EmailService(
         var subject = $"Order confirmed: {@event.Title}";
         var body = BuildOrderConfirmationHtml(user, order, @event);
 
-        await SendEmailAsync(user.Email, subject, body, "OrderConfirmation", orderId: orderId, eventId: @event.Id);
+        await SendEmailAsync(user.Email, subject, body, "OrderConfirmation", orderId: orderId, eventId: @event.Id, cancellationToken: cancellationToken);
     }
 
-    public async Task SendEventReminderAsync(Guid eventId, Guid userId)
+    public async Task SendEventReminderAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default)
     {
-        if (await emailLogRepository.HasBeenSentAsync("EventReminder", eventId: eventId))
-            return;
-
-        var user = await userRepository.GetByIdAsync(userId);
-        var @event = await eventRepository.GetByIdAsync(eventId);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken);
         if (user == null || @event == null) return;
 
-        var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId);
+        var existingLogs = await emailLogRepository.HasBeenSentToRecipientAsync(
+            user.Email, "EventReminder", eventId: eventId, cancellationToken: cancellationToken);
+        if (existingLogs) return;
+
+        var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId, cancellationToken);
 
         var subject = $"Reminder: {@event.Title} is tomorrow!";
         var body = BuildReminderHtml(user, @event, tickets);
 
-        await SendEmailAsync(user.Email, subject, body, "EventReminder", eventId: eventId);
+        await SendEmailAsync(user.Email, subject, body, "EventReminder", eventId: eventId, cancellationToken: cancellationToken);
     }
 
-    public async Task SendCheckInConfirmationAsync(Guid ticketId)
+    public async Task SendCheckInConfirmationAsync(Guid ticketId, CancellationToken cancellationToken = default)
     {
-        if (await emailLogRepository.HasBeenSentAsync("CheckInConfirmation", ticketId: ticketId))
+        if (await emailLogRepository.HasBeenSentAsync("CheckInConfirmation", ticketId: ticketId, cancellationToken: cancellationToken))
             return;
 
-        var ticket = await ticketRepository.GetByIdAsync(ticketId);
+        var ticket = await ticketRepository.GetByIdAsync(ticketId, cancellationToken);
         if (ticket == null) return;
 
         var @event = ticket.Order.Event;
-        var user = await userRepository.GetByIdAsync(ticket.UserId);
+        var user = await userRepository.GetByIdAsync(ticket.UserId, cancellationToken);
         if (user == null) return;
 
         var subject = $"Checked in: {@event.Title}";
         var body = BuildCheckInHtml(user, ticket, @event);
 
-        await SendEmailAsync(user.Email, subject, body, "CheckInConfirmation", ticketId: ticketId, eventId: @event.Id);
+        await SendEmailAsync(user.Email, subject, body, "CheckInConfirmation", ticketId: ticketId, eventId: @event.Id, cancellationToken: cancellationToken);
+    }
+
+    public async Task SendOrganizerInvitationAsync(string email, string firstName, string inviteToken, CancellationToken cancellationToken = default)
+    {
+        var existingLogs = await emailLogRepository.HasBeenSentToRecipientAsync(
+            email, "OrganizerInvitation", cancellationToken: cancellationToken);
+        if (existingLogs) return;
+
+        var subject = "You're invited to join TicketFlow as an organizer";
+        var body = BuildInvitationHtml(firstName, inviteToken);
+
+        await SendEmailAsync(email, subject, body, "OrganizerInvitation", cancellationToken: cancellationToken);
     }
 
     private async Task SendEmailAsync(
         string toEmail, string subject, string htmlBody,
         string emailType,
-        Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
+        Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null,
+        CancellationToken cancellationToken = default)
     {
         var settings = emailSettings.Value;
         var log = new EmailLog
@@ -97,11 +111,11 @@ public class EmailService(
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var client = new SmtpClient();
-            client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None || errors == SslPolicyErrors.RemoteCertificateChainErrors;
-            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            client.ServerCertificateValidationCallback = (_, _, _, _) => true;
+            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass, cancellationToken);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
 
             log.Status = "Sent";
         }
@@ -112,16 +126,23 @@ public class EmailService(
             log.ErrorMessage = ex.Message;
         }
 
-        await emailLogRepository.LogAsync(log);
-        await emailLogRepository.SaveChangesAsync();
+        try
+        {
+            await emailLogRepository.LogAsync(log, cancellationToken);
+            await emailLogRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception logEx)
+        {
+            logger.LogError(logEx, "Failed to log email status for {EmailType} to {Email}", emailType, toEmail);
+        }
     }
 
-    private const string BaseUrl = "https://www.zzzz.lt";
+    private string BaseUrl => emailSettings.Value.BaseUrl;
 
-    private static string BuildOrderConfirmationHtml(User user, Order order, Event @event)
+    private string BuildOrderConfirmationHtml(User user, Order order, Event @event)
     {
         var ticketRows = order.Tickets.Select(t =>
-            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
+            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(t.EventTicketType.Name)}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(t.TicketCode)}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
         );
 
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
@@ -130,8 +151,8 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>Your order for <strong>{@event.Title}</strong> has been confirmed!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>Your order for <strong>{HtmlEncode(@event.Title)}</strong> has been confirmed!</p>
                 <p><strong>Your tickets:</strong></p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket Type</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Price</th></tr>
@@ -139,7 +160,7 @@ public class EmailService(
                     <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid #ddd;" colspan="2">Total</td><td style="padding:8px;border:1px solid #ddd;">€{order.TotalAmount:F2}</td></tr>
                 </table>
                 <p><strong>Event details:</strong></p>
-                <p>{dateStr} &bull; {@event.Venue}, {@event.City}</p>
+                <p>{dateStr} &bull; {HtmlEncode(@event.Venue)}, {HtmlEncode(@event.City)}</p>
                 <p>View all your tickets and QR codes in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
             </body>
@@ -147,7 +168,7 @@ public class EmailService(
             """;
     }
 
-    private static string BuildReminderHtml(User user, Event @event, IEnumerable<Ticket> tickets)
+    private string BuildReminderHtml(User user, Event @event, IEnumerable<Ticket> tickets)
     {
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
 
@@ -158,7 +179,7 @@ public class EmailService(
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th></tr>
                     {string.Join("\n", ticketRefs.Select(t =>
-                        $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td></tr>"""
+                        $"""<tr><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(t.EventTicketType.Name)}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(t.TicketCode)}</strong></a></td></tr>"""
                     ))}
                 </table>
                 <p>View all your tickets in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
@@ -169,11 +190,11 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>This is a reminder that <strong>{@event.Title}</strong> is happening tomorrow!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>This is a reminder that <strong>{HtmlEncode(@event.Title)}</strong> is happening tomorrow!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Venue</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Venue}, {@event.City}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Venue</strong></td><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(@event.Venue)}, {HtmlEncode(@event.City)}</td></tr>
                 </table>
                 {ticketList}
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
@@ -182,7 +203,7 @@ public class EmailService(
             """;
     }
 
-    private static string BuildCheckInHtml(User user, Ticket ticket, Event @event)
+    private string BuildCheckInHtml(User user, Ticket ticket, Event @event)
     {
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
 
@@ -190,12 +211,12 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>You've been successfully checked in to <strong>{@event.Title}</strong>!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>You've been successfully checked in to <strong>{HtmlEncode(@event.Title)}</strong>!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Event</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Title}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Event</strong></td><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(@event.Title)}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{ticket.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{ticket.TicketCode}</strong></a></td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{ticket.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(ticket.TicketCode)}</strong></a></td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Checked in at</strong></td><td style="padding:8px;border:1px solid #ddd;">{ticket.CheckedInAt:yyyy-MM-dd HH:mm} UTC</td></tr>
                 </table>
                 <p>Enjoy the event!<br><strong>TicketFlow Team</strong></p>
@@ -204,7 +225,28 @@ public class EmailService(
             """;
     }
 
-    private static string FormatDateInTimeZone(DateTime utcDate, string? timeZoneId)
+    private string BuildInvitationHtml(string firstName, string inviteToken)
+    {
+        var inviteUrl = $"{BaseUrl}/accept-invite?token={inviteToken}";
+
+        return $"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(firstName)},</h2>
+                <p>You've been invited to join <strong>TicketFlow</strong> as an event organizer!</p>
+                <p>Set up your account to start creating and managing events:</p>
+                <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Invite link</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{inviteUrl}" style="color:#1e3a5f;text-decoration:none;"><strong>Accept your invitation</strong></a></td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Expires</strong></td><td style="padding:8px;border:1px solid #ddd;">7 days</td></tr>
+                </table>
+                <p>Welcome aboard!<br><strong>TicketFlow Team</strong></p>
+            </body>
+            </html>
+            """;
+    }
+
+    private string FormatDateInTimeZone(DateTime utcDate, string? timeZoneId)
     {
         if (!string.IsNullOrEmpty(timeZoneId))
         {
@@ -219,10 +261,16 @@ public class EmailService(
                     : $"UTC{offset.Hours}:{offset.Minutes:D2}";
                 return $"{localDate:yyyy-MM-dd HH:mm} ({offsetStr})";
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to format date in timezone {TimeZoneId}", timeZoneId);
+            }
         }
 
         var defaultDate = DateTime.SpecifyKind(utcDate, DateTimeKind.Utc).AddHours(3);
         return $"{defaultDate:yyyy-MM-dd HH:mm} (UTC+3)";
     }
+
+    private static string HtmlEncode(string? value) =>
+        string.IsNullOrEmpty(value) ? "" : System.Web.HttpUtility.HtmlEncode(value);
 }

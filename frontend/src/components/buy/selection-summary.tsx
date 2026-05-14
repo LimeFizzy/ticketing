@@ -37,7 +37,7 @@ const calcDiscount = (
   totalPrice: number
 ): number => {
   if (!promo.valid || promo.discountValue == null) return 0;
-  if (promo.discountType === 'percentage')
+  if (promo.discountType === 'Percentage')
     return (totalPrice * promo.discountValue) / 100;
   return Math.min(promo.discountValue, totalPrice);
 };

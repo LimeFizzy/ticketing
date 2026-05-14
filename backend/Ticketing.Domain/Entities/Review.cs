@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Ticketing.Domain.Entities;
 
 public class Review
@@ -9,6 +12,9 @@ public class Review
     public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    [Timestamp]
+    public uint RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
     public User User { get; set; } = null!;

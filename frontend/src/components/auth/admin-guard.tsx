@@ -11,8 +11,8 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role !== 'admin') router.replace(Route.Home);
+    if (user && user.role !== 'Admin') router.replace(Route.Home);
   }, [user, router]);
 
-  return <AuthGuard>{user?.role === 'admin' ? children : null}</AuthGuard>;
+  return <AuthGuard>{user?.role === 'Admin' ? children : null}</AuthGuard>;
 };

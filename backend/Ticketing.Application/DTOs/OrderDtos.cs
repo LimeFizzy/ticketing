@@ -1,16 +1,17 @@
 using System.ComponentModel.DataAnnotations;
+using Ticketing.Domain.Constants;
 
 namespace Ticketing.Application.DTOs;
 
 public record CreateCheckoutSessionRequest(
     [Required] Guid EventId,
-    [Required] OrderItemRequest[] Items,
-    string? PromoCode
+    [Required][MinLength(1)][MaxLength(50)] OrderItemRequest[] Items,
+    [MaxLength(50)] string? PromoCode
 );
 
 public record OrderItemRequest(
     [Required] Guid EventTicketTypeId,
-    [Required] int Quantity,
+    [Required][Range(1, 100)] int Quantity,
     Guid? VenueMapPlaceId = null
 );
 
@@ -20,14 +21,15 @@ public record CheckoutSessionDto(
 
 public record CreateOrderRequest(
     [Required] Guid EventId,
-    [Required] OrderItemRequest[] Items
+    [Required][MinLength(1)] OrderItemRequest[] Items
 );
 
 public record OrderDto(
     [property: Required] Guid Id,
     [property: Required] Guid EventId,
     [property: Required] decimal TotalAmount,
-    [property: Required] string Status,
+    [property: Required] OrderStatus Status,
     [property: Required] DateTime CreatedAt,
-    [property: Required] TicketDto[] Tickets
+    [property: Required] TicketDto[] Tickets,
+    [property: Required] uint RowVersion
 );

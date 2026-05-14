@@ -81,7 +81,7 @@ export const MobileDrawer = () => {
                 label="Account"
                 onClick={closeMobile}
               />
-              {user?.role === 'organizer' && (
+              {user?.role === 'Organizer' && (
                 <>
                   <NavLink
                     href={Route.Dashboard}
@@ -98,7 +98,7 @@ export const MobileDrawer = () => {
                   />
                 </>
               )}
-              {user?.role === 'admin' && (
+              {user?.role === 'Admin' && (
                 <>
                   <NavLink
                     href={Route.Dashboard}

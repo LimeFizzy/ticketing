@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
@@ -16,7 +17,7 @@ public static class DataSeederExtensions
 
         Guid adminId = Guid.Empty;
 
-        if (!await context.Users.AnyAsync(u => u.Role == "admin"))
+        if (!await context.Users.AnyAsync(u => u.Role == UserRole.Admin))
         {
             var admin = new User
             {
@@ -24,7 +25,7 @@ public static class DataSeederExtensions
                 LastName = "TicketFlow",
                 Email = "admin@ticketflow.lt",
                 PasswordHash = passwordHasher.Hash("Admin123!"),
-                Role = "admin"
+                Role = UserRole.Admin
             };
             await context.Users.AddAsync(admin);
             await context.SaveChangesAsync();
@@ -33,7 +34,7 @@ public static class DataSeederExtensions
         else
         {
             adminId = await context.Users
-                .Where(u => u.Role == "admin")
+                .Where(u => u.Role == UserRole.Admin)
                 .Select(u => u.Id)
                 .FirstAsync();
         }

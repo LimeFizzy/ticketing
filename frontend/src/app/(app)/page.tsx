@@ -26,7 +26,8 @@ const DashboardPage = async ({
   );
   if (error) throw error;
 
-  const eventList = events ?? [];
+  // TODO: Implement Pagination
+  const eventList = events?.items ?? [];
 
   const featured = eventList.filter((e) => e.featured);
 

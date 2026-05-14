@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -13,22 +12,19 @@ public class ScannerDashboardController(IScannerService scannerService) : Contro
 {
     [HttpGet("events", Name = "getScannerEvents")]
     [ProducesResponseType(typeof(IEnumerable<ScannerEventDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAssignedEvents()
+    public async Task<IActionResult> GetAssignedEvents(CancellationToken cancellationToken = default)
     {
-        var userId = GetUserIdFromClaims();
-        var events = await scannerService.GetAssignedEventsAsync(userId);
+        var userId = this.GetUserIdFromClaims();
+        var events = await scannerService.GetAssignedEventsAsync(userId, cancellationToken);
         return Ok(events);
     }
 
     [HttpGet("status", Name = "getScannerStatus")]
     [ProducesResponseType(typeof(ScannerStatusDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetStatus()
+    public async Task<IActionResult> GetStatus(CancellationToken cancellationToken = default)
     {
-        var userId = GetUserIdFromClaims();
-        var isScanner = await scannerService.IsScannerAsync(userId);
+        var userId = this.GetUserIdFromClaims();
+        var isScanner = await scannerService.IsScannerAsync(userId, cancellationToken);
         return Ok(new ScannerStatusDto(isScanner));
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

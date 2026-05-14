@@ -87,7 +87,7 @@ export const DesktopSidebar = () => {
           label="Account"
           collapsed={collapsed}
         />
-        {user?.role === 'organizer' && (
+        {user?.role === 'Organizer' && (
           <>
             <NavLink
               href={Route.Dashboard}
@@ -104,7 +104,7 @@ export const DesktopSidebar = () => {
             />
           </>
         )}
-        {user?.role === 'admin' && (
+        {user?.role === 'Admin' && (
           <>
             <NavLink
               href={Route.Dashboard}

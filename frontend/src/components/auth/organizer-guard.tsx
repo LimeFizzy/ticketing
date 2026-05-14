@@ -11,13 +11,13 @@ export const OrganizerGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role !== 'organizer' && user.role !== 'admin')
+    if (user && user.role !== 'Organizer' && user.role !== 'Admin')
       router.replace(Route.Home);
   }, [user, router]);
 
   return (
     <AuthGuard>
-      {user?.role === 'organizer' || user?.role === 'admin' ? children : null}
+      {user?.role === 'Organizer' || user?.role === 'Admin' ? children : null}
     </AuthGuard>
   );
 };

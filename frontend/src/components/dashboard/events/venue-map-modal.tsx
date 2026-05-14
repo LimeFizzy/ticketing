@@ -186,6 +186,7 @@ export const VenueMapModal = ({
     imageUrl: event.imageUrl,
     description: event.description,
     featured: event.featured,
+    rowVersion: event.rowVersion,
     disclaimers: event.disclaimers?.join('|') ?? null,
     status: event.status,
     venueMapId: mapId,

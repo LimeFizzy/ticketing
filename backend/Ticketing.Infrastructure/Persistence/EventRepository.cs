@@ -1,22 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
 
 public class EventRepository(TicketingDbContext context) : IEventRepository
 {
-    public async Task<Event?> GetByIdAsync(Guid id)
+    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await context.Events
             .Include(e => e.TicketTypes)
-            .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+            .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
 
-    public async Task<IEnumerable<Event>> GetAllAsync(EventsQueryDto? filter = null)
+    public async Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default)
     {
         var query = context.Events
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(e => e.TicketTypes)
             .Where(e => !e.IsDeleted && e.Date >= DateTime.UtcNow);
 
@@ -25,10 +28,10 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
             if (filter.OrganizerId.HasValue)
                 query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value);
 
-            if (!string.IsNullOrEmpty(filter.Status))
-                query = query.Where(e => e.Status == filter.Status);
+            if (filter.Status.HasValue)
+                query = query.Where(e => e.Status == filter.Status.Value);
             else if (!filter.OrganizerId.HasValue)
-                query = query.Where(e => e.Status == "published");
+                query = query.Where(e => e.Status == EventStatus.Published);
 
             if (filter.Category.HasValue)
                 query = query.Where(e => e.Category == filter.Category.Value);
@@ -37,11 +40,11 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                 query = query.Where(e => e.Featured == filter.Featured.Value);
 
             if (!string.IsNullOrEmpty(filter.City))
-                query = query.Where(e => e.City == filter.City);
+                query = query.Where(e => EF.Functions.ILike(e.City, EscapeLikeWildcards(filter.City)));
 
             if (!string.IsNullOrEmpty(filter.Search))
             {
-                var searchTerm = $"%{filter.Search}%";
+                var searchTerm = $"%{EscapeLikeWildcards(filter.Search)}%";
                 query = query.Where(e =>
                     EF.Functions.ILike(e.Title, searchTerm) ||
                     EF.Functions.ILike(e.Venue, searchTerm) ||
@@ -60,7 +63,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                         query = query.Where(e => e.Date >= now && e.Date < now.AddDays(7));
                         break;
                     case "month":
-                        query = query.Where(e => e.Date >= now && e.Date < now.AddDays(30));
+                        query = query.Where(e => e.Date >= now && e.Date < now.AddMonths(1));
                         break;
                 }
             }
@@ -78,44 +81,67 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                 }
             }
         }
-        else
-        {
-            query = query.Where(e => e.Status == "published");
-        }
 
-        return await query.ToListAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var page = Math.Max(filter?.Page ?? 1, 1);
+        var pageSize = Math.Clamp(filter?.PageSize ?? 20, 1, 100);
+
+        var events = await query
+            .OrderBy(e => e.Date)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (events, totalCount);
     }
 
-    public async Task<bool> ExistsAsync(Guid id)
+    public async Task<Dictionary<Guid, Event>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
     {
-        return await context.Events.AnyAsync(e => e.Id == id && !e.IsDeleted);
+        var idList = ids.ToList();
+        return await context.Events
+            .AsNoTracking()
+            .Include(e => e.TicketTypes)
+            .Where(e => idList.Contains(e.Id) && !e.IsDeleted)
+            .ToDictionaryAsync(e => e.Id, cancellationToken);
     }
 
-    public async Task<Event> CreateAsync(Event @event)
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        await context.Events.AddAsync(@event);
-        await context.SaveChangesAsync();
+        return await context.Events.AsNoTracking().AnyAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
+    }
+
+    public async Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default)
+    {
+        await context.Events.AddAsync(@event, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         return @event;
     }
 
-    public async Task UpdateAsync(Event @event)
+    public async Task UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
+        context.Entry(@event).Property(e => e.RowVersion).OriginalValue = @event.RowVersion;
         context.Events.Update(@event);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task SoftDeleteAsync(Guid id)
+    public async Task SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var @event = await context.Events.FindAsync(id);
+        var @event = await context.Events.FindAsync([id], cancellationToken);
         if (@event != null)
         {
             @event.IsDeleted = true;
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 
-    public async Task SaveChangesAsync()
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string EscapeLikeWildcards(string input)
+    {
+        return input.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
     }
 }

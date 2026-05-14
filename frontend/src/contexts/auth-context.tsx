@@ -10,6 +10,7 @@ import {
   postSignUp,
   updateProfile as updateProfileApi,
 } from '@/lib/api';
+import { initAntiforgery, resetAntiforgeryToken } from '@/lib/antiforgery';
 
 const toUser = (dto: UserDto): User => ({ ...dto });
 
@@ -18,6 +19,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
+
+  useEffect(() => {
+    initAntiforgery();
+  }, []);
 
   useEffect(() => {
     getMe()
@@ -35,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error) throw new Error(error?.title || 'Login failed');
     if (data) setUser(toUser(data));
+    resetAntiforgeryToken();
   };
 
   const signUp: AuthContextValue['signUp'] = async ({
@@ -49,11 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error) throw new Error(error?.title || 'Registration failed');
     if (data) setUser(toUser(data));
+    resetAntiforgeryToken();
   };
 
   const signOut: AuthContextValue['signOut'] = async () => {
     await postSignOut();
     setUser(null);
+    resetAntiforgeryToken();
   };
 
   const updateProfile: AuthContextValue['updateProfile'] = async (patch) => {
@@ -64,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         firstName: patch.firstName ?? user.firstName,
         lastName: patch.lastName ?? user.lastName,
         email: patch.email ?? user.email,
+        rowVersion: user.rowVersion,
       },
     });
     if (data) setUser(toUser(data));
