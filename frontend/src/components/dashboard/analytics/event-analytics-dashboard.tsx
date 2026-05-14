@@ -9,8 +9,15 @@ import type { KpiItem } from '@/components/dashboard/analytics/kpi-grid';
 import { TicketTypesCard } from '@/components/dashboard/analytics/ticket-types-card';
 import { DailySalesCard } from '@/components/dashboard/analytics/daily-sales-card';
 import { CumulativeSalesCard } from '@/components/dashboard/analytics/cumulative-sales-card';
+import { ReviewsCard } from '@/components/dashboard/analytics/reviews-card';
+import { PromoCodesCard } from '@/components/dashboard/analytics/promo-codes-card';
 import { exportAttendeesCsv } from '@/lib/api';
-import type { EventAnalyticsDto, EventDto } from '@/lib/api/types.gen';
+import type {
+  EventAnalyticsDto,
+  EventDto,
+  EventReviewsSummaryDto,
+  PromoCodeDto,
+} from '@/lib/api/types.gen';
 import { dashboardAnalyticsRoute } from '@/lib/routes';
 import {
   formatEventDateLong,
@@ -22,9 +29,16 @@ import { downloadBlob } from '@/lib/utils';
 interface Props {
   analytics: EventAnalyticsDto;
   event: EventDto;
+  reviews?: EventReviewsSummaryDto | null;
+  promoCodes?: PromoCodeDto[];
 }
 
-export const EventAnalyticsDashboard = ({ analytics, event }: Props) => {
+export const EventAnalyticsDashboard = ({
+  analytics,
+  event,
+  reviews,
+  promoCodes,
+}: Props) => {
   const [exporting, setExporting] = useState(false);
 
   const avgPrice =
@@ -155,6 +169,12 @@ export const EventAnalyticsDashboard = ({ analytics, event }: Props) => {
 
       {cumulativeData.length > 1 && (
         <CumulativeSalesCard cumulativeData={cumulativeData} />
+      )}
+
+      {reviews && reviews.totalReviews > 0 && <ReviewsCard reviews={reviews} />}
+
+      {promoCodes && promoCodes.length > 0 && (
+        <PromoCodesCard codes={promoCodes} />
       )}
     </div>
   );
