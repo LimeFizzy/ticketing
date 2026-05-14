@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CATEGORIES, type EventCategory } from '@/lib/mocks/dashboard';
+import { CATEGORIES, type EventCategory } from '@/types/event';
 
 type EventFormValues = {
   title: string;
@@ -23,9 +23,10 @@ type EventFormValues = {
 interface EventFormFieldsProps {
   form: EventFormValues;
   patch: (values: Partial<EventFormValues>) => void;
+  errors?: Partial<Record<keyof EventFormValues, string>>;
 }
 
-export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
+export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) => (
   <>
     <Card className="glass border-white/40 shadow-sm">
       <CardHeader>
@@ -34,7 +35,7 @@ export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Title" className="sm:col-span-2">
+        <FormField label="Title" className="sm:col-span-2" error={errors?.title}>
           <Input
             value={form.title}
             onChange={(e) => patch({ title: e.target.value })}
@@ -79,7 +80,7 @@ export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Date & Time" className="sm:col-span-2">
+        <FormField label="Date & Time" className="sm:col-span-2" error={errors?.date}>
           <Input
             type="datetime-local"
             value={form.date}
@@ -88,7 +89,7 @@ export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
           />
         </FormField>
 
-        <FormField label="Venue">
+        <FormField label="Venue" error={errors?.venue}>
           <Input
             value={form.venue}
             onChange={(e) => patch({ venue: e.target.value })}
@@ -97,7 +98,7 @@ export const EventFormFields = ({ form, patch }: EventFormFieldsProps) => (
           />
         </FormField>
 
-        <FormField label="City">
+        <FormField label="City" error={errors?.city}>
           <Input
             value={form.city}
             onChange={(e) => patch({ city: e.target.value })}

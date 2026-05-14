@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
-import { getOrganizerEvent, updateOrganizerEvent } from '@/lib/mocks/dashboard';
+import { deleteTicketType, getEventById, updateTicketType } from '@/lib/api';
+import type { EventDto, OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
 import { dashboardEventTicketsRoute } from '@/lib/routes';
 import { useFormState } from '@/hooks/use-form-state';
 import { useSaveFeedback } from '@/hooks/use-save-feedback';
@@ -25,57 +26,93 @@ const EditTicketTypePage = () => {
   const { id, ticketId } = useParams<{ id: string; ticketId: string }>();
   const router = useRouter();
 
-  const [event] = useState(() => getOrganizerEvent(id) ?? null);
-  const ticketType = event?.ticketTypes.find((t) => t.id === ticketId) ?? null;
+  const [event, setEvent] = useState<EventDto | null>(null);
+  const [ticketType, setTicketType] = useState<OrganizerEventTicketTypeDto | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [form, patch] = useFormState<TicketForm>({
-    name: ticketType?.name ?? '',
-    description: ticketType?.description ?? '',
-    price: ticketType ? String(ticketType.price) : '',
-    capacity: ticketType ? String(ticketType.capacity) : '',
+    name: '',
+    description: '',
+    price: '',
+    capacity: '',
   });
 
   const { saved, showSaved } = useSaveFeedback();
 
-  if (!event || !ticketType) notFound();
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    getEventById({ path: { id } })
+      .then(({ data }) => {
+        if (!active || !data) return;
+        setEvent(data);
+        const tt = data.ticketTypes.find((t) => t.id === ticketId);
+        if (tt) {
+          setTicketType(tt as OrganizerEventTicketTypeDto);
+          patch({
+            name: tt.name,
+            description: tt.description ?? '',
+            price: String(tt.price),
+            capacity: String(tt.capacity),
+          });
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, ticketId, patch]);
 
   const isValid =
     form.name.trim().length > 0 &&
     Number(form.price) >= 0 &&
     Number(form.capacity) >= 1;
 
-  const handleSave = useCallback(() => {
-    updateOrganizerEvent(id, {
-      ...event!,
-      ticketTypes: event!.ticketTypes.map((t) =>
-        t.id === ticketId
-          ? {
-              ...t,
-              name: form.name.trim(),
-              description: form.description.trim() || undefined,
-              price: Number(form.price),
-              capacity: Number(form.capacity),
-            }
-          : t
-      ),
-    });
-    showSaved();
-  }, [id, ticketId, event, form, showSaved]);
+  const handleSave = useCallback(async () => {
+    const newCapacity = Number(form.capacity);
+    if (ticketType && newCapacity < ticketType.sold) {
+      return;
+    }
 
-  const handleDelete = useCallback(() => {
+    const { data } = await updateTicketType({
+      path: { eventId: id, ticketTypeId: ticketId },
+      body: {
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+        price: Number(form.price),
+        capacity: newCapacity,
+      },
+    });
+
+    if (data) {
+      setTicketType(data as OrganizerEventTicketTypeDto);
+      showSaved();
+    }
+  }, [id, ticketId, form, ticketType, showSaved]);
+
+  const handleDelete = useCallback(async () => {
     if (!window.confirm(`Delete "${form.name}"? This cannot be undone.`))
       return;
-    updateOrganizerEvent(id, {
-      ...event!,
-      ticketTypes: event!.ticketTypes.filter((t) => t.id !== ticketId),
-    });
+    await deleteTicketType({ path: { eventId: id, ticketTypeId: ticketId } });
     router.push(dashboardEventTicketsRoute(id));
-  }, [id, ticketId, event, form.name, router]);
+  }, [id, ticketId, form.name, router]);
+
+  if (loading) return null;
+  if (!event || !ticketType) notFound();
 
   const soldPct =
     ticketType.capacity > 0
       ? Math.min(100, (ticketType.sold / ticketType.capacity) * 100)
       : 0;
+
+  const capacityError =
+    ticketType && Number(form.capacity) < ticketType.sold
+      ? `Capacity cannot be less than ${ticketType.sold} (already sold)`
+      : undefined;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">
@@ -92,7 +129,7 @@ const EditTicketTypePage = () => {
       </h1>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        {/* ── Left column ── */}
+        {/* Left column */}
         <div className="flex flex-col gap-6">
           <Card className="glass border-white/40 shadow-sm">
             <CardHeader>
@@ -133,10 +170,10 @@ const EditTicketTypePage = () => {
                 />
               </FormField>
 
-              <FormField label="Capacity">
+              <FormField label="Capacity" error={capacityError}>
                 <Input
                   type="number"
-                  min={1}
+                  min={ticketType.sold}
                   value={form.capacity}
                   onChange={(e) => patch({ capacity: e.target.value })}
                   placeholder="100"
@@ -169,7 +206,7 @@ const EditTicketTypePage = () => {
           </Card>
         </div>
 
-        {/* ── Right sidebar ── */}
+        {/* Right sidebar */}
         <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
           <Card className="glass border-white/40 shadow-sm">
             <CardHeader>
@@ -181,7 +218,7 @@ const EditTicketTypePage = () => {
               <Button
                 className="w-full gap-1.5"
                 onClick={handleSave}
-                disabled={!isValid}
+                disabled={!isValid || !!capacityError}
               >
                 {saved ? <Check className="size-4" /> : null}
                 {saved ? 'Saved' : 'Save changes'}

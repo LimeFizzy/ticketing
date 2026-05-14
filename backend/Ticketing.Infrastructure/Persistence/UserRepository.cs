@@ -27,6 +27,25 @@ public class UserRepository(TicketingDbContext context) : IUserRepository
         return Task.CompletedTask;
     }
 
+    public async Task<User?> GetByInviteTokenAsync(string token)
+    {
+        return await context.Users
+            .FirstOrDefaultAsync(u => u.InviteToken == token && u.InviteTokenExpires > DateTime.UtcNow);
+    }
+
+    public async Task<IEnumerable<User>> GetByRoleAsync(string role)
+    {
+        return await context.Users
+            .Where(u => u.Role == role)
+            .ToListAsync();
+    }
+
+    public Task DeleteAsync(User user)
+    {
+        context.Users.Remove(user);
+        return Task.CompletedTask;
+    }
+
     public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();

@@ -12,7 +12,8 @@ public interface IOrderService
 public class OrderService(
     IOrderRepository orderRepository,
     ITicketRepository ticketRepository,
-    IEventRepository eventRepository) : IOrderService
+    IEventRepository eventRepository,
+    IEventTicketTypeRepository eventTicketTypeRepository) : IOrderService
 {
     public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null)
     {
@@ -22,9 +23,6 @@ public class OrderService(
         var ticketTypeLookup = @event.TicketTypes.ToDictionary(t => t.Id);
         var totalTickets = request.Items.Sum(i => i.Quantity);
 
-        if (@event.AvailableTickets < totalTickets)
-            throw new InvalidOperationException("Not enough tickets available");
-
         decimal total = 0;
         var ticketsToCreate = new List<Ticket>();
 
@@ -32,6 +30,10 @@ public class OrderService(
         {
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
+
+            var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
+            if (soldCount + item.Quantity > tt.Capacity)
+                throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
 
             total += tt.Price * item.Quantity;
 
@@ -60,8 +62,6 @@ public class OrderService(
         };
 
         await orderRepository.CreateAsync(order);
-
-        @event.AvailableTickets -= totalTickets;
 
         await orderRepository.SaveChangesAsync();
 

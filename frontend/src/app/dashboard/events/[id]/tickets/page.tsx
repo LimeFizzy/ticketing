@@ -1,34 +1,41 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { TicketTypesList } from '@/components/dashboard/tickets/ticket-types-list';
-import {
-  getOrganizerEvent,
-  type OrganizerTicketType,
-  updateOrganizerEvent,
-} from '@/lib/mocks/dashboard';
+import { getEventById } from '@/lib/api';
+import type { EventDto, OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
 import { dashboardEventRoute, dashboardEventTicketRoute } from '@/lib/routes';
 
 const EventTicketsPage = () => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [event] = useState(() => getOrganizerEvent(id) ?? null);
-  const [ticketTypes, setTicketTypes] = useState<OrganizerTicketType[]>(
-    event?.ticketTypes ?? []
-  );
+  const [event, setEvent] = useState<EventDto | null>(null);
+  const [ticketTypes, setTicketTypes] = useState<OrganizerEventTicketTypeDto[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleChange = useCallback(
-    (updated: OrganizerTicketType[]) => {
-      setTicketTypes(updated);
-      updateOrganizerEvent(id, { ...event!, ticketTypes: updated });
-    },
-    [id, event]
-  );
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    getEventById({ path: { id } })
+      .then(({ data }) => {
+        if (!active) return;
+        setEvent(data ?? null);
+        setTicketTypes((data?.ticketTypes ?? []) as OrganizerEventTicketTypeDto[]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const handleEdit = useCallback(
     (ticketId: string) => {
@@ -37,6 +44,7 @@ const EventTicketsPage = () => {
     [id, router]
   );
 
+  if (loading) return null;
   if (!event) notFound();
 
   return (
@@ -54,8 +62,9 @@ const EventTicketsPage = () => {
       </h1>
 
       <TicketTypesList
+        eventId={id}
         ticketTypes={ticketTypes}
-        onChange={handleChange}
+        onChange={setTicketTypes}
         onEdit={handleEdit}
       />
     </div>

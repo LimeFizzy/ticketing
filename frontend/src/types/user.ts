@@ -1,10 +1,8 @@
-import { UserDto } from '@/lib/api';
+import { type UserDto } from '@/lib/api';
 
-export type UserRole = 'attendee' | 'organizer';
+export type UserRole = 'attendee' | 'organizer' | 'admin';
 
-export interface User extends UserDto {
-  role: UserRole;
-}
+export type User = UserDto;
 
 export interface AuthContextValue {
   user: User | null;

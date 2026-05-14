@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
@@ -17,12 +17,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  type EventCategory,
-  deleteOrganizerEvent,
-  getOrganizerEvent,
-  updateOrganizerEvent,
-} from '@/lib/mocks/dashboard';
+import { deleteEvent, getEventById, updateEvent } from '@/lib/api';
+import type { EventCategory, EventDto } from '@/lib/api/types.gen';
 import { dashboardEventTicketsRoute, Route } from '@/lib/routes';
 import { toDatetimeLocal } from '@/lib/formatters';
 import { CoverImageField } from '@/components/dashboard/events/cover-image-field';
@@ -46,32 +42,74 @@ const EditEventPage = () => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [event] = useState(() => getOrganizerEvent(id) ?? null);
+  const [event, setEvent] = useState<EventDto | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [form, patch] = useFormState<EventForm>({
-    title: event?.title ?? '',
-    category: event?.category ?? 'Music',
-    date: event ? toDatetimeLocal(event.date) : '',
-    venue: event?.venue ?? '',
-    city: event?.city ?? '',
-    description: event?.description ?? '',
-    imageUrl: event?.imageUrl ?? '',
-    status: event?.status ?? 'draft',
+    title: '',
+    category: 'Music',
+    date: '',
+    venue: '',
+    city: '',
+    description: '',
+    imageUrl: '',
+    status: 'draft',
   });
 
   const { saved, showSaved } = useSaveFeedback();
 
-  if (!event) notFound();
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    getEventById({ path: { id } })
+      .then(({ data }) => {
+        if (!active || !data) return;
+        setEvent(data);
+        patch({
+          title: data.title,
+          category: data.category,
+          date: toDatetimeLocal(data.date),
+          venue: data.venue,
+          city: data.city,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          status: data.status === 'published' ? 'published' : 'draft',
+        });
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, patch]);
 
   const persist = useCallback(
-    (nextStatus: 'published' | 'draft') => {
-      updateOrganizerEvent(id, {
-        ...form,
-        status: nextStatus,
-        ticketTypes: event!.ticketTypes,
+    async (nextStatus: 'published' | 'draft') => {
+      const { data } = await updateEvent({
+        path: { id },
+        body: {
+          title: form.title,
+          category: form.category,
+          date: new Date(form.date).toISOString(),
+          venue: form.venue,
+          city: form.city,
+          imageUrl: form.imageUrl,
+          description: form.description,
+          featured: event?.featured ?? false,
+          disclaimers: event?.disclaimers?.join('|') ?? null,
+          venueMapId: event?.venueMapId ?? null,
+          status: nextStatus,
+        },
       });
-      patch({ status: nextStatus });
-      showSaved();
+
+      if (data) {
+        setEvent(data as EventDto);
+        patch({ status: nextStatus });
+        showSaved();
+      }
     },
     [id, form, event, patch, showSaved]
   );
@@ -83,12 +121,15 @@ const EditEventPage = () => {
   const handlePublish = useCallback(() => persist('published'), [persist]);
   const handleUnpublish = useCallback(() => persist('draft'), [persist]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`))
       return;
-    deleteOrganizerEvent(id);
+    await deleteEvent({ path: { id } });
     router.push(Route.Dashboard);
   }, [id, form.title, router]);
+
+  if (loading) return null;
+  if (!event) notFound();
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">
@@ -185,7 +226,7 @@ const EditEventPage = () => {
               </Link>
             </CardHeader>
             <CardContent className="p-6 pt-0">
-              {event!.ticketTypes.length === 0 ? (
+              {event.ticketTypes.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-8 text-center">
                   <Ticket className="size-8 text-muted-foreground/40" />
                   <div>
@@ -205,7 +246,7 @@ const EditEventPage = () => {
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {event!.ticketTypes.map((t) => (
+                  {event.ticketTypes.map((t) => (
                     <div
                       key={t.id}
                       className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"

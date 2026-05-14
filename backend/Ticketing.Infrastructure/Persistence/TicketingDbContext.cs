@@ -14,12 +14,29 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.InviteToken);
+
+        modelBuilder.Entity<Event>()
+            .HasOne(e => e.Organizer)
+            .WithMany()
+            .HasForeignKey(e => e.OrganizerId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
 
         modelBuilder.Entity<Event>()
             .HasIndex(e => e.Category);
 
         modelBuilder.Entity<Event>()
             .HasIndex(e => new { e.Date, e.Featured });
+
+        modelBuilder.Entity<Event>()
+            .HasIndex(e => e.OrganizerId);
+
+        modelBuilder.Entity<Event>()
+            .HasIndex(e => e.Status);
+
+        modelBuilder.Entity<Event>()
+            .HasIndex(e => e.IsDeleted);
 
         modelBuilder.Entity<EventTicketType>()
             .HasIndex(et => new { et.EventId, et.Name });

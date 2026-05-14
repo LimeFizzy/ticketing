@@ -17,7 +17,7 @@ import {
   postSignUp,
 } from '@/lib/api';
 
-const toUser = (dto: UserDto): User => ({ ...dto, role: 'organizer' });
+const toUser = (dto: UserDto): User => ({ ...dto });
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 

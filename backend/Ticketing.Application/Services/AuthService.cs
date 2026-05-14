@@ -10,6 +10,13 @@ public interface IAuthService
     Task<UserDto?> RegisterAsync(RegisterRequest request);
     Task<UserDto?> GetUserByIdAsync(Guid userId);
     Task<UserDto?> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
+    Task<(UserDto User, string InviteToken)> InviteOrganizerAsync(Guid adminUserId, InviteOrganizerRequest request);
+    Task<VerifyInviteResponse> VerifyInviteAsync(string token);
+    Task<UserDto?> AcceptInviteAsync(AcceptInviteRequest request);
+    Task<IEnumerable<OrganizerDto>> GetOrganizersAsync();
+    Task RemoveOrganizerAsync(Guid organizerId, Guid adminUserId);
+    Task<bool> IsAdminAsync(Guid userId);
+    Task<bool> HasPasswordAsync(string email);
 }
 
 public class AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher) : IAuthService
@@ -71,7 +78,95 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         return MapToDto(user);
     }
 
+    public async Task<(UserDto User, string InviteToken)> InviteOrganizerAsync(Guid adminUserId, InviteOrganizerRequest request)
+    {
+        var admin = await userRepository.GetByIdAsync(adminUserId);
+        if (admin?.Role != "admin")
+            throw new UnauthorizedAccessException("Only admins can invite organizers");
+
+        var existingUser = await userRepository.GetByEmailAsync(request.Email);
+        if (existingUser != null)
+            throw new InvalidOperationException("A user with this email already exists");
+
+        var inviteToken = Guid.NewGuid().ToString("N");
+
+        var user = new User
+        {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            PasswordHash = "",
+            Role = "organizer",
+            InviteToken = inviteToken,
+            InviteTokenExpires = DateTime.UtcNow.AddDays(7)
+        };
+
+        await userRepository.AddAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        return (MapToDto(user), inviteToken);
+    }
+
+    public async Task<VerifyInviteResponse> VerifyInviteAsync(string token)
+    {
+        var user = await userRepository.GetByInviteTokenAsync(token);
+        if (user == null)
+            return new VerifyInviteResponse(false, null);
+
+        return new VerifyInviteResponse(true, user.Email);
+    }
+
+    public async Task<UserDto?> AcceptInviteAsync(AcceptInviteRequest request)
+    {
+        var user = await userRepository.GetByInviteTokenAsync(request.Token);
+        if (user == null) return null;
+
+        user.PasswordHash = passwordHasher.Hash(request.Password);
+        user.InviteToken = null;
+        user.InviteTokenExpires = null;
+
+        await userRepository.UpdateAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        return MapToDto(user);
+    }
+
+    public async Task<IEnumerable<OrganizerDto>> GetOrganizersAsync()
+    {
+        var organizers = await userRepository.GetByRoleAsync("organizer");
+        return organizers.Select(o => new OrganizerDto(
+            o.Id, o.FirstName, o.LastName, o.Email,
+            !string.IsNullOrEmpty(o.PasswordHash)
+        ));
+    }
+
+    public async Task RemoveOrganizerAsync(Guid organizerId, Guid adminUserId)
+    {
+        var admin = await userRepository.GetByIdAsync(adminUserId);
+        if (admin?.Role != "admin")
+            throw new UnauthorizedAccessException("Only admins can remove organizers");
+
+        var organizer = await userRepository.GetByIdAsync(organizerId);
+        if (organizer == null || organizer.Role != "organizer")
+            throw new InvalidOperationException("Organizer not found");
+
+        await userRepository.DeleteAsync(organizer);
+        await userRepository.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsAdminAsync(Guid userId)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        return user?.Role == "admin";
+    }
+
+    public async Task<bool> HasPasswordAsync(string email)
+    {
+        var user = await userRepository.GetByEmailAsync(email);
+        return user != null && !string.IsNullOrEmpty(user.PasswordHash);
+    }
+
     private static UserDto MapToDto(User user) => new(
-        user.Id, user.FirstName, user.LastName, user.Email
+        user.Id, user.FirstName, user.LastName, user.Email, user.Role
     );
 }
