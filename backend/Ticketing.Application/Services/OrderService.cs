@@ -6,7 +6,7 @@ namespace Ticketing.Application.Services;
 
 public interface IOrderService
 {
-    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null);
+    Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null, Guid? promoCodeId = null, decimal discountAmount = 0);
 }
 
 public class OrderService(
@@ -15,7 +15,7 @@ public class OrderService(
     IEventRepository eventRepository,
     IEventTicketTypeRepository eventTicketTypeRepository) : IOrderService
 {
-    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null)
+    public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null, Guid? promoCodeId = null, decimal discountAmount = 0)
     {
         var @event = await eventRepository.GetByIdAsync(request.EventId)
             ?? throw new InvalidOperationException("Event not found");
@@ -55,9 +55,11 @@ public class OrderService(
         {
             UserId = userId,
             EventId = request.EventId,
-            TotalAmount = total,
+            TotalAmount = total - discountAmount,
             Status = "Confirmed",
             StripeSessionId = stripeSessionId,
+            PromoCodeId = promoCodeId,
+            DiscountAmount = discountAmount,
             Tickets = ticketsToCreate
         };
 

@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -15,6 +16,8 @@ namespace Ticketing.API.Controllers;
 public class WebhooksController(
     IOrderService orderService,
     IOrderRepository orderRepository,
+    IEmailService emailService,
+    IPromoCodeRepository promoCodeRepository,
     IOptions<StripeSettings> options) : ControllerBase
 {
     [HttpPost("stripe")]
@@ -51,8 +54,18 @@ public class WebhooksController(
             var eventId = Guid.Parse(session.Metadata["eventId"]);
             var items = System.Text.Json.JsonSerializer.Deserialize<OrderItemRequest[]>(session.Metadata["items"])!;
 
+            Guid? promoCodeId = session.Metadata.TryGetValue("promoCodeId", out var pcId) && Guid.TryParse(pcId, out var parsed)
+                ? parsed : null;
+            decimal discountAmount = session.Metadata.TryGetValue("discountAmount", out var da) && decimal.TryParse(da, out var parsedDa)
+                ? parsedDa : 0;
+
             var request = new CreateOrderRequest(eventId, items);
-            await orderService.CreateOrderAsync(userId, request, session.Id);
+            var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount);
+
+            if (promoCodeId.HasValue)
+                await promoCodeRepository.IncrementUsageAsync(promoCodeId.Value);
+
+            BackgroundJob.Enqueue(() => emailService.SendOrderConfirmationAsync(order.Id));
         }
 
         return Ok();

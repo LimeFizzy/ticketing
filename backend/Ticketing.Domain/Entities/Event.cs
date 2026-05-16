@@ -23,4 +23,6 @@ public class Event
     public User? Organizer { get; set; }
 
     public ICollection<EventTicketType> TicketTypes { get; set; } = [];
+    public ICollection<PromoCode> PromoCodes { get; set; } = [];
+    public ICollection<Review> Reviews { get; set; } = [];
 }

@@ -9,6 +9,7 @@ using Ticketing.Domain.Constants;
 using Ticketing.Infrastructure.Auth;
 using Ticketing.Infrastructure.Persistence;
 using Ticketing.API.Services;
+using Hangfire;
 using EventService = Ticketing.Application.Services.EventService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,22 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IEventTicketTypeRepository, EventTicketTypeRepository>();
 builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailLogRepository, EmailLogRepository>();
+builder.Services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
+builder.Services.AddScoped<IPromoCodeService, PromoCodeService>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, Ticketing.Application.Services.ReviewService>();
+builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+
+builder.Services.AddHangfire(config => config
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseInMemoryStorage());
+builder.Services.AddHangfireServer();
 
 builder.Services.AddCors(options =>
 {
@@ -97,6 +114,12 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.MapOpenApi();
+
+app.UseHangfireDashboard();
+RecurringJob.AddOrUpdate<EmailBackgroundJobs>(
+    "send-event-reminders",
+    x => x.SendEventReminders(),
+    Cron.Hourly);
 app.UseSwagger();
 
 if (app.Environment.IsDevelopment())

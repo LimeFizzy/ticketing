@@ -28,7 +28,9 @@ public record EventDto(
     string[]? Disclaimers,
     string? VenueMapId,
     [property: Required] string Status,
-    Guid? OrganizerId
+    Guid? OrganizerId,
+    double? AverageRating = null,
+    int ReviewCount = 0
 );
 
 public record EventsQueryDto(
