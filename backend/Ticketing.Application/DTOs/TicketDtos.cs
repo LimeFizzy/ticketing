@@ -15,7 +15,9 @@ public record TicketDto(
     [property: Required] string Venue,
     [property: Required] string City,
     [property: Required] string ImageUrl,
-    DateTime? CheckedInAt = null
+    DateTime? CheckedInAt = null,
+    Guid? VenueMapPlaceId = null,
+    string? SeatLabel = null
 );
 
 public record CheckInRequest(

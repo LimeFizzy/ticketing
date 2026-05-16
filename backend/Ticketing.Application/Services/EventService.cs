@@ -15,7 +15,8 @@ public interface IEventService
 
 public class EventService(
     IEventRepository eventRepository,
-    IEventTicketTypeRepository ticketTypeRepository) : IEventService
+    IEventTicketTypeRepository ticketTypeRepository,
+    IReviewRepository reviewRepository) : IEventService
 {
     public async Task<EventDto?> GetByIdAsync(Guid id)
     {
@@ -111,6 +112,9 @@ public class EventService(
         var availableTypes = ticketTypes.Where(t => t.Capacity > t.Sold).ToList();
         var priceFrom = availableTypes.Count > 0 ? availableTypes.Min(t => t.Price) : 0;
 
+        var avgRating = await reviewRepository.GetAverageRatingAsync(@event.Id);
+        var reviewCount = await reviewRepository.GetReviewCountAsync(@event.Id);
+
         return new EventDto(
             @event.Id,
             @event.Title,
@@ -127,7 +131,9 @@ public class EventService(
             disclaimers,
             @event.VenueMapId,
             @event.Status,
-            @event.OrganizerId
+            @event.OrganizerId,
+            reviewCount > 0 ? Math.Round(avgRating, 1) : null,
+            reviewCount
         );
     }
 }

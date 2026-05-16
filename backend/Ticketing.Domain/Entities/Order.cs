@@ -9,8 +9,11 @@ public class Order
     public required string Status { get; set; } = "Pending";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? StripeSessionId { get; set; }
+    public Guid? PromoCodeId { get; set; }
+    public decimal DiscountAmount { get; set; }
 
     public User User { get; set; } = null!;
     public Event Event { get; set; } = null!;
     public ICollection<Ticket> Tickets { get; set; } = [];
+    public PromoCode? PromoCode { get; set; }
 }

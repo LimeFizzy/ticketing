@@ -65,7 +65,9 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
             @event.Venue,
             @event.City,
             @event.ImageUrl,
-            ticket.CheckedInAt
+            ticket.CheckedInAt,
+            ticket.VenueMapPlaceId,
+            ticket.VenueMapPlace?.Label
         );
     }
 }

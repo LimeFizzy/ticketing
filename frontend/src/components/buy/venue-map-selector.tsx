@@ -107,6 +107,7 @@ export const VenueMapSelector = ({
         .map(([placeId, quantity]) => ({
           eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
           quantity,
+          venueMapPlaceId: placeId,
         }));
       const { data, error } = await createCheckoutSession({
         body: { eventId: event.id, items },

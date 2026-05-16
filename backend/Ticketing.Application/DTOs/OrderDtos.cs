@@ -4,12 +4,14 @@ namespace Ticketing.Application.DTOs;
 
 public record CreateCheckoutSessionRequest(
     [Required] Guid EventId,
-    [Required] OrderItemRequest[] Items
+    [Required] OrderItemRequest[] Items,
+    string? PromoCode
 );
 
 public record OrderItemRequest(
     [Required] Guid EventTicketTypeId,
-    [Required] int Quantity
+    [Required] int Quantity,
+    Guid? VenueMapPlaceId = null
 );
 
 public record CheckoutSessionDto(

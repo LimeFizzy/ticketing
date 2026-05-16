@@ -12,6 +12,16 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
         return order;
     }
 
+    public Task<Order?> GetByIdAsync(Guid id)
+    {
+        return context.Orders
+            .Include(o => o.User)
+            .Include(o => o.Event)
+            .Include(o => o.Tickets)
+                .ThenInclude(t => t.EventTicketType)
+            .FirstOrDefaultAsync(o => o.Id == id);
+    }
+
     public Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId)
     {
         return context.Orders.FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId);
