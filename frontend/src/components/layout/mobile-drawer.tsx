@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { Drawer } from '@base-ui/react/drawer';
-import { CalendarDays, LayoutDashboard, Shield, Ticket, User, X } from 'lucide-react';
+import {
+  CalendarDays,
+  LayoutDashboard,
+  Shield,
+  Ticket,
+  User,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';

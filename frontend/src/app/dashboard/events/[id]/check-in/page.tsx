@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -15,11 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { checkInTicket, getEventById } from '@/lib/api';
-import type {
-  CheckInResponse,
-  EventDto,
-  TicketDto,
-} from '@/lib/api/types.gen';
+import type { CheckInResponse, EventDto, TicketDto } from '@/lib/api/types.gen';
 import { dashboardEventRoute } from '@/lib/routes';
 import { useAuth } from '@/hooks/use-auth';
 import { formatTicketDate } from '@/lib/formatters';
@@ -36,11 +32,7 @@ interface RecentCheckIn {
 
 const QR_READER_ID = 'qr-reader';
 
-const CheckInPage = ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) => {
+const CheckInPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [eventId, setEventId] = useState<string>('');
@@ -67,65 +59,59 @@ const CheckInPage = ({
       .finally(() => setLoading(false));
   }, [eventId, user]);
 
-  const performCheckIn = useCallback(
-    async (ticketCode: string) => {
-      if (!eventId) return;
-      setResult(null);
+  const performCheckIn = async (ticketCode: string) => {
+    if (!eventId) return;
+    setResult(null);
 
-      try {
-        const { data, error } = await checkInTicket({
-          body: { ticketCode, eventId },
-        });
+    try {
+      const { data, error } = await checkInTicket({
+        body: { ticketCode, eventId },
+      });
 
-        if (error || !data) {
-          const message =
-            (error as Record<string, unknown> & { title?: string })?.title ||
-            'Check-in failed. Please try again.';
-          setResult({ type: 'error', message: String(message) });
-          return;
-        }
-
-        if (data.wasAlreadyCheckedIn) {
-          setResult({ type: 'duplicate', response: data });
-        } else {
-          setResult({ type: 'success', response: data });
-          setRecentCheckIns((prev) => [
-            { ticket: data.ticket, checkedInAt: new Date() },
-            ...prev,
-          ]);
-        }
-      } catch {
-        setResult({
-          type: 'error',
-          message: 'Something went wrong. Please try again.',
-        });
-      }
-    },
-    [eventId]
-  );
-
-  const handleScan = useCallback(
-    (decodedText: string) => {
-      if (isScanning.current) return;
-      isScanning.current = true;
-
-      try {
-        const payload = JSON.parse(decodedText);
-        if (payload.ticketCode) {
-          performCheckIn(payload.ticketCode);
-        }
-      } catch {
-        if (decodedText.startsWith('TF-')) {
-          performCheckIn(decodedText);
-        }
+      if (error || !data) {
+        const message =
+          (error as Record<string, unknown> & { title?: string })?.title ||
+          'Check-in failed. Please try again.';
+        setResult({ type: 'error', message: String(message) });
+        return;
       }
 
-      setTimeout(() => {
-        isScanning.current = false;
-      }, 2000);
-    },
-    [performCheckIn]
-  );
+      if (data.wasAlreadyCheckedIn) {
+        setResult({ type: 'duplicate', response: data });
+      } else {
+        setResult({ type: 'success', response: data });
+        setRecentCheckIns((prev) => [
+          { ticket: data.ticket, checkedInAt: new Date() },
+          ...prev,
+        ]);
+      }
+    } catch {
+      setResult({
+        type: 'error',
+        message: 'Something went wrong. Please try again.',
+      });
+    }
+  };
+
+  const handleScan = (decodedText: string) => {
+    if (isScanning.current) return;
+    isScanning.current = true;
+
+    try {
+      const payload = JSON.parse(decodedText);
+      if (payload.ticketCode) {
+        performCheckIn(payload.ticketCode);
+      }
+    } catch {
+      if (decodedText.startsWith('TF-')) {
+        performCheckIn(decodedText);
+      }
+    }
+
+    setTimeout(() => {
+      isScanning.current = false;
+    }, 2000);
+  };
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +135,7 @@ const CheckInPage = ({
       try {
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 10 },
           handleScan,
           () => {}
         );
@@ -228,21 +214,32 @@ const CheckInPage = ({
       <Card className="glass border-white/40 shadow-sm">
         <CardContent className="flex flex-col items-center gap-4 p-6">
           {scannerMode === 'camera' ? (
-            <div className="w-full max-w-sm">
-              <div id={QR_READER_ID} className="w-full" />
+            <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-black">
+              <div
+                id={QR_READER_ID}
+                className="w-full [&_video]:!block [&_video]:!w-full"
+              />
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="size-52 rounded-2xl border-2 border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+              </div>
             </div>
           ) : (
-            <form onSubmit={handleManualSubmit} className="flex w-full gap-2">
-              <Input
-                placeholder="Enter ticket code (e.g. TF-XXXXXXXX)"
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                className="flex-1 font-mono"
-              />
-              <Button type="submit" disabled={!manualCode.trim()}>
-                Check in
-              </Button>
-            </form>
+            <div className="flex w-full flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">
+                Ticket code
+              </label>
+              <form onSubmit={handleManualSubmit} className="flex w-full gap-2">
+                <Input
+                  placeholder="TF-XXXXXXXX"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                  className="flex-1 font-mono"
+                />
+                <Button type="submit" disabled={!manualCode.trim()}>
+                  Check in
+                </Button>
+              </form>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -298,9 +295,7 @@ const CheckInPage = ({
                       result.response.ticket.checkedInAt && (
                         <span className="text-xs">
                           Checked in at{' '}
-                          {formatTicketDate(
-                            result.response.ticket.checkedInAt
-                          )}
+                          {formatTicketDate(result.response.ticket.checkedInAt)}
                         </span>
                       )}
                   </div>
@@ -319,7 +314,10 @@ const CheckInPage = ({
           </h2>
           <div className="flex flex-col gap-2">
             {recentCheckIns.map((ci) => (
-              <Card key={ci.ticket.id} className="glass border-white/40 shadow-sm">
+              <Card
+                key={ci.ticket.id}
+                className="glass border-white/40 shadow-sm"
+              >
                 <CardContent className="flex items-center justify-between p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">

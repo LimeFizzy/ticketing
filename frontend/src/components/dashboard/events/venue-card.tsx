@@ -19,7 +19,7 @@ export const VenueCard = ({
   <Card className="glass border-white/40 shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between">
       <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Venue
+        Location
       </CardTitle>
       {venueMapId && (
         <Badge variant="secondary" className="text-xs font-normal">
@@ -40,15 +40,17 @@ export const VenueCard = ({
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-foreground">
-            {venue || '—'}
-          </p>
+          <p className="truncate font-medium text-foreground">{venue || '—'}</p>
           <p className="truncate text-sm text-muted-foreground">
             {city || '—'}
           </p>
           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
             <LayoutGrid className="size-3" />
-            <span>{venueMapId ? 'Seating map configured' : 'Seating map not configured'}</span>
+            <span>
+              {venueMapId
+                ? 'Seating map configured'
+                : 'Seating map not configured'}
+            </span>
           </div>
         </div>
       </div>
@@ -61,7 +63,7 @@ export const VenueCard = ({
         <Link href={dashboardEventVenueMapRoute(eventId)}>
           <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
             <MapPin className="size-3.5" />
-            Manage venue
+            Manage location
           </Button>
         </Link>
       </div>

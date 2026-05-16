@@ -11,11 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
-import {
-  getOrganizers,
-  inviteOrganizer,
-  removeOrganizer,
-} from '@/lib/api';
+import { getOrganizers, inviteOrganizer, removeOrganizer } from '@/lib/api';
 import type { OrganizerDto } from '@/lib/api/types.gen';
 import { useFormState } from '@/hooks/use-form-state';
 
@@ -52,7 +48,11 @@ export const AdminPanel = () => {
     setLoading(true);
 
     const { data, error: apiError } = await inviteOrganizer({
-      body: { firstName: form.firstName, lastName: form.lastName, email: form.email },
+      body: {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+      },
     });
 
     if (apiError) {

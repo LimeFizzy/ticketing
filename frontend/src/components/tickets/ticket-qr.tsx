@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
@@ -13,14 +12,15 @@ interface TicketQRProps {
   muted?: boolean;
 }
 
-export const TicketQR = ({ ticketCode, eventId, checkedInAt, muted }: TicketQRProps) => {
+export const TicketQR = ({
+  ticketCode,
+  eventId,
+  checkedInAt,
+  muted,
+}: TicketQRProps) => {
   const isUsed = !!checkedInAt;
   const { user } = useAuth();
-  const payload = useMemo(
-    () =>
-      user ? JSON.stringify({ ticketCode, eventId }) : null,
-    [user, ticketCode, eventId]
-  );
+  const payload = user ? JSON.stringify({ ticketCode, eventId }) : null;
 
   if (!payload) return null;
 

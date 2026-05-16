@@ -5,6 +5,7 @@ import {
   CalendarDays,
   LayoutDashboard,
   LogIn,
+  Map,
   PanelLeftClose,
   PanelLeftOpen,
   Shield,
@@ -18,7 +19,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { NavLink } from './nav-link';
 import { SidebarAuthSection } from './sidebar-auth-section';
 import { cn } from '@/lib/utils';
-import { Route } from '@/lib/routes';
+import { dashboardVenueMapsRoute, Route } from '@/lib/routes';
 
 export const DesktopSidebar = () => {
   const { collapsed, toggleCollapsed } = useSidebar();
@@ -95,6 +96,13 @@ export const DesktopSidebar = () => {
               href={Route.Dashboard}
               icon={<LayoutDashboard className="size-4" />}
               label="Dashboard"
+              collapsed={collapsed}
+              excludePrefixes={[dashboardVenueMapsRoute()]}
+            />
+            <NavLink
+              href={dashboardVenueMapsRoute()}
+              icon={<Map className="size-4" />}
+              label="Venue Maps"
               collapsed={collapsed}
             />
             <NavLink
