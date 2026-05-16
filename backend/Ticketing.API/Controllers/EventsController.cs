@@ -9,7 +9,7 @@ namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/events")]
-public class EventsController(IEventService eventService) : ControllerBase
+public class EventsController(IEventService eventService, IReviewService reviewService, IVenueMapService venueMapService) : ControllerBase
 {
     [HttpGet(Name = "getEvents")]
     [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
@@ -79,6 +79,24 @@ public class EventsController(IEventService eventService) : ControllerBase
         {
             return StatusCode(403, new ProblemDetails { Title = "Event not found or not owned by you" });
         }
+    }
+
+    [HttpGet("{id}/reviews", Name = "getEventReviews")]
+    [ProducesResponseType(typeof(EventReviewsSummaryDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReviews(Guid id)
+    {
+        var summary = await reviewService.GetByEventIdAsync(id);
+        return Ok(summary);
+    }
+
+    [HttpGet("{id}/venue-map", Name = "getEventVenueMap")]
+    [ProducesResponseType(typeof(VenueMapDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetVenueMap(Guid id)
+    {
+        var venueMap = await venueMapService.GetForEventAsync(id);
+        if (venueMap == null) return NotFound(new ProblemDetails { Title = "No venue map for this event" });
+        return Ok(venueMap);
     }
 
     private Guid GetUserIdFromClaims() =>

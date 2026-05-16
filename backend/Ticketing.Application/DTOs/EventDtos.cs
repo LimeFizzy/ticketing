@@ -26,9 +26,11 @@ public record EventDto(
     [property: Required] int AvailableTickets,
     [property: Required] bool Featured,
     string[]? Disclaimers,
-    string? VenueMapId,
+    Guid? VenueMapId,
     [property: Required] string Status,
-    Guid? OrganizerId
+    Guid? OrganizerId,
+    double? AverageRating = null,
+    int ReviewCount = 0
 );
 
 public record EventsQueryDto(
@@ -64,7 +66,7 @@ public record UpdateEventRequest(
     string? Description,
     bool Featured,
     string? Disclaimers,
-    string? VenueMapId,
+    Guid? VenueMapId,
     [Required] string Status
 );
 

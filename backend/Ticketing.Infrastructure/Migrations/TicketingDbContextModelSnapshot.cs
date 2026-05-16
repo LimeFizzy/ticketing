@@ -22,6 +22,57 @@ namespace Ticketing.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ticketing.Domain.Entities.EmailLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmailType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EventId", "EmailType");
+
+                    b.HasIndex("OrderId", "EmailType");
+
+                    b.ToTable("EmailLogs");
+                });
+
             modelBuilder.Entity("Ticketing.Domain.Entities.Event", b =>
                 {
                     b.Property<Guid>("Id")
@@ -76,8 +127,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("VenueMapId")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("VenueMapId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -88,6 +139,8 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasIndex("OrganizerId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("VenueMapId");
 
                     b.HasIndex("Date", "Featured");
 
@@ -123,6 +176,33 @@ namespace Ticketing.Infrastructure.Migrations
                     b.ToTable("EventTicketTypes");
                 });
 
+            modelBuilder.Entity("Ticketing.Domain.Entities.EventVenueMapPlace", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EventTicketTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("VenueMapPlaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventTicketTypeId");
+
+                    b.HasIndex("VenueMapPlaceId");
+
+                    b.HasIndex("EventId", "VenueMapPlaceId")
+                        .IsUnique();
+
+                    b.ToTable("EventVenueMapPlaces");
+                });
+
             modelBuilder.Entity("Ticketing.Domain.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -132,7 +212,13 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PromoCodeId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Status")
@@ -150,11 +236,94 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PromoCodeId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("EventId", "CreatedAt");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.PromoCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentUses")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("Code", "EventId")
+                        .IsUnique();
+
+                    b.ToTable("PromoCodes");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("EventId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.Ticket", b =>
@@ -189,6 +358,9 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("VenueMapPlaceId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
@@ -197,6 +369,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("VenueMapPlaceId");
 
                     b.HasIndex("EventTicketTypeId", "Status");
 
@@ -245,6 +419,103 @@ namespace Ticketing.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMap", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.ToTable("VenueMaps");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMapDecoration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Height")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("VenueMapId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("Width")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("X")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Y")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VenueMapId");
+
+                    b.ToTable("VenueMapDecorations");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMapPlace", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("Height")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("VenueMapId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Width")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("X")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Y")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VenueMapId");
+
+                    b.ToTable("VenueMapPlaces");
+                });
+
             modelBuilder.Entity("Ticketing.Domain.Entities.Event", b =>
                 {
                     b.HasOne("Ticketing.Domain.Entities.User", "Organizer")
@@ -252,7 +523,14 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasForeignKey("OrganizerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Ticketing.Domain.Entities.VenueMap", "VenueMap")
+                        .WithMany()
+                        .HasForeignKey("VenueMapId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Organizer");
+
+                    b.Navigation("VenueMap");
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.EventTicketType", b =>
@@ -266,6 +544,33 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("Ticketing.Domain.Entities.EventVenueMapPlace", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ticketing.Domain.Entities.EventTicketType", "EventTicketType")
+                        .WithMany()
+                        .HasForeignKey("EventTicketTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ticketing.Domain.Entities.VenueMapPlace", "VenueMapPlace")
+                        .WithMany()
+                        .HasForeignKey("VenueMapPlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("EventTicketType");
+
+                    b.Navigation("VenueMapPlace");
+                });
+
             modelBuilder.Entity("Ticketing.Domain.Entities.Order", b =>
                 {
                     b.HasOne("Ticketing.Domain.Entities.Event", "Event")
@@ -274,8 +579,45 @@ namespace Ticketing.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Ticketing.Domain.Entities.PromoCode", "PromoCode")
+                        .WithMany()
+                        .HasForeignKey("PromoCodeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Ticketing.Domain.Entities.User", "User")
                         .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("PromoCode");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.PromoCode", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.Event", "Event")
+                        .WithMany("PromoCodes")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.Review", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.Event", "Event")
+                        .WithMany("Reviews")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ticketing.Domain.Entities.User", "User")
+                        .WithMany("Reviews")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -305,15 +647,59 @@ namespace Ticketing.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Ticketing.Domain.Entities.VenueMapPlace", "VenueMapPlace")
+                        .WithMany("Tickets")
+                        .HasForeignKey("VenueMapPlaceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("EventTicketType");
 
                     b.Navigation("Order");
 
                     b.Navigation("User");
+
+                    b.Navigation("VenueMapPlace");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMap", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMapDecoration", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.VenueMap", "VenueMap")
+                        .WithMany("Decorations")
+                        .HasForeignKey("VenueMapId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("VenueMap");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMapPlace", b =>
+                {
+                    b.HasOne("Ticketing.Domain.Entities.VenueMap", "VenueMap")
+                        .WithMany("Places")
+                        .HasForeignKey("VenueMapId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("VenueMap");
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.Event", b =>
                 {
+                    b.Navigation("PromoCodes");
+
+                    b.Navigation("Reviews");
+
                     b.Navigation("TicketTypes");
                 });
 
@@ -323,6 +709,20 @@ namespace Ticketing.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Reviews");
+
+                    b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMap", b =>
+                {
+                    b.Navigation("Decorations");
+
+                    b.Navigation("Places");
+                });
+
+            modelBuilder.Entity("Ticketing.Domain.Entities.VenueMapPlace", b =>
                 {
                     b.Navigation("Tickets");
                 });
