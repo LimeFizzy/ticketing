@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Loader2, Trash2 } from 'lucide-react';
@@ -54,7 +54,7 @@ export const EditTicketTypeForm = ({
       ? `Capacity cannot be less than ${currentTicketType.sold} (already sold)`
       : undefined;
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     const newCapacity = Number(form.capacity);
     if (newCapacity < currentTicketType.sold) return;
 
@@ -74,15 +74,15 @@ export const EditTicketTypeForm = ({
       showSaved();
     }
     setSaving(false);
-  }, [id, ticketId, form, currentTicketType, showSaved]);
+  };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!window.confirm(`Delete "${form.name}"? This cannot be undone.`))
       return;
     setDeleting(true);
     await deleteTicketType({ path: { eventId: id, ticketTypeId: ticketId } });
     router.push(dashboardEventTicketsRoute(id));
-  }, [id, ticketId, form.name, router]);
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">

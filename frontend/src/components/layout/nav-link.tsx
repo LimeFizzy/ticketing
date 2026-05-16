@@ -12,6 +12,7 @@ interface NavLinkProps {
   label: string;
   collapsed?: boolean;
   onClick?: () => void;
+  excludePrefixes?: string[];
 }
 
 export const NavLink = ({
@@ -20,10 +21,12 @@ export const NavLink = ({
   label,
   collapsed = false,
   onClick,
+  excludePrefixes,
 }: NavLinkProps) => {
   const pathname = usePathname();
   const isActive =
-    pathname === href || (href !== Route.Home && pathname.startsWith(href));
+    (pathname === href || (href !== Route.Home && pathname.startsWith(href))) &&
+    !excludePrefixes?.some((prefix) => pathname.startsWith(prefix));
 
   return (
     <Link

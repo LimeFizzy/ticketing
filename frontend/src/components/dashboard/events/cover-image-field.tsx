@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImageIcon, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,20 +21,17 @@ export const CoverImageField = ({ value, onChange }: CoverImageFieldProps) => {
     setImgError(false);
   }, [value]);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        onChange(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    },
-    [onChange]
-  );
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      onChange(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
-  const openPicker = useCallback(() => fileInputRef.current?.click(), []);
+  const openPicker = () => fileInputRef.current?.click();
 
   const hasImage = Boolean(value) && !imgError;
 

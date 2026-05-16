@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Link2, Loader2, Pencil, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
@@ -72,43 +72,31 @@ const DashboardPage = () => {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const filtered = useMemo(
-    () => filterEvents(events, search, status, category),
-    [events, search, status, category]
-  );
+  const filtered = filterEvents(events, search, status, category);
 
-  const handleDelete = useCallback(
-    async (e: React.MouseEvent, id: string) => {
-      e.stopPropagation();
-      setDeletingId(id);
-      await deleteEvent({ path: { id } });
-      setEvents((prev) => prev.filter((ev) => ev.id !== id));
-      setDeletingId(null);
-    },
-    []
-  );
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setDeletingId(id);
+    await deleteEvent({ path: { id } });
+    setEvents((prev) => prev.filter((ev) => ev.id !== id));
+    setDeletingId(null);
+  };
 
-  const handleCheckIn = useCallback(
-    (e: React.MouseEvent, id: string) => {
-      e.stopPropagation();
-      router.push(dashboardEventCheckInRoute(id));
-    },
-    [router]
-  );
+  const handleCheckIn = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    router.push(dashboardEventCheckInRoute(id));
+  };
 
-  const handleShare = useCallback((e: React.MouseEvent, id: string) => {
+  const handleShare = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const url = `${window.location.origin}${eventRoute(id)}`;
     navigator.clipboard.writeText(url);
-  }, []);
+  };
 
-  const handleEdit = useCallback(
-    (e: React.MouseEvent, id: string) => {
-      e.stopPropagation();
-      router.push(dashboardEventRoute(id));
-    },
-    [router]
-  );
+  const handleEdit = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    router.push(dashboardEventRoute(id));
+  };
 
   if (loading) return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">

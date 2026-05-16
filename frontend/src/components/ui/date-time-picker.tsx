@@ -2,7 +2,7 @@
 
 import { Popover } from '@base-ui/react/popover';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -62,14 +62,14 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
     else setViewMonth((m) => m + 1);
   };
 
-  const selectDay = useCallback((day: number, month: number, year: number) => {
+  const selectDay = (day: number, month: number, year: number) => {
     const current = new Date();
     const h = selected?.getHours() ?? current.getHours();
     const m = selected?.getMinutes() ?? current.getMinutes();
     onChange(toInputValue(new Date(year, month, day, h, m)));
-  }, [selected, onChange]);
+  };
 
-  const changeTime = useCallback((field: 'h' | 'm', raw: string) => {
+  const changeTime = (field: 'h' | 'm', raw: string) => {
     const num = parseInt(raw, 10);
     if (isNaN(num)) return;
     const base = selected ?? new Date(viewYear, viewMonth, 1);
@@ -77,7 +77,7 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
     if (field === 'h') d.setHours(Math.max(0, Math.min(23, num)));
     else d.setMinutes(Math.max(0, Math.min(59, num)));
     onChange(toInputValue(d));
-  }, [selected, viewYear, viewMonth, onChange]);
+  };
 
   return (
     <Popover.Root>

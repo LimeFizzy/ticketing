@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
@@ -20,12 +20,9 @@ export const EventTicketsContent = ({
   const [event] = useState(initialEvent);
   const [ticketTypes, setTicketTypes] = useState(initialTicketTypes);
 
-  const handleEdit = useCallback(
-    (ticketId: string) => {
-      router.push(dashboardEventTicketRoute(id, ticketId));
-    },
-    [id, router]
-  );
+  const handleEdit = (ticketId: string) => {
+    router.push(dashboardEventTicketRoute(id, ticketId));
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">

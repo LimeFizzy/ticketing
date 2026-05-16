@@ -1,22 +1,23 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, Map, ScanLine, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DisclaimersCard } from '@/components/dashboard/events/disclaimers-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deleteEvent, updateEvent } from '@/lib/api';
 import type { EventCategory, EventDto } from '@/lib/api/types.gen';
-import { dashboardEventTicketsRoute, Route } from '@/lib/routes';
+import { dashboardEventCheckInRoute, dashboardEventTicketsRoute, dashboardEventVenueMapRoute, Route } from '@/lib/routes';
 import { toDatetimeLocal } from '@/lib/formatters';
 import { CoverImageField } from '@/components/dashboard/events/cover-image-field';
 import { EventFormFields } from '@/components/dashboard/events/event-form-fields';
 import { VenueCard } from '@/components/dashboard/events/venue-card';
 import { EventTicketTypesCard } from '@/components/dashboard/events/event-ticket-types-card';
 import { EventPublishingCard } from '@/components/dashboard/events/event-publishing-card';
+import { useAuth } from '@/hooks/use-auth';
 import { useFormState } from '@/hooks/use-form-state';
 import { useSaveFeedback } from '@/hooks/use-save-feedback';
 
@@ -35,6 +36,7 @@ type EventForm = {
 export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [event, setEvent] = useState<EventDto>(initialEvent);
 
   const [form, patch] = useFormState<EventForm>({
@@ -52,7 +54,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   const { saved, showSaved } = useSaveFeedback();
   const [saving, setSaving] = useState<'save' | 'publish' | 'unpublish' | null>(null);
 
-  const persist = useCallback(
+  const persist = 
     async (nextStatus: 'published' | 'draft', action: 'save' | 'publish' | 'unpublish') => {
       setSaving(action);
       const { data } = await updateEvent({
@@ -80,23 +82,18 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
         showSaved();
       }
       setSaving(null);
-    },
-    [id, form, event, patch, showSaved]
-  );
+    };
 
-  const handleSave = useCallback(
-    () => persist(form.status, 'save'),
-    [persist, form.status]
-  );
-  const handlePublish = useCallback(() => persist('published', 'publish'), [persist]);
-  const handleUnpublish = useCallback(() => persist('draft', 'unpublish'), [persist]);
+  const handleSave = () => persist(form.status, 'save');
+  const handlePublish = () => persist('published', 'publish');
+  const handleUnpublish = () => persist('draft', 'unpublish');
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`))
       return;
     await deleteEvent({ path: { id } });
     router.push(Route.Dashboard);
-  }, [id, form.title, router]);
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-10">
@@ -167,6 +164,28 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
           />
+          <Card>
+            <CardContent className="flex flex-col gap-2 p-4">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => router.push(dashboardEventCheckInRoute(id))}
+              >
+                <ScanLine className="size-4" />
+                Check in attendees
+              </Button>
+              {user?.role === 'admin' && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => router.push(dashboardEventVenueMapRoute(id))}
+                >
+                  <Map className="size-4" />
+                  Edit venue map
+                </Button>
+              )}
+            </CardContent>
+          </Card>
           <CoverImageField
             value={form.imageUrl}
             onChange={(imageUrl) => patch({ imageUrl })}

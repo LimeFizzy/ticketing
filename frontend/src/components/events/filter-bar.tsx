@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Search, Tag, Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -20,13 +20,15 @@ export const FilterBar = () => {
 
   const searchValue = params.get('q') ?? '';
   const [draft, setDraft] = useState(searchValue);
+  const [prevSearchValue, setPrevSearchValue] = useState(searchValue);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
+  if (prevSearchValue !== searchValue) {
+    setPrevSearchValue(searchValue);
     setDraft(searchValue);
-  }, [searchValue]);
+  }
 
-  const update = useCallback((key: string, value: string | null) => {
+  const update = (key: string, value: string | null) => {
     const next = new URLSearchParams(params.toString());
     if (value && value !== 'all') {
       next.set(key, value);
@@ -35,13 +37,13 @@ export const FilterBar = () => {
     }
     const qs = next.toString();
     router.replace(qs ? `${Route.Home}?${qs}` : Route.Home);
-  }, [params, router]);
+  };
 
-  const handleSearchChange = useCallback((value: string) => {
+  const handleSearchChange = (value: string) => {
     setDraft(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => update('q', value || null), 300);
-  }, [update]);
+  };
 
   return (
     <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">

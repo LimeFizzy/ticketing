@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
@@ -54,7 +54,7 @@ export default function EventVenueMapPage({ params }: { params: Promise<{ id: st
     }).catch(() => {});
   }, [eventId]);
 
-  const handleSelectMap = useCallback(async (mapId: string) => {
+  const handleSelectMap = async (mapId: string) => {
     if (!eventId) return;
     const { data: updated } = await updateEvent({
       path: { id: eventId },
@@ -78,7 +78,7 @@ export default function EventVenueMapPage({ params }: { params: Promise<{ id: st
         setSelectedMap(null);
       }
     }
-  }, [eventId, event]);
+  };
 
   // Load full map when event has a venueMapId
   useEffect(() => {
@@ -88,13 +88,13 @@ export default function EventVenueMapPage({ params }: { params: Promise<{ id: st
     }
   }, [event?.venueMapId]);
 
-  const updateMapping = useCallback((placeId: string, ticketTypeId: string) => {
+  const updateMapping = (placeId: string, ticketTypeId: string) => {
     setMappings((prev) => {
       const next = new Map(prev);
       next.set(placeId, ticketTypeId);
       return next;
     });
-  }, []);
+  };
 
   const handleSave = async () => {
     setSaving(true);

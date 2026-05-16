@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Globe, Lock } from 'lucide-react';
@@ -60,20 +60,17 @@ const NewEventPage = () => {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const patchAndClearError = useCallback(
-    (values: Partial<EventForm>) => {
-      patch(values);
-      const clearedKeys = Object.keys(values) as (keyof FieldErrors)[];
-      setErrors((prev) => {
-        const next = { ...prev };
-        clearedKeys.forEach((k) => delete next[k]);
-        return next;
-      });
-    },
-    [patch],
-  );
+  const patchAndClearError = (values: Partial<EventForm>) => {
+    patch(values);
+    const clearedKeys = Object.keys(values) as (keyof FieldErrors)[];
+    setErrors((prev) => {
+      const next = { ...prev };
+      clearedKeys.forEach((k) => delete next[k]);
+      return next;
+    });
+  };
 
-  const handleCreate = useCallback(async () => {
+  const handleCreate = async () => {
     const validationErrors = validate(form);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
@@ -105,7 +102,7 @@ const NewEventPage = () => {
     } else {
       setSubmitting(false);
     }
-  }, [form, router]);
+  };
 
   const hasErrors = Object.keys(errors).length > 0;
 

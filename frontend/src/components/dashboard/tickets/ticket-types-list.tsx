@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Check, Loader2, Plus, Pencil, Search, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export const TicketTypesList = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
 
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     const q = search.trim().toLowerCase();
     if (!q) return ticketTypes;
     return ticketTypes.filter(
@@ -52,7 +52,7 @@ export const TicketTypesList = ({
         t.name.toLowerCase().includes(q) ||
         t.description?.toLowerCase().includes(q)
     );
-  }, [ticketTypes, search]);
+  })();
 
   const patchDraft = (patch: Partial<Draft>) =>
     setDraft((prev) => ({ ...prev, ...patch }));
