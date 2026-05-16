@@ -40,15 +40,17 @@ export const VenueCard = ({
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-foreground">
-            {venue || '—'}
-          </p>
+          <p className="truncate font-medium text-foreground">{venue || '—'}</p>
           <p className="truncate text-sm text-muted-foreground">
             {city || '—'}
           </p>
           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
             <LayoutGrid className="size-3" />
-            <span>{venueMapId ? 'Seating map configured' : 'Seating map not configured'}</span>
+            <span>
+              {venueMapId
+                ? 'Seating map configured'
+                : 'Seating map not configured'}
+            </span>
           </div>
         </div>
       </div>

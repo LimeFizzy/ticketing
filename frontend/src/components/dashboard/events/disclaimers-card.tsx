@@ -41,7 +41,7 @@ export const DisclaimersCard = ({ value, onChange }: DisclaimersCardProps) => {
               className={cn(
                 'fixed inset-0 z-50 bg-black/30 backdrop-blur-sm',
                 'transition-opacity duration-200',
-                'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
+                'data-[starting-style]:opacity-0 data-[ending-style]:opacity-0'
               )}
             />
             <Dialog.Popup
@@ -50,7 +50,7 @@ export const DisclaimersCard = ({ value, onChange }: DisclaimersCardProps) => {
                 'rounded-2xl border border-white/40 bg-popover p-6 shadow-xl outline-none',
                 'transition-all duration-200',
                 'data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
-                'data-[ending-style]:scale-95 data-[ending-style]:opacity-0',
+                'data-[ending-style]:scale-95 data-[ending-style]:opacity-0'
               )}
             >
               <div className="mb-4 flex items-center justify-between">
@@ -66,7 +66,8 @@ export const DisclaimersCard = ({ value, onChange }: DisclaimersCardProps) => {
                 />
               </div>
               <Dialog.Description className="mb-4 text-sm text-muted-foreground">
-                This is how the disclaimers section appears to buyers on the event page.
+                This is how the disclaimers section appears to buyers on the
+                event page.
               </Dialog.Description>
               <EventDisclaimers extras={extras.length ? extras : null} />
             </Dialog.Popup>
@@ -86,7 +87,9 @@ export const DisclaimersCard = ({ value, onChange }: DisclaimersCardProps) => {
           <ul className="flex flex-col gap-1">
             {STATIC_DISCLAIMERS.map((line, i) => (
               <li key={i} className="flex gap-2 text-xs text-muted-foreground">
-                <span aria-hidden className="select-none">•</span>
+                <span aria-hidden className="select-none">
+                  •
+                </span>
                 <span>{line}</span>
               </li>
             ))}
@@ -101,7 +104,7 @@ export const DisclaimersCard = ({ value, onChange }: DisclaimersCardProps) => {
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={"Age 18+ only\nNo refunds after purchase"}
+            placeholder={'Age 18+ only\nNo refunds after purchase'}
             rows={4}
           />
         </FormField>

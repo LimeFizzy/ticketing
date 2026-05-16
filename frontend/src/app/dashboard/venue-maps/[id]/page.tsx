@@ -1,10 +1,17 @@
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getVenueMapById } from '@/lib/api';
-import type { PlaceInput, DecorationInput } from '@/components/dashboard/venue-maps/editor-canvas';
+import type {
+  PlaceInput,
+  DecorationInput,
+} from '@/components/dashboard/venue-maps/editor-canvas';
 import { VenueMapEditorPage } from './editor-page';
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   if (id === 'new') {
@@ -23,7 +30,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     id: p.id || crypto.randomUUID(),
     kind: p.kind as 'seat' | 'section',
     label: p.label,
-    x: p.x, y: p.y,
+    x: p.x,
+    y: p.y,
     width: p.width ?? undefined,
     height: p.height ?? undefined,
     capacity: p.capacity,
@@ -31,7 +39,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   const decorations: DecorationInput[] = data.decorations.map((d) => ({
     id: d.id || crypto.randomUUID(),
-    x: d.x, y: d.y, width: d.width, height: d.height, label: d.label,
+    x: d.x,
+    y: d.y,
+    width: d.width,
+    height: d.height,
+    label: d.label,
   }));
 
   return (

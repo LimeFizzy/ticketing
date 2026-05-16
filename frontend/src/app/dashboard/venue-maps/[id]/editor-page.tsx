@@ -10,7 +10,11 @@ import { createVenueMap, updateVenueMap } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useSaveFeedback } from '@/hooks/use-save-feedback';
 import { dashboardVenueMapsRoute } from '@/lib/routes';
-import { EditorCanvas, type PlaceInput, type DecorationInput } from '@/components/dashboard/venue-maps/editor-canvas';
+import {
+  EditorCanvas,
+  type PlaceInput,
+  type DecorationInput,
+} from '@/components/dashboard/venue-maps/editor-canvas';
 import { EditorPanel } from '@/components/dashboard/venue-maps/editor-panel';
 
 interface VenueMapEditorPageProps {
@@ -39,20 +43,25 @@ export function VenueMapEditorPage({
   const [mapWidth, setMapWidth] = useState(initialWidth);
   const [mapHeight, setMapHeight] = useState(initialHeight);
   const [places, setPlaces] = useState<PlaceInput[]>(initialPlaces);
-  const [decorations, setDecorations] = useState<DecorationInput[]>(initialDecorations);
+  const [decorations, setDecorations] =
+    useState<DecorationInput[]>(initialDecorations);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
   const handleSelectMany = (ids: Set<string>, add: boolean) => {
-    setSelectedIds((prev) => add ? new Set([...prev, ...ids]) : new Set(ids));
+    setSelectedIds((prev) => (add ? new Set([...prev, ...ids]) : new Set(ids)));
   };
 
   const handleSelect = (id: string | null, addToSelection: boolean) => {
-    if (id === null) { setSelectedIds(new Set()); return; }
+    if (id === null) {
+      setSelectedIds(new Set());
+      return;
+    }
     if (addToSelection) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(id)) next.delete(id); else next.add(id);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
         return next;
       });
     } else {
@@ -61,27 +70,46 @@ export function VenueMapEditorPage({
   };
 
   const handleMovePlace = (id: string, x: number, y: number) => {
-    setPlaces((prev) => prev.map((p) => p.id === id ? { ...p, x, y } : p));
+    setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, x, y } : p)));
   };
 
   const handleMoveDecoration = (id: string, x: number, y: number) => {
-    setDecorations((prev) => prev.map((d) => d.id === id ? { ...d, x, y } : d));
+    setDecorations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, x, y } : d))
+    );
   };
 
   const handleResizeSection = (id: string, width: number, height: number) => {
-    setPlaces((prev) => prev.map((p) => p.id === id ? { ...p, width, height } : p));
+    setPlaces((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, width, height } : p))
+    );
   };
 
-  const handleResizeDecoration = (id: string, x: number, y: number, width: number, height: number) => {
-    setDecorations((prev) => prev.map((d) => d.id === id ? { ...d, x, y, width, height } : d));
+  const handleResizeDecoration = (
+    id: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    setDecorations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, x, y, width, height } : d))
+    );
   };
 
   const handleUpdatePlace = (id: string, patch: Partial<PlaceInput>) => {
-    setPlaces((prev) => prev.map((p) => p.id === id ? { ...p, ...patch } : p));
+    setPlaces((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...patch } : p))
+    );
   };
 
-  const handleUpdateDecoration = (id: string, patch: Partial<DecorationInput>) => {
-    setDecorations((prev) => prev.map((d) => d.id === id ? { ...d, ...patch } : d));
+  const handleUpdateDecoration = (
+    id: string,
+    patch: Partial<DecorationInput>
+  ) => {
+    setDecorations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, ...patch } : d))
+    );
   };
 
   const handleDeleteSelected = () => {
@@ -90,7 +118,13 @@ export function VenueMapEditorPage({
     setSelectedIds(new Set());
   };
 
-  const handleAddRow = (prefix: string, count: number, startX: number, y: number, spacing: number) => {
+  const handleAddRow = (
+    prefix: string,
+    count: number,
+    startX: number,
+    y: number,
+    spacing: number
+  ) => {
     const newSeats: PlaceInput[] = Array.from({ length: count }, (_, i) => ({
       id: crypto.randomUUID(),
       kind: 'seat',
@@ -103,20 +137,33 @@ export function VenueMapEditorPage({
   };
 
   const handleAddSection = () => {
-    setPlaces((prev) => [...prev, {
-      id: crypto.randomUUID(),
-      kind: 'section',
-      label: `Section ${prev.filter((p) => p.kind === 'section').length + 1}`,
-      x: 100, y: 100, width: 200, height: 100, capacity: 50,
-    }]);
+    setPlaces((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        kind: 'section',
+        label: `Section ${prev.filter((p) => p.kind === 'section').length + 1}`,
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 100,
+        capacity: 50,
+      },
+    ]);
   };
 
   const handleAddDecoration = () => {
-    setDecorations((prev) => [...prev, {
-      id: crypto.randomUUID(),
-      label: 'STAGE',
-      x: Math.round(mapWidth / 2) - 100, y: 30, width: 200, height: 40,
-    }]);
+    setDecorations((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        label: 'STAGE',
+        x: Math.round(mapWidth / 2) - 100,
+        y: 30,
+        width: 200,
+        height: 40,
+      },
+    ]);
   };
 
   const handleSave = async () => {
@@ -131,14 +178,19 @@ export function VenueMapEditorPage({
           id: p.id,
           kind: p.kind,
           label: p.label,
-          x: p.x, y: p.y,
+          x: p.x,
+          y: p.y,
           width: p.width ?? null,
           height: p.height ?? null,
           capacity: p.capacity,
         })),
         decorations: decorations.map((d) => ({
           id: d.id,
-          x: d.x, y: d.y, width: d.width, height: d.height, label: d.label,
+          x: d.x,
+          y: d.y,
+          width: d.width,
+          height: d.height,
+          label: d.label,
         })),
       };
 
@@ -160,7 +212,9 @@ export function VenueMapEditorPage({
   if (user?.role !== 'admin') {
     return (
       <div className="mx-auto flex w-full max-w-screen-xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
-        <p className="text-sm text-muted-foreground">Only administrators can manage venue maps.</p>
+        <p className="text-sm text-muted-foreground">
+          Only administrators can manage venue maps.
+        </p>
       </div>
     );
   }
@@ -177,7 +231,7 @@ export function VenueMapEditorPage({
 
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-3xl tracking-tight text-foreground">
-          {mapId === 'new' ? 'Create Venue Map' : (name || 'Edit Venue Map')}
+          {mapId === 'new' ? 'Create Venue Map' : name || 'Edit Venue Map'}
         </h1>
         <Button onClick={handleSave} disabled={saving || !name.trim()}>
           {saved ? 'Saved' : saving ? 'Saving…' : 'Save'}

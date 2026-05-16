@@ -29,14 +29,19 @@ export const TicketTypeActionsCard = ({
         onClick={onSave}
         disabled={!isValid || hasCapacityError || saving}
       >
-        {saving
-          ? <Loader2 className="size-4 animate-spin" />
-          : saved
-            ? <Check className="size-4" />
-            : null}
+        {saving ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : saved ? (
+          <Check className="size-4" />
+        ) : null}
         {saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
       </Button>
-      <Button variant="outline" className="w-full" onClick={onCancel} disabled={saving}>
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={onCancel}
+        disabled={saving}
+      >
         Cancel
       </Button>
     </CardContent>

@@ -2,9 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  SelectionSummary,
-} from '@/components/buy/selection-summary';
+import { SelectionSummary } from '@/components/buy/selection-summary';
 import { VenueMapCanvas } from '@/components/buy/venue-map-canvas';
 import { VenueMapLegend } from '@/components/buy/venue-map-legend';
 import { VenueMapZoomControls } from '@/components/buy/venue-map-zoom-controls';
@@ -75,15 +73,15 @@ export const VenueMapSelector = ({
     .map((p) => {
       const typeName = unitNameFor(p.ticketTypeId);
       return {
-            key: p.id,
-            title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
-            subtitle: p.kind === 'section' ? typeName : undefined,
-            unitPrice: unitPriceFor(p.ticketTypeId),
-            quantity: selection[p.id] ?? 0,
-            max: p.available,
-            onQuantityChange: (next: number) => setQuantity(p.id, next),
-    };
-  });
+        key: p.id,
+        title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
+        subtitle: p.kind === 'section' ? typeName : undefined,
+        unitPrice: unitPriceFor(p.ticketTypeId),
+        quantity: selection[p.id] ?? 0,
+        max: p.available,
+        onQuantityChange: (next: number) => setQuantity(p.id, next),
+      };
+    });
 
   const handleContinue = async () => {
     setSubmitting(true);

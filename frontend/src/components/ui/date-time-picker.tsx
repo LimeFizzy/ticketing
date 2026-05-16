@@ -7,8 +7,18 @@ import { cn } from '@/lib/utils';
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 function toInputValue(d: Date): string {
@@ -27,8 +37,11 @@ function daysInMonth(year: number, month: number): number {
 
 function formatDisplay(date: Date): string {
   return date.toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -38,12 +51,20 @@ interface DateTimePickerProps {
   className?: string;
 }
 
-export function DateTimePicker({ value, onChange, className }: DateTimePickerProps) {
+export function DateTimePicker({
+  value,
+  onChange,
+  className,
+}: DateTimePickerProps) {
   const selected = value ? new Date(value) : null;
   const now = new Date();
 
-  const [viewYear, setViewYear] = useState(selected?.getFullYear() ?? now.getFullYear());
-  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? now.getMonth());
+  const [viewYear, setViewYear] = useState(
+    selected?.getFullYear() ?? now.getFullYear()
+  );
+  const [viewMonth, setViewMonth] = useState(
+    selected?.getMonth() ?? now.getMonth()
+  );
 
   const offset = firstWeekdayOfMonth(viewYear, viewMonth);
   const dim = daysInMonth(viewYear, viewMonth);
@@ -54,12 +75,16 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
   const minute = String((selected ?? now).getMinutes()).padStart(2, '0');
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
-    else setViewMonth((m) => m - 1);
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else setViewMonth((m) => m - 1);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
-    else setViewMonth((m) => m + 1);
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else setViewMonth((m) => m + 1);
   };
 
   const selectDay = (day: number, month: number, year: number) => {
@@ -88,7 +113,7 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
           'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
           'aria-expanded:border-ring aria-expanded:ring-3 aria-expanded:ring-ring/50',
           !selected && 'text-muted-foreground',
-          className,
+          className
         )}
       >
         <CalendarIcon className="size-3.5 shrink-0 opacity-50" />
@@ -103,7 +128,7 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
               'shadow-lg shadow-black/8 outline-none',
               'transition-all duration-150 ease-out',
               'data-[starting-style]:scale-[0.97] data-[starting-style]:opacity-0',
-              'data-[ending-style]:scale-[0.97] data-[ending-style]:opacity-0',
+              'data-[ending-style]:scale-[0.97] data-[ending-style]:opacity-0'
             )}
           >
             {/* Month navigation */}
@@ -184,7 +209,7 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
                           ? 'bg-accent font-medium text-accent-foreground'
                           : current
                             ? 'text-foreground hover:bg-muted'
-                            : 'text-muted-foreground/40 hover:bg-muted/50',
+                            : 'text-muted-foreground/40 hover:bg-muted/50'
                     )}
                   >
                     {day}
@@ -207,10 +232,12 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
                     'w-10 rounded-md border border-border bg-white/70 px-1.5 py-0.5',
                     'text-center text-sm outline-none transition-colors',
                     'focus:border-ring focus:ring-2 focus:ring-ring/50',
-                    '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+                    '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                   )}
                 />
-                <span className="text-sm font-medium text-muted-foreground">:</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  :
+                </span>
                 <input
                   type="number"
                   min={0}
@@ -221,7 +248,7 @@ export function DateTimePicker({ value, onChange, className }: DateTimePickerPro
                     'w-10 rounded-md border border-border bg-white/70 px-1.5 py-0.5',
                     'text-center text-sm outline-none transition-colors',
                     'focus:border-ring focus:ring-2 focus:ring-ring/50',
-                    '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+                    '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                   )}
                 />
               </div>

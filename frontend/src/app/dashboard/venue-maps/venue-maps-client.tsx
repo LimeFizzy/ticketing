@@ -15,18 +15,26 @@ import { dashboardVenueMapRoute } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { VenueMapSummaryDto } from '@/lib/api/types.gen';
 
-export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryDto[] }) {
+export function VenueMapsClient({
+  initialMaps,
+}: {
+  initialMaps: VenueMapSummaryDto[];
+}) {
   const router = useRouter();
   const [maps, setMaps] = useState(initialMaps);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [search, setSearch, filtered] = useLocalSearch(
-    maps,
-    (m, q) => m.name.toLowerCase().includes(q)
+  const [search, setSearch, filtered] = useLocalSearch(maps, (m, q) =>
+    m.name.toLowerCase().includes(q)
   );
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!confirm('Delete this venue map? Events using it will keep their assignment but the map data will be lost.')) return;
+    if (
+      !confirm(
+        'Delete this venue map? Events using it will keep their assignment but the map data will be lost.'
+      )
+    )
+      return;
     setDeletingId(id);
     await deleteVenueMap({ path: { id } });
     setMaps((prev) => prev.filter((m) => m.id !== id));
@@ -44,7 +52,10 @@ export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryD
             Manage seating charts and floor plans shared across events.
           </p>
         </div>
-        <Link href={dashboardVenueMapRoute('new')} className={cn(buttonVariants(), 'gap-1.5')}>
+        <Link
+          href={dashboardVenueMapRoute('new')}
+          className={cn(buttonVariants(), 'gap-1.5')}
+        >
           <Plus className="size-4" />
           New map
         </Link>
@@ -78,16 +89,23 @@ export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryD
                       <td colSpan={3} className="py-10 text-center">
                         {maps.length === 0 ? (
                           <div className="flex flex-col items-center gap-3">
-                            <p className="text-muted-foreground">No venue maps yet.</p>
+                            <p className="text-muted-foreground">
+                              No venue maps yet.
+                            </p>
                             <Link
                               href={dashboardVenueMapRoute('new')}
-                              className={buttonVariants({ variant: 'default', size: 'sm' })}
+                              className={buttonVariants({
+                                variant: 'default',
+                                size: 'sm',
+                              })}
                             >
                               Create your first map
                             </Link>
                           </div>
                         ) : (
-                          <p className="text-muted-foreground">No venue maps match your search.</p>
+                          <p className="text-muted-foreground">
+                            No venue maps match your search.
+                          </p>
                         )}
                       </td>
                     </tr>
@@ -95,12 +113,18 @@ export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryD
                     filtered.map((m) => (
                       <tr
                         key={m.id}
-                        onClick={() => router.push(dashboardVenueMapRoute(m.id))}
+                        onClick={() =>
+                          router.push(dashboardVenueMapRoute(m.id))
+                        }
                         className="cursor-pointer transition-colors hover:bg-muted/40"
                       >
-                        <td className="py-3 pr-4 font-medium text-foreground">{m.name}</td>
+                        <td className="py-3 pr-4 font-medium text-foreground">
+                          {m.name}
+                        </td>
                         <td className="py-3 pr-4 text-muted-foreground">
-                          <Badge variant="secondary">{m.placeCount} places</Badge>
+                          <Badge variant="secondary">
+                            {m.placeCount} places
+                          </Badge>
                         </td>
                         <td className="py-3">
                           <div className="flex items-center justify-end gap-1">
@@ -112,9 +136,11 @@ export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryD
                                 disabled={deletingId === m.id}
                                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                               >
-                                {deletingId === m.id
-                                  ? <Loader2 className="size-3.5 animate-spin" />
-                                  : <Trash2 className="size-3.5" />}
+                                {deletingId === m.id ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3.5" />
+                                )}
                               </Button>
                             </Tooltip>
                           </div>
@@ -129,7 +155,8 @@ export function VenueMapsClient({ initialMaps }: { initialMaps: VenueMapSummaryD
 
           {search.trim() && (
             <p className="text-xs text-muted-foreground">
-              {filtered.length} of {maps.length} venue map{maps.length !== 1 ? 's' : ''}
+              {filtered.length} of {maps.length} venue map
+              {maps.length !== 1 ? 's' : ''}
             </p>
           )}
         </CardContent>

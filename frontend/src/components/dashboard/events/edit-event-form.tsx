@@ -10,7 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deleteEvent, updateEvent } from '@/lib/api';
 import type { EventCategory, EventDto } from '@/lib/api/types.gen';
-import { dashboardEventCheckInRoute, dashboardEventTicketsRoute, dashboardEventVenueMapRoute, Route } from '@/lib/routes';
+import {
+  dashboardEventCheckInRoute,
+  dashboardEventTicketsRoute,
+  dashboardEventVenueMapRoute,
+  Route,
+} from '@/lib/routes';
 import { toDatetimeLocal } from '@/lib/formatters';
 import { CoverImageField } from '@/components/dashboard/events/cover-image-field';
 import { EventFormFields } from '@/components/dashboard/events/event-form-fields';
@@ -52,37 +57,45 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   });
 
   const { saved, showSaved } = useSaveFeedback();
-  const [saving, setSaving] = useState<'save' | 'publish' | 'unpublish' | null>(null);
+  const [saving, setSaving] = useState<'save' | 'publish' | 'unpublish' | null>(
+    null
+  );
 
-  const persist = 
-    async (nextStatus: 'published' | 'draft', action: 'save' | 'publish' | 'unpublish') => {
-      setSaving(action);
-      const { data } = await updateEvent({
-        path: { id },
-        body: {
-          title: form.title,
-          category: form.category,
-          date: new Date(form.date).toISOString(),
-          venue: form.venue,
-          city: form.city,
-          imageUrl: form.imageUrl,
-          description: form.description,
-          featured: event?.featured ?? false,
-          disclaimers: form.disclaimers.trim()
-            ? form.disclaimers.split('\n').map((s) => s.trim()).filter(Boolean).join('|')
-            : null,
-          venueMapId: event?.venueMapId ?? null,
-          status: nextStatus,
-        },
-      });
+  const persist = async (
+    nextStatus: 'published' | 'draft',
+    action: 'save' | 'publish' | 'unpublish'
+  ) => {
+    setSaving(action);
+    const { data } = await updateEvent({
+      path: { id },
+      body: {
+        title: form.title,
+        category: form.category,
+        date: new Date(form.date).toISOString(),
+        venue: form.venue,
+        city: form.city,
+        imageUrl: form.imageUrl,
+        description: form.description,
+        featured: event?.featured ?? false,
+        disclaimers: form.disclaimers.trim()
+          ? form.disclaimers
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .join('|')
+          : null,
+        venueMapId: event?.venueMapId ?? null,
+        status: nextStatus,
+      },
+    });
 
-      if (data) {
-        setEvent(data as EventDto);
-        patch({ status: nextStatus });
-        showSaved();
-      }
-      setSaving(null);
-    };
+    if (data) {
+      setEvent(data as EventDto);
+      patch({ status: nextStatus });
+      showSaved();
+    }
+    setSaving(null);
+  };
 
   const handleSave = () => persist(form.status, 'save');
   const handlePublish = () => persist('published', 'publish');
@@ -120,7 +133,12 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
           <EventFormFields form={form} patch={patch} />
-          <VenueCard venue={form.venue} city={form.city} eventId={id} venueMapId={event.venueMapId} />
+          <VenueCard
+            venue={form.venue}
+            city={form.city}
+            eventId={id}
+            venueMapId={event.venueMapId}
+          />
           <EventTicketTypesCard
             eventId={id}
             ticketTypes={event.ticketTypes}

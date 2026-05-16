@@ -111,9 +111,11 @@ export const SelectionSummary = ({
           disabled={totalQuantity === 0 || submitting}
           onClick={onContinue}
         >
-          {submitting
-            ? <Loader2 className="size-4 animate-spin" />
-            : <Ticket className="size-4" />}
+          {submitting ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Ticket className="size-4" />
+          )}
           {submitting ? 'Processing…' : 'Continue to payment'}
         </Button>
       </CardContent>

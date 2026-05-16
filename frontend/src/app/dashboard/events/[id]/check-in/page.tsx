@@ -15,11 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { checkInTicket, getEventById } from '@/lib/api';
-import type {
-  CheckInResponse,
-  EventDto,
-  TicketDto,
-} from '@/lib/api/types.gen';
+import type { CheckInResponse, EventDto, TicketDto } from '@/lib/api/types.gen';
 import { dashboardEventRoute } from '@/lib/routes';
 import { useAuth } from '@/hooks/use-auth';
 import { formatTicketDate } from '@/lib/formatters';
@@ -36,11 +32,7 @@ interface RecentCheckIn {
 
 const QR_READER_ID = 'qr-reader';
 
-const CheckInPage = ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) => {
+const CheckInPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [eventId, setEventId] = useState<string>('');
@@ -303,9 +295,7 @@ const CheckInPage = ({
                       result.response.ticket.checkedInAt && (
                         <span className="text-xs">
                           Checked in at{' '}
-                          {formatTicketDate(
-                            result.response.ticket.checkedInAt
-                          )}
+                          {formatTicketDate(result.response.ticket.checkedInAt)}
                         </span>
                       )}
                   </div>
@@ -324,7 +314,10 @@ const CheckInPage = ({
           </h2>
           <div className="flex flex-col gap-2">
             {recentCheckIns.map((ci) => (
-              <Card key={ci.ticket.id} className="glass border-white/40 shadow-sm">
+              <Card
+                key={ci.ticket.id}
+                className="glass border-white/40 shadow-sm"
+              >
                 <CardContent className="flex items-center justify-between p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">

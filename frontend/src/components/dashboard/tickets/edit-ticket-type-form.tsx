@@ -7,7 +7,10 @@ import { ChevronLeft, Loader2, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { deleteTicketType, updateTicketType } from '@/lib/api';
-import type { EventDto, OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
+import type {
+  EventDto,
+  OrganizerEventTicketTypeDto,
+} from '@/lib/api/types.gen';
 import { dashboardEventTicketsRoute } from '@/lib/routes';
 import { useFormState } from '@/hooks/use-form-state';
 import { useSaveFeedback } from '@/hooks/use-save-feedback';
@@ -39,7 +42,8 @@ export const EditTicketTypeForm = ({
     capacity: String(ticketType.capacity),
   });
 
-  const [currentTicketType, setCurrentTicketType] = useState<OrganizerEventTicketTypeDto>(ticketType);
+  const [currentTicketType, setCurrentTicketType] =
+    useState<OrganizerEventTicketTypeDto>(ticketType);
   const { saved, showSaved } = useSaveFeedback();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -124,9 +128,11 @@ export const EditTicketTypeForm = ({
                 onClick={handleDelete}
                 disabled={deleting}
               >
-                {deleting
-                  ? <Loader2 className="size-3.5 animate-spin" />
-                  : <Trash2 className="size-3.5" />}
+                {deleting ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="size-3.5" />
+                )}
                 {deleting ? 'Deleting…' : 'Delete'}
               </Button>
             </CardContent>

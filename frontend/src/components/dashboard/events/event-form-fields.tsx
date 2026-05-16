@@ -27,7 +27,11 @@ interface EventFormFieldsProps {
   errors?: Partial<Record<keyof EventFormValues, string>>;
 }
 
-export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) => (
+export const EventFormFields = ({
+  form,
+  patch,
+  errors,
+}: EventFormFieldsProps) => (
   <>
     <Card className="glass border-white/40 shadow-sm">
       <CardHeader>
@@ -36,7 +40,11 @@ export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) =
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Title" className="sm:col-span-2" error={errors?.title}>
+        <FormField
+          label="Title"
+          className="sm:col-span-2"
+          error={errors?.title}
+        >
           <Input
             value={form.title}
             onChange={(e) => patch({ title: e.target.value })}
@@ -81,7 +89,11 @@ export const EventFormFields = ({ form, patch, errors }: EventFormFieldsProps) =
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 p-6 pt-0 sm:grid-cols-2">
-        <FormField label="Date & Time" className="sm:col-span-2" error={errors?.date}>
+        <FormField
+          label="Date & Time"
+          className="sm:col-span-2"
+          error={errors?.date}
+        >
           <DateTimePicker
             value={form.date}
             onChange={(date) => patch({ date })}

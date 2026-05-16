@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { type AuthContextValue, type User } from '@/types/user';
 import {
   type UserDto,
@@ -13,6 +8,7 @@ import {
   postSignIn,
   postSignOut,
   postSignUp,
+  updateProfile as updateProfileApi,
 } from '@/lib/api';
 
 const toUser = (dto: UserDto): User => ({ ...dto });
@@ -41,7 +37,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (data) setUser(toUser(data));
   };
 
-  const signUp: AuthContextValue['signUp'] = async ({ firstName, lastName, email, password }) => {
+  const signUp: AuthContextValue['signUp'] = async ({
+    firstName,
+    lastName,
+    email,
+    password,
+  }) => {
     const { data, error } = await postSignUp({
       body: { firstName, lastName, email, password },
     });
@@ -58,16 +59,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateProfile: AuthContextValue['updateProfile'] = async (patch) => {
     if (!user) return;
 
-    const api = await import('@/lib/api');
-    const res = await api.updateProfile({
+    const { data, error } = await updateProfileApi({
       body: {
         firstName: patch.firstName ?? user.firstName,
         lastName: patch.lastName ?? user.lastName,
         email: patch.email ?? user.email,
       },
     });
-    if (res.data) setUser(toUser(res.data));
-    if (res.error) throw new Error('Profile update failed');
+    if (data) setUser(toUser(data));
+    if (error) throw new Error('Profile update failed');
   };
 
   const value: AuthContextValue = {

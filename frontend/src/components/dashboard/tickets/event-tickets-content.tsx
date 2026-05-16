@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { TicketTypesList } from '@/components/dashboard/tickets/ticket-types-list';
-import type { EventDto, OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
+import type {
+  EventDto,
+  OrganizerEventTicketTypeDto,
+} from '@/lib/api/types.gen';
 import { dashboardEventRoute, dashboardEventTicketRoute } from '@/lib/routes';
 
 export const EventTicketsContent = ({

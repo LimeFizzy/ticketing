@@ -92,7 +92,11 @@ const NewEventPage = () => {
     });
 
     if (error) {
-      setApiError(typeof error === 'object' && 'title' in error ? String(error.title) : 'Failed to create event');
+      setApiError(
+        typeof error === 'object' && 'title' in error
+          ? String(error.title)
+          : 'Failed to create event'
+      );
       setSubmitting(false);
       return;
     }
@@ -122,7 +126,11 @@ const NewEventPage = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
-          <EventFormFields form={form} patch={patchAndClearError} errors={errors} />
+          <EventFormFields
+            form={form}
+            patch={patchAndClearError}
+            errors={errors}
+          />
         </div>
 
         <div className="flex flex-col gap-6 order-first lg:order-last lg:sticky lg:top-6 lg:self-start">
@@ -179,7 +187,11 @@ const NewEventPage = () => {
                 onClick={handleCreate}
                 disabled={submitting}
               >
-                {submitting ? 'Creating…' : hasErrors ? 'Fix errors above' : 'Create event'}
+                {submitting
+                  ? 'Creating…'
+                  : hasErrors
+                    ? 'Fix errors above'
+                    : 'Create event'}
               </Button>
             </CardContent>
           </Card>

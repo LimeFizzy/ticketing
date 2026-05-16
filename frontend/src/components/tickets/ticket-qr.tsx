@@ -12,7 +12,12 @@ interface TicketQRProps {
   muted?: boolean;
 }
 
-export const TicketQR = ({ ticketCode, eventId, checkedInAt, muted }: TicketQRProps) => {
+export const TicketQR = ({
+  ticketCode,
+  eventId,
+  checkedInAt,
+  muted,
+}: TicketQRProps) => {
   const isUsed = !!checkedInAt;
   const { user } = useAuth();
   const payload = user ? JSON.stringify({ ticketCode, eventId }) : null;

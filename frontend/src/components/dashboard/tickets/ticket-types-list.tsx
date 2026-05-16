@@ -181,9 +181,11 @@ export const TicketTypesList = ({
                         disabled={deletingId === t.id}
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       >
-                        {deletingId === t.id
-                          ? <Loader2 className="size-3.5 animate-spin" />
-                          : <Trash2 className="size-3.5" />}
+                        {deletingId === t.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}
                       </Button>
                     </div>
                   </td>
@@ -245,9 +247,11 @@ export const TicketTypesList = ({
                         onClick={commitAdd}
                         className="text-primary hover:bg-primary/10 hover:text-primary"
                       >
-                        {committing
-                          ? <Loader2 className="size-3.5 animate-spin" />
-                          : <Check className="size-3.5" />}
+                        {committing ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Check className="size-3.5" />
+                        )}
                       </Button>
                       <Button
                         size="icon-sm"

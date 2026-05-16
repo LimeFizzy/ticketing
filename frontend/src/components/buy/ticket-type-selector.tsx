@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
-import {
-  SelectionSummary,
-} from '@/components/buy/selection-summary';
+import { SelectionSummary } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
 import { createCheckoutSession, type EventDto } from '@/lib/api';
 
@@ -19,10 +17,9 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
 
-  const remaining = 
-      Object.fromEntries(
-        event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
-      );
+  const remaining = Object.fromEntries(
+    event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
+  );
 
   const totalPrice = event.ticketTypes.reduce(
     (sum, t) => sum + (selection[t.id] ?? 0) * t.price,

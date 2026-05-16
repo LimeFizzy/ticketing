@@ -18,7 +18,8 @@ const EventTicketsPage = async ({
 
   if (!event) notFound();
 
-  const ticketTypes = (event.ticketTypes ?? []) as OrganizerEventTicketTypeDto[];
+  const ticketTypes = (event.ticketTypes ??
+    []) as OrganizerEventTicketTypeDto[];
 
   return <EventTicketsContent event={event} ticketTypes={ticketTypes} />;
 };

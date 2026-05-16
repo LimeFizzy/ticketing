@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Link2, Loader2, Pencil, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
+import {
+  Link2,
+  Loader2,
+  Pencil,
+  Plus,
+  ScanLine,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -98,28 +106,29 @@ const DashboardPage = () => {
     router.push(dashboardEventRoute(id));
   };
 
-  if (loading) return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
-      <div className="flex items-center justify-between gap-4">
-        <Skeleton className="h-9 w-40" />
-        <Skeleton className="h-8 w-32" />
+  if (loading)
+    return (
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <Card className="glass border-white/40 shadow-sm">
+          <CardContent className="flex flex-col gap-4 p-5">
+            <div className="flex gap-2.5">
+              <Skeleton className="h-8 flex-1" />
+              <Skeleton className="h-8 w-36" />
+              <Skeleton className="h-8 w-40" />
+            </div>
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <Card className="glass border-white/40 shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-5">
-          <div className="flex gap-2.5">
-            <Skeleton className="h-8 flex-1" />
-            <Skeleton className="h-8 w-36" />
-            <Skeleton className="h-8 w-40" />
-          </div>
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
@@ -212,16 +221,23 @@ const DashboardPage = () => {
                     <td colSpan={7} className="py-10 text-center">
                       {events.length === 0 ? (
                         <div className="flex flex-col items-center gap-3">
-                          <p className="text-muted-foreground">No events yet.</p>
+                          <p className="text-muted-foreground">
+                            No events yet.
+                          </p>
                           <Link
                             href={dashboardEventsNewRoute()}
-                            className={buttonVariants({ variant: 'default', size: 'sm' })}
+                            className={buttonVariants({
+                              variant: 'default',
+                              size: 'sm',
+                            })}
                           >
                             Create your first event
                           </Link>
                         </div>
                       ) : (
-                        <p className="text-muted-foreground">No events match your filters.</p>
+                        <p className="text-muted-foreground">
+                          No events match your filters.
+                        </p>
                       )}
                     </td>
                   </tr>
@@ -309,9 +325,11 @@ const DashboardPage = () => {
                                   disabled={deletingId === event.id}
                                   className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 >
-                                  {deletingId === event.id
-                                    ? <Loader2 className="size-3.5 animate-spin" />
-                                    : <Trash2 className="size-3.5" />}
+                                  {deletingId === event.id ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="size-3.5" />
+                                  )}
                                 </Button>
                               </Tooltip>
                             </div>
@@ -331,7 +349,6 @@ const DashboardPage = () => {
           </p>
         </CardContent>
       </Card>
-
     </div>
   );
 };

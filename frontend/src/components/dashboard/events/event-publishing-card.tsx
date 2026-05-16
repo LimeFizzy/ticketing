@@ -43,11 +43,11 @@ export const EventPublishingCard = ({
       </div>
 
       <Button className="w-full gap-1.5" onClick={onSave} disabled={!!saving}>
-        {saving === 'save'
-          ? <Loader2 className="size-4 animate-spin" />
-          : saved
-            ? <Check className="size-4" />
-            : null}
+        {saving === 'save' ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : saved ? (
+          <Check className="size-4" />
+        ) : null}
         {saving === 'save' ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
       </Button>
 
@@ -57,9 +57,11 @@ export const EventPublishingCard = ({
           onClick={onPublish}
           disabled={!!saving}
         >
-          {saving === 'publish'
-            ? <Loader2 className="size-4 animate-spin" />
-            : <Globe className="size-4" />}
+          {saving === 'publish' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Globe className="size-4" />
+          )}
           {saving === 'publish' ? 'Publishing…' : 'Publish event'}
         </Button>
       ) : (
@@ -69,9 +71,11 @@ export const EventPublishingCard = ({
           onClick={onUnpublish}
           disabled={!!saving}
         >
-          {saving === 'unpublish'
-            ? <Loader2 className="size-4 animate-spin" />
-            : <Lock className="size-4" />}
+          {saving === 'unpublish' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Lock className="size-4" />
+          )}
           {saving === 'unpublish' ? 'Unpublishing…' : 'Unpublish'}
         </Button>
       )}

@@ -34,9 +34,11 @@ export const useTicketSelection = (
   const total = totalSelected(selection);
   const capRemaining = MAX_PLACES_PER_ORDER - total;
 
-  const unitPriceFor = (ticketTypeId: string) => ticketTypeIndex.get(ticketTypeId)?.price ?? 0;
+  const unitPriceFor = (ticketTypeId: string) =>
+    ticketTypeIndex.get(ticketTypeId)?.price ?? 0;
 
-  const unitNameFor = (ticketTypeId: string) => ticketTypeIndex.get(ticketTypeId)?.name ?? 'Ticket';
+  const unitNameFor = (ticketTypeId: string) =>
+    ticketTypeIndex.get(ticketTypeId)?.name ?? 'Ticket';
 
   return {
     selection,
