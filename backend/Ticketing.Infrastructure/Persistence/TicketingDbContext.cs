@@ -13,6 +13,10 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
     public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
     public DbSet<PromoCode> PromoCodes => Set<PromoCode>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<VenueMap> VenueMaps => Set<VenueMap>();
+    public DbSet<VenueMapPlace> VenueMapPlaces => Set<VenueMapPlace>();
+    public DbSet<VenueMapDecoration> VenueMapDecorations => Set<VenueMapDecoration>();
+    public DbSet<EventVenueMapPlace> EventVenueMapPlaces => Set<EventVenueMapPlace>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,5 +111,71 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
 
         modelBuilder.Entity<Review>()
             .HasIndex(r => r.EventId);
+
+        // VenueMap
+        modelBuilder.Entity<VenueMap>()
+            .HasOne(vm => vm.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(vm => vm.CreatedBy)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<VenueMap>()
+            .HasIndex(vm => vm.CreatedBy);
+
+        // VenueMapPlace
+        modelBuilder.Entity<VenueMapPlace>()
+            .HasOne(p => p.VenueMap)
+            .WithMany(vm => vm.Places)
+            .HasForeignKey(p => p.VenueMapId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // VenueMapDecoration
+        modelBuilder.Entity<VenueMapDecoration>()
+            .HasOne(d => d.VenueMap)
+            .WithMany(vm => vm.Decorations)
+            .HasForeignKey(d => d.VenueMapId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Event -> VenueMap
+        modelBuilder.Entity<Event>()
+            .HasOne(e => e.VenueMap)
+            .WithMany()
+            .HasForeignKey(e => e.VenueMapId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // Ticket -> VenueMapPlace
+        modelBuilder.Entity<Ticket>()
+            .HasOne(t => t.VenueMapPlace)
+            .WithMany(p => p.Tickets)
+            .HasForeignKey(t => t.VenueMapPlaceId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.VenueMapPlaceId);
+
+        // EventVenueMapPlace
+        modelBuilder.Entity<EventVenueMapPlace>()
+            .HasOne(evmp => evmp.Event)
+            .WithMany()
+            .HasForeignKey(evmp => evmp.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EventVenueMapPlace>()
+            .HasOne(evmp => evmp.VenueMapPlace)
+            .WithMany()
+            .HasForeignKey(evmp => evmp.VenueMapPlaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EventVenueMapPlace>()
+            .HasOne(evmp => evmp.EventTicketType)
+            .WithMany()
+            .HasForeignKey(evmp => evmp.EventTicketTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<EventVenueMapPlace>()
+            .HasIndex(evmp => new { evmp.EventId, evmp.VenueMapPlaceId })
+            .IsUnique();
     }
 }

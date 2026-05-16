@@ -5,6 +5,9 @@ namespace Ticketing.Application.Services;
 
 public static class DataSeeder
 {
+    public static readonly Guid ZalgirioVenueMapId = Guid.Parse("00000000-0000-0000-0000-000000000901");
+    public static readonly Guid LakesideVenueMapId = Guid.Parse("00000000-0000-0000-0000-000000000902");
+
     public static List<Event> GetMockEvents()
     {
         return
@@ -64,7 +67,7 @@ public static class DataSeeder
                 Description = "Witness the passion of Lithuanian basketball as Žalgiris Kaunas takes on Olympiacos in a crucial EuroLeague clash. The atmosphere at Žalgirio Arena is unlike anything else in European basketball.",
                 AvailableTickets = 92,
                 Featured = true,
-                VenueMapId = "vm-zalgirio",
+                VenueMapId = ZalgirioVenueMapId,
                 Status = "published",
                 TicketTypes =
                 [
@@ -106,7 +109,7 @@ public static class DataSeeder
                 AvailableTickets = 190,
                 Featured = true,
                 Disclaimers = "Strictly 18+. Photo ID required at the gate.",
-                VenueMapId = "vm-lakeside",
+                VenueMapId = LakesideVenueMapId,
                 Status = "published",
                 TicketTypes =
                 [
@@ -128,5 +131,83 @@ public static class DataSeeder
                 ]
             }
         ];
+    }
+
+    public static List<VenueMap> GetMockVenueMaps(Guid adminUserId)
+    {
+        return
+        [
+            new VenueMap
+            {
+                Id = ZalgirioVenueMapId,
+                Name = "Žalgirio Arena",
+                Width = 1000,
+                Height = 600,
+                CreatedBy = adminUserId,
+                Decorations =
+                [
+                    new VenueMapDecoration
+                    {
+                        X = 350, Y = 250, Width = 300, Height = 100, Label = "COURT"
+                    }
+                ],
+                Places = GenerateSeatRow("cs", 8, 385, 220, 32)
+                    .Concat(GenerateSeatRow("lwr-a", 12, 320, 400, 35))
+                    .Concat(GenerateSeatRow("lwr-b", 12, 320, 430, 35))
+                    .Concat(GenerateSeatRow("lwr-c", 12, 320, 460, 35))
+                    .Concat(GenerateSeatRow("upr-a", 20, 150, 495, 35))
+                    .Concat(GenerateSeatRow("upr-b", 20, 150, 525, 35))
+                    .Concat(GenerateSeatRow("upr-c", 20, 150, 555, 35))
+                    .ToList()
+            },
+            new VenueMap
+            {
+                Id = LakesideVenueMapId,
+                Name = "Lakeside Park — Festival Grounds",
+                Width = 800,
+                Height = 400,
+                CreatedBy = adminUserId,
+                Decorations =
+                [
+                    new VenueMapDecoration
+                    {
+                        X = 250, Y = 30, Width = 300, Height = 50, Label = "STAGE"
+                    }
+                ],
+                Places =
+                [
+                    new VenueMapPlace
+                    {
+                        Kind = "section", Label = "VIP Deck",
+                        X = 300, Y = 110, Width = 200, Height = 80,
+                        Capacity = 50
+                    },
+                    new VenueMapPlace
+                    {
+                        Kind = "section", Label = "General Admission",
+                        X = 100, Y = 220, Width = 600, Height = 140,
+                        Capacity = 200
+                    }
+                ]
+            }
+        ];
+    }
+
+    private static List<VenueMapPlace> GenerateSeatRow(
+        string prefix, int count, double startX, double y, double spacing)
+    {
+        var places = new List<VenueMapPlace>();
+        for (var i = 0; i < count; i++)
+        {
+            places.Add(new VenueMapPlace
+            {
+                Kind = "seat",
+                Label = $"{prefix.ToUpper()}{i + 1}",
+                X = startX + i * spacing,
+                Y = y,
+                Capacity = 1
+            });
+        }
+        return places;
     }
 }

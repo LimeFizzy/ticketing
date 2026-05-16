@@ -67,6 +67,10 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, Ticketing.Application.Services.ReviewService>();
 builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IVenueMapRepository, VenueMapRepository>();
+builder.Services.AddScoped<IVenueMapService, VenueMapService>();
+builder.Services.AddScoped<IEventVenueMapPlaceRepository, EventVenueMapPlaceRepository>();
+builder.Services.AddScoped<IEventVenueMapPlaceService, EventVenueMapPlaceService>();
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 

@@ -10,7 +10,8 @@ public record CreateCheckoutSessionRequest(
 
 public record OrderItemRequest(
     [Required] Guid EventTicketTypeId,
-    [Required] int Quantity
+    [Required] int Quantity,
+    Guid? VenueMapPlaceId = null
 );
 
 public record CheckoutSessionDto(

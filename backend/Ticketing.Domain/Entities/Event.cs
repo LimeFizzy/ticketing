@@ -16,7 +16,8 @@ public class Event
     public int AvailableTickets { get; set; }
     public bool Featured { get; set; }
     public string? Disclaimers { get; set; }
-    public string? VenueMapId { get; set; }
+    public Guid? VenueMapId { get; set; }
+    public VenueMap? VenueMap { get; set; }
     public string Status { get; set; } = "draft";
     public bool IsDeleted { get; set; }
     public Guid? OrganizerId { get; set; }

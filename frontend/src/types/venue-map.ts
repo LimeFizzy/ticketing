@@ -4,16 +4,17 @@ export interface VenueMapPlace {
   id: string;
   kind: PlaceKind;
   label: string;
-  ticketTypeId: string;
   x: number;
   y: number;
-  width?: number;
-  height?: number;
+  width?: number | null;
+  height?: number | null;
   capacity: number;
   available: number;
+  ticketTypeId: string;
 }
 
 export interface VenueMapDecoration {
+  id: string;
   x: number;
   y: number;
   width: number;
@@ -26,6 +27,6 @@ export interface VenueMap {
   name: string;
   width: number;
   height: number;
-  decorations?: VenueMapDecoration[];
+  decorations: VenueMapDecoration[];
   places: VenueMapPlace[];
 }
