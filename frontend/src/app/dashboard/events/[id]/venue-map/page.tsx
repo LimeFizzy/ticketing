@@ -46,7 +46,9 @@ export default function EventVenueMapPage({ params }: { params: Promise<{ id: st
     getManagedEventVenueMapPlaces({ path: { eventId } }).then(({ data }) => {
       if (data) {
         const map = new Map<string, string>();
-        (data as EventVenueMapPlaceDto[]).forEach((m) => map.set(m.venueMapPlaceId, m.eventTicketTypeId));
+        (data as EventVenueMapPlaceDto[]).forEach((m) => {
+          if (m.venueMapPlaceId && m.eventTicketTypeId) map.set(m.venueMapPlaceId, m.eventTicketTypeId);
+        });
         setMappings(map);
       }
     }).catch(() => {});
