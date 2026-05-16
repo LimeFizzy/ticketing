@@ -3,14 +3,6 @@
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 import { cn } from '@/lib/utils';
 
-export function TooltipProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <TooltipPrimitive.Provider delay={300}>
-      {children}
-    </TooltipPrimitive.Provider>
-  );
-}
-
 export function Tooltip({
   label,
   children,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { SelectionSummary } from '@/components/buy/selection-summary';
 import { VenueMapCanvas } from '@/components/buy/venue-map-canvas';
@@ -10,7 +11,11 @@ import { type VenueMap } from '@/types/venue-map';
 import { buildTicketTypeColors } from '@/lib/venue-maps';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
+import { useRestoreSelection } from '@/hooks/use-restore-selection';
+import { useAuth } from '@/hooks/use-auth';
 import { createCheckoutSession, type EventDto } from '@/lib/api';
+import { saveSelection } from '@/lib/buy-utils';
+import { eventBuyRoute, Route } from '@/lib/routes';
 
 interface VenueMapSelectorProps {
   event: EventDto;
@@ -21,6 +26,8 @@ export const VenueMapSelector = ({
   event,
   venueMap,
 }: VenueMapSelectorProps) => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -32,6 +39,8 @@ export const VenueMapSelector = ({
     unitPriceFor,
     unitNameFor,
   } = useTicketSelection(event);
+
+  useRestoreSelection(event.id, setQuantity);
 
   const placesById = new Map(venueMap.places.map((p) => [p.id, p]));
 
@@ -84,6 +93,13 @@ export const VenueMapSelector = ({
     });
 
   const handleContinue = async () => {
+    if (!isAuthenticated) {
+      saveSelection(event.id, selection);
+      const next = encodeURIComponent(eventBuyRoute(event.id));
+      router.push(`${Route.SignUp}?next=${next}`);
+      return;
+    }
+
     setSubmitting(true);
     setCheckoutError(null);
     try {

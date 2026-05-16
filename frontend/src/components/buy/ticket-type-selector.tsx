@@ -1,21 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuantityStepper } from '@/components/buy/quantity-stepper';
 import { SelectionSummary } from '@/components/buy/selection-summary';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
+import { useRestoreSelection } from '@/hooks/use-restore-selection';
+import { useAuth } from '@/hooks/use-auth';
 import { createCheckoutSession, type EventDto } from '@/lib/api';
+import { saveSelection } from '@/lib/buy-utils';
+import { eventBuyRoute, Route } from '@/lib/routes';
 
 interface TicketTypeSelectorProps {
   event: EventDto;
 }
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
+
+  useRestoreSelection(event.id, setQuantity);
 
   const remaining = Object.fromEntries(
     event.ticketTypes.map((t) => [t.id, t.capacity - t.sold])
@@ -27,6 +36,13 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
   );
 
   const handleContinue = async () => {
+    if (!isAuthenticated) {
+      saveSelection(event.id, selection);
+      const next = encodeURIComponent(eventBuyRoute(event.id));
+      router.push(`${Route.SignUp}?next=${next}`);
+      return;
+    }
+
     setSubmitting(true);
     setCheckoutError(null);
     try {

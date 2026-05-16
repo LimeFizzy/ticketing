@@ -103,7 +103,7 @@ const SignInForm = () => {
       <CardFooter className="justify-center text-sm text-muted-foreground">
         No account yet?{' '}
         <Link
-          href={Route.SignUp}
+          href={`${Route.SignUp}${next !== Route.Home ? `?next=${encodeURIComponent(next)}` : ''}`}
           className="ml-1 font-medium text-primary hover:underline"
         >
           Sign up

@@ -38,3 +38,21 @@ export const ticketTypePriceFromIndex = (
   index: Map<string, EventTicketTypeDto>,
   id: string
 ): number => index.get(id)?.price ?? 0;
+
+export const selectionKey = (eventId: string) => `tf:sel:${eventId}`;
+
+export const saveSelection = (eventId: string, selection: Selection) => {
+  sessionStorage.setItem(selectionKey(eventId), JSON.stringify(selection));
+};
+
+export const restoreSelection = (eventId: string): Selection | null => {
+  const key = selectionKey(eventId);
+  const saved = sessionStorage.getItem(key);
+  sessionStorage.removeItem(key);
+  if (!saved) return null;
+  try {
+    return JSON.parse(saved) as Selection;
+  } catch {
+    return null;
+  }
+};
