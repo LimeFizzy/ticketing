@@ -25,6 +25,7 @@ export const VenueMapSelector = ({
   venueMap,
 }: VenueMapSelectorProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const {
     selection,
@@ -101,6 +102,7 @@ export const VenueMapSelector = ({
 
   const handleContinue = useCallback(async () => {
     setSubmitting(true);
+    setCheckoutError(null);
     try {
       const items = Object.entries(selection)
         .filter(([, qty]) => qty > 0)
@@ -112,7 +114,7 @@ export const VenueMapSelector = ({
         body: { eventId: event.id, items },
       });
       if (error || !data?.sessionUrl) {
-        console.error('Checkout failed:', error);
+        setCheckoutError('Something went wrong. Please try again.');
         return;
       }
       window.location.href = data.sessionUrl;
@@ -165,6 +167,7 @@ export const VenueMapSelector = ({
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
+        checkoutError={checkoutError}
         onContinue={handleContinue}
       />
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Ticket } from 'lucide-react';
+import { Loader2, Ticket } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +22,7 @@ interface SelectionSummaryProps {
   totalQuantity: number;
   totalPrice: number;
   submitting?: boolean;
+  checkoutError?: string | null;
   onContinue: () => void;
 }
 
@@ -30,6 +31,7 @@ export const SelectionSummary = ({
   totalQuantity,
   totalPrice,
   submitting,
+  checkoutError,
   onContinue,
 }: SelectionSummaryProps) => {
   const capRemaining = MAX_PLACES_PER_ORDER - totalQuantity;
@@ -99,14 +101,20 @@ export const SelectionSummary = ({
           </p>
         ) : null}
 
+        {checkoutError && (
+          <p className="text-sm text-destructive">{checkoutError}</p>
+        )}
+
         <Button
           size="lg"
           className="w-full gap-2"
           disabled={totalQuantity === 0 || submitting}
           onClick={onContinue}
         >
-          <Ticket className="size-4" />
-          Continue to payment
+          {submitting
+            ? <Loader2 className="size-4 animate-spin" />
+            : <Ticket className="size-4" />}
+          {submitting ? 'Processing…' : 'Continue to payment'}
         </Button>
       </CardContent>
     </Card>

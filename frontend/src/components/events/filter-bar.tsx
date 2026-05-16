@@ -50,9 +50,9 @@ export const FilterBar = () => {
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search events, venues, cities…"
+          placeholder="Search events, locations, cities…"
           value={draft}
-          className="h-10 rounded-xl bg-white/95 border-border pl-9 backdrop-blur-md"
+          className="h-10 rounded-xl bg-white/60 border-border pl-9 backdrop-blur-md"
           onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
@@ -62,7 +62,7 @@ export const FilterBar = () => {
         value={params.get('category') ?? 'all'}
         onValueChange={(value) => update('category', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-44">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/60 border-border backdrop-blur-md sm:w-44">
           <Tag className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) =>
@@ -83,7 +83,7 @@ export const FilterBar = () => {
         value={params.get('date') ?? 'all'}
         onValueChange={(value) => update('date', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-40">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/60 border-border backdrop-blur-md sm:w-40">
           <CalendarDays className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) => DATE_LABELS[String(value ?? 'all')] ?? 'Any date'}
@@ -102,7 +102,7 @@ export const FilterBar = () => {
         value={params.get('price') ?? 'all'}
         onValueChange={(value) => update('price', String(value ?? 'all'))}
       >
-        <SelectTrigger className="h-10 w-full rounded-xl bg-white/95 border-border backdrop-blur-md sm:w-40">
+        <SelectTrigger className="h-10 w-full rounded-xl bg-white/60 border-border backdrop-blur-md sm:w-40">
           <Wallet className="size-3.5 text-muted-foreground" />
           <SelectValue>
             {(value) => PRICE_LABELS[String(value ?? 'all')] ?? 'Any price'}

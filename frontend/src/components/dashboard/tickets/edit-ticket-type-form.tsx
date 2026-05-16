@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { deleteTicketType, updateTicketType } from '@/lib/api';
@@ -41,6 +41,8 @@ export const EditTicketTypeForm = ({
 
   const [currentTicketType, setCurrentTicketType] = useState<OrganizerEventTicketTypeDto>(ticketType);
   const { saved, showSaved } = useSaveFeedback();
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isValid =
     form.name.trim().length > 0 &&
@@ -56,6 +58,7 @@ export const EditTicketTypeForm = ({
     const newCapacity = Number(form.capacity);
     if (newCapacity < currentTicketType.sold) return;
 
+    setSaving(true);
     const { data } = await updateTicketType({
       path: { eventId: id, ticketTypeId: ticketId },
       body: {
@@ -70,11 +73,13 @@ export const EditTicketTypeForm = ({
       setCurrentTicketType(data as OrganizerEventTicketTypeDto);
       showSaved();
     }
+    setSaving(false);
   }, [id, ticketId, form, currentTicketType, showSaved]);
 
   const handleDelete = useCallback(async () => {
     if (!window.confirm(`Delete "${form.name}"? This cannot be undone.`))
       return;
+    setDeleting(true);
     await deleteTicketType({ path: { eventId: id, ticketTypeId: ticketId } });
     router.push(dashboardEventTicketsRoute(id));
   }, [id, ticketId, form.name, router]);
@@ -117,9 +122,12 @@ export const EditTicketTypeForm = ({
                 size="sm"
                 className="shrink-0 gap-1.5"
                 onClick={handleDelete}
+                disabled={deleting}
               >
-                <Trash2 className="size-3.5" />
-                Delete
+                {deleting
+                  ? <Loader2 className="size-3.5 animate-spin" />
+                  : <Trash2 className="size-3.5" />}
+                {deleting ? 'Deleting…' : 'Delete'}
               </Button>
             </CardContent>
           </Card>
@@ -128,6 +136,7 @@ export const EditTicketTypeForm = ({
         <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
           <TicketTypeActionsCard
             saved={saved}
+            saving={saving}
             isValid={isValid}
             hasCapacityError={!!capacityError}
             onSave={handleSave}

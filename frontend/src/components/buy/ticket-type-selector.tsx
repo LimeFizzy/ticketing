@@ -16,6 +16,7 @@ interface TicketTypeSelectorProps {
 
 export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const { selection, setQuantity, total, capRemaining } =
     useTicketSelection(event);
 
@@ -38,6 +39,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
 
   const handleContinue = useCallback(async () => {
     setSubmitting(true);
+    setCheckoutError(null);
     try {
       const items = Object.entries(selection)
         .filter(([, qty]) => qty > 0)
@@ -49,7 +51,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         body: { eventId: event.id, items },
       });
       if (error || !data?.sessionUrl) {
-        console.error('Checkout failed:', error);
+        setCheckoutError('Something went wrong. Please try again.');
         return;
       }
       window.location.href = data.sessionUrl;
@@ -118,6 +120,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
+        checkoutError={checkoutError}
         onContinue={handleContinue}
       />
     </div>

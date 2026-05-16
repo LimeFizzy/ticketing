@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DisclaimersCard } from '@/components/dashboard/events/disclaimers-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deleteEvent, updateEvent } from '@/lib/api';
@@ -28,6 +29,7 @@ type EventForm = {
   description: string;
   imageUrl: string;
   status: 'published' | 'draft';
+  disclaimers: string;
 };
 
 export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
@@ -44,12 +46,15 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
     description: initialEvent.description,
     imageUrl: initialEvent.imageUrl,
     status: initialEvent.status === 'published' ? 'published' : 'draft',
+    disclaimers: initialEvent.disclaimers?.join('\n') ?? '',
   });
 
   const { saved, showSaved } = useSaveFeedback();
+  const [saving, setSaving] = useState<'save' | 'publish' | 'unpublish' | null>(null);
 
   const persist = useCallback(
-    async (nextStatus: 'published' | 'draft') => {
+    async (nextStatus: 'published' | 'draft', action: 'save' | 'publish' | 'unpublish') => {
+      setSaving(action);
       const { data } = await updateEvent({
         path: { id },
         body: {
@@ -61,7 +66,9 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
           imageUrl: form.imageUrl,
           description: form.description,
           featured: event?.featured ?? false,
-          disclaimers: event?.disclaimers?.join('|') ?? null,
+          disclaimers: form.disclaimers.trim()
+            ? form.disclaimers.split('\n').map((s) => s.trim()).filter(Boolean).join('|')
+            : null,
           venueMapId: event?.venueMapId ?? null,
           status: nextStatus,
         },
@@ -72,16 +79,17 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
         patch({ status: nextStatus });
         showSaved();
       }
+      setSaving(null);
     },
     [id, form, event, patch, showSaved]
   );
 
   const handleSave = useCallback(
-    () => persist(form.status),
+    () => persist(form.status, 'save'),
     [persist, form.status]
   );
-  const handlePublish = useCallback(() => persist('published'), [persist]);
-  const handleUnpublish = useCallback(() => persist('draft'), [persist]);
+  const handlePublish = useCallback(() => persist('published', 'publish'), [persist]);
+  const handleUnpublish = useCallback(() => persist('draft', 'unpublish'), [persist]);
 
   const handleDelete = useCallback(async () => {
     if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`))
@@ -122,6 +130,11 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
             manageRoute={dashboardEventTicketsRoute(id)}
           />
 
+          <DisclaimersCard
+            value={form.disclaimers}
+            onChange={(disclaimers) => patch({ disclaimers })}
+          />
+
           <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-destructive">
@@ -145,10 +158,11 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
+        <div className="flex flex-col gap-6 order-first lg:order-last lg:sticky lg:top-6 lg:self-start">
           <EventPublishingCard
             status={form.status}
             saved={saved}
+            saving={saving}
             onSave={handleSave}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}

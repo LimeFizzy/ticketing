@@ -48,7 +48,7 @@ const validate = (form: EventForm): FieldErrors => {
   const errors: FieldErrors = {};
   if (!form.title.trim()) errors.title = 'Title is required';
   if (!form.date) errors.date = 'Date is required';
-  if (!form.venue.trim()) errors.venue = 'Venue is required';
+  if (!form.venue.trim()) errors.venue = 'Location is required';
   if (!form.city.trim()) errors.city = 'City is required';
   return errors;
 };
@@ -59,6 +59,19 @@ const NewEventPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const patchAndClearError = useCallback(
+    (values: Partial<EventForm>) => {
+      patch(values);
+      const clearedKeys = Object.keys(values) as (keyof FieldErrors)[];
+      setErrors((prev) => {
+        const next = { ...prev };
+        clearedKeys.forEach((k) => delete next[k]);
+        return next;
+      });
+    },
+    [patch],
+  );
 
   const handleCreate = useCallback(async () => {
     const validationErrors = validate(form);
@@ -112,10 +125,10 @@ const NewEventPage = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <div className="flex flex-col gap-6">
-          <EventFormFields form={form} patch={patch} errors={errors} />
+          <EventFormFields form={form} patch={patchAndClearError} errors={errors} />
         </div>
 
-        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
+        <div className="flex flex-col gap-6 order-first lg:order-last lg:sticky lg:top-6 lg:self-start">
           <Card className="glass border-white/40 shadow-sm">
             <CardHeader>
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

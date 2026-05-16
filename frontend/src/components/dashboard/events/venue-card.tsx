@@ -13,7 +13,7 @@ export const VenueCard = ({
   <Card className="glass border-white/40 shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between">
       <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Venue
+        Location
       </CardTitle>
       <Badge variant="secondary" className="text-xs font-normal">
         Coming soon
@@ -55,7 +55,7 @@ export const VenueCard = ({
           disabled
         >
           <MapPin className="size-3.5" />
-          Manage venue
+          Manage location
         </Button>
       </div>
     </CardContent>

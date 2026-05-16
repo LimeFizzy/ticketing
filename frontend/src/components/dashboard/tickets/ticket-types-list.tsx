@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Plus, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Check, Loader2, Plus, Pencil, Search, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,8 @@ export const TicketTypesList = ({
 }: TicketTypesListProps) => {
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
+  const [committing, setCommitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
 
   const filtered = useMemo(() => {
@@ -57,7 +59,7 @@ export const TicketTypesList = ({
 
   const commitAdd = async () => {
     if (!isValid(draft)) return;
-
+    setCommitting(true);
     const { data } = await createTicketType({
       path: { eventId },
       body: {
@@ -67,15 +69,17 @@ export const TicketTypesList = ({
         capacity: Number(draft.capacity),
       },
     });
-
     if (data) onChange([...ticketTypes, data]);
     setAdding(false);
+    setCommitting(false);
     setDraft(emptyDraft());
   };
 
   const handleDelete = async (id: string) => {
+    setDeletingId(id);
     await deleteTicketType({ path: { eventId, ticketTypeId: id } });
     onChange(ticketTypes.filter((t) => t.id !== id));
+    setDeletingId(null);
   };
 
   return (
@@ -174,9 +178,12 @@ export const TicketTypesList = ({
                           e.stopPropagation();
                           handleDelete(t.id);
                         }}
+                        disabled={deletingId === t.id}
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       >
-                        <Trash2 className="size-3.5" />
+                        {deletingId === t.id
+                          ? <Loader2 className="size-3.5 animate-spin" />
+                          : <Trash2 className="size-3.5" />}
                       </Button>
                     </div>
                   </td>
@@ -234,16 +241,19 @@ export const TicketTypesList = ({
                         size="icon-sm"
                         variant="ghost"
                         title="Confirm"
-                        disabled={!isValid(draft)}
+                        disabled={!isValid(draft) || committing}
                         onClick={commitAdd}
                         className="text-primary hover:bg-primary/10 hover:text-primary"
                       >
-                        <Check className="size-3.5" />
+                        {committing
+                          ? <Loader2 className="size-3.5 animate-spin" />
+                          : <Check className="size-3.5" />}
                       </Button>
                       <Button
                         size="icon-sm"
                         variant="ghost"
                         title="Cancel"
+                        disabled={committing}
                         onClick={() => setAdding(false)}
                       >
                         <X className="size-3.5" />

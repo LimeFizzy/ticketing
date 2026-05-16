@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Link2, Pencil, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
+import { Link2, Loader2, Pencil, Plus, ScanLine, Search, Trash2 } from 'lucide-react';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipProvider } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -56,6 +58,7 @@ const DashboardPage = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<EventDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState<EventCategory | 'all'>('all');
@@ -77,8 +80,10 @@ const DashboardPage = () => {
   const handleDelete = useCallback(
     async (e: React.MouseEvent, id: string) => {
       e.stopPropagation();
+      setDeletingId(id);
       await deleteEvent({ path: { id } });
       setEvents((prev) => prev.filter((ev) => ev.id !== id));
+      setDeletingId(null);
     },
     []
   );
@@ -105,7 +110,28 @@ const DashboardPage = () => {
     [router]
   );
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-8 w-32" />
+      </div>
+      <Card className="glass border-white/40 shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-5">
+          <div className="flex gap-2.5">
+            <Skeleton className="h-8 flex-1" />
+            <Skeleton className="h-8 w-36" />
+            <Skeleton className="h-8 w-40" />
+          </div>
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
@@ -128,7 +154,7 @@ const DashboardPage = () => {
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by title, venue, city…"
+                placeholder="Search by title, location, city…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -184,7 +210,7 @@ const DashboardPage = () => {
                   <th className="pb-2 pr-4 font-medium">Title</th>
                   <th className="pb-2 pr-4 font-medium">Category</th>
                   <th className="pb-2 pr-4 font-medium">Date</th>
-                  <th className="pb-2 pr-4 font-medium">Venue</th>
+                  <th className="pb-2 pr-4 font-medium">Location</th>
                   <th className="pb-2 pr-4 text-right font-medium">
                     Tickets sold
                   </th>
@@ -195,11 +221,20 @@ const DashboardPage = () => {
               <tbody className="divide-y divide-border">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={7}
-                      className="py-10 text-center text-muted-foreground"
-                    >
-                      No events match your filters.
+                    <td colSpan={7} className="py-10 text-center">
+                      {events.length === 0 ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <p className="text-muted-foreground">No events yet.</p>
+                          <Link
+                            href={dashboardEventsNewRoute()}
+                            className={buttonVariants({ variant: 'default', size: 'sm' })}
+                          >
+                            Create your first event
+                          </Link>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No events match your filters.</p>
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -249,41 +284,50 @@ const DashboardPage = () => {
                           </Badge>
                         </td>
                         <td className="py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Check-in"
-                              onClick={(e) => handleCheckIn(e, event.id)}
-                            >
-                              <ScanLine className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Copy public link"
-                              onClick={(e) => handleShare(e, event.id)}
-                            >
-                              <Link2 className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Edit event"
-                              onClick={(e) => handleEdit(e, event.id)}
-                            >
-                              <Pencil className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Delete event"
-                              onClick={(e) => handleDelete(e, event.id)}
-                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
+                          <TooltipProvider>
+                            <div className="flex items-center justify-end gap-1">
+                              <Tooltip label="Check-in">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => handleCheckIn(e, event.id)}
+                                >
+                                  <ScanLine className="size-3.5" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip label="Copy link">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => handleShare(e, event.id)}
+                                >
+                                  <Link2 className="size-3.5" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip label="Edit">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => handleEdit(e, event.id)}
+                                >
+                                  <Pencil className="size-3.5" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip label="Delete">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => handleDelete(e, event.id)}
+                                  disabled={deletingId === event.id}
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  {deletingId === event.id
+                                    ? <Loader2 className="size-3.5 animate-spin" />
+                                    : <Trash2 className="size-3.5" />}
+                                </Button>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
                         </td>
                       </tr>
                     );
@@ -300,17 +344,6 @@ const DashboardPage = () => {
         </CardContent>
       </Card>
 
-      {events.length === 0 && (
-        <div className="flex flex-col items-center gap-4 py-10 text-center">
-          <p className="text-muted-foreground">No events yet.</p>
-          <Link
-            href={dashboardEventsNewRoute()}
-            className={buttonVariants({ variant: 'outline' })}
-          >
-            Create your first event
-          </Link>
-        </div>
-      )}
     </div>
   );
 };

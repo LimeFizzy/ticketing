@@ -1,16 +1,18 @@
-import { Check, Globe, Lock } from 'lucide-react';
+import { Check, Globe, Loader2, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export const EventPublishingCard = ({
   status,
   saved,
+  saving,
   onSave,
   onPublish,
   onUnpublish,
 }: {
   status: 'published' | 'draft';
   saved: boolean;
+  saving?: 'save' | 'publish' | 'unpublish' | null;
   onSave: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
@@ -40,28 +42,37 @@ export const EventPublishingCard = ({
         </div>
       </div>
 
-      <Button className="w-full gap-1.5" onClick={onSave}>
-        {saved ? <Check className="size-4" /> : null}
-        {saved ? 'Saved' : 'Save changes'}
+      <Button className="w-full gap-1.5" onClick={onSave} disabled={!!saving}>
+        {saving === 'save'
+          ? <Loader2 className="size-4 animate-spin" />
+          : saved
+            ? <Check className="size-4" />
+            : null}
+        {saving === 'save' ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
       </Button>
 
       {status === 'draft' ? (
         <Button
-          variant="outline"
           className="w-full gap-1.5"
           onClick={onPublish}
+          disabled={!!saving}
         >
-          <Globe className="size-4" />
-          Publish event
+          {saving === 'publish'
+            ? <Loader2 className="size-4 animate-spin" />
+            : <Globe className="size-4" />}
+          {saving === 'publish' ? 'Publishing…' : 'Publish event'}
         </Button>
       ) : (
         <Button
           variant="outline"
           className="w-full gap-1.5"
           onClick={onUnpublish}
+          disabled={!!saving}
         >
-          <Lock className="size-4" />
-          Unpublish
+          {saving === 'unpublish'
+            ? <Loader2 className="size-4 animate-spin" />
+            : <Lock className="size-4" />}
+          {saving === 'unpublish' ? 'Unpublishing…' : 'Unpublish'}
         </Button>
       )}
     </CardContent>

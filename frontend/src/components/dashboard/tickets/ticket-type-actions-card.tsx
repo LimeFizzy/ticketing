@@ -1,15 +1,17 @@
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export const TicketTypeActionsCard = ({
   saved,
+  saving,
   isValid,
   hasCapacityError,
   onSave,
   onCancel,
 }: {
   saved: boolean;
+  saving?: boolean;
   isValid: boolean;
   hasCapacityError: boolean;
   onSave: () => void;
@@ -25,12 +27,16 @@ export const TicketTypeActionsCard = ({
       <Button
         className="w-full gap-1.5"
         onClick={onSave}
-        disabled={!isValid || hasCapacityError}
+        disabled={!isValid || hasCapacityError || saving}
       >
-        {saved ? <Check className="size-4" /> : null}
-        {saved ? 'Saved' : 'Save changes'}
+        {saving
+          ? <Loader2 className="size-4 animate-spin" />
+          : saved
+            ? <Check className="size-4" />
+            : null}
+        {saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
       </Button>
-      <Button variant="outline" className="w-full" onClick={onCancel}>
+      <Button variant="outline" className="w-full" onClick={onCancel} disabled={saving}>
         Cancel
       </Button>
     </CardContent>
