@@ -48,3 +48,11 @@ export const reviewRoute = (eventId: string) =>
 
 export const dashboardEventPromoCodesRoute = (id: string) =>
   `/dashboard/events/${id}/promo-codes` as const;
+
+export const dashboardEventScannersRoute = (id: string) =>
+  `/dashboard/events/${id}/scanners` as const;
+
+export const scannerRoute = () => '/scanner' as const;
+
+export const scannerEventCheckInRoute = (id: string) =>
+  `/scanner/events/${id}/check-in` as const;
