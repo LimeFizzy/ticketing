@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { SelectionSummary } from '@/components/buy/selection-summary';
@@ -42,16 +42,19 @@ export const VenueMapSelector = ({
 
   useRestoreSelection(event.id, setQuantity);
 
-  const placesById = new Map(venueMap.places.map((p) => [p.id, p]));
+  const placesById = useMemo(
+    () => new Map(venueMap.places.map((p) => [p.id, p])),
+    [venueMap.places]
+  );
 
-  const colors = buildTicketTypeColors(event);
+  const colors = useMemo(() => buildTicketTypeColors(event), [event]);
 
   const handleTap = (clientX: number, clientY: number) => {
     const target = document.elementFromPoint(clientX, clientY);
     const placeEl = target?.closest('[data-place-id]') as HTMLElement | null;
     if (!placeEl?.dataset.placeId) return;
     const place = placesById.get(placeEl.dataset.placeId);
-    if (!place || place.available === 0) return;
+    if (!place || place.available === 0 || !place.ticketTypeId) return;
     const qty = selection[place.id] ?? 0;
 
     if (place.kind === 'seat') {
@@ -71,28 +74,36 @@ export const VenueMapSelector = ({
     transformOrigin: '0 0',
   };
 
-  const totalPrice = Object.entries(selection).reduce((sum, [placeId, qty]) => {
-    const place = placesById.get(placeId);
-    if (!place) return sum;
-    return sum + qty * unitPriceFor(place.ticketTypeId);
-  }, 0);
+  const totalPrice = useMemo(
+    () =>
+      Object.entries(selection).reduce((sum, [placeId, qty]) => {
+        const place = placesById.get(placeId);
+        if (!place) return sum;
+        return sum + qty * unitPriceFor(place.ticketTypeId);
+      }, 0),
+    [selection, placesById, unitPriceFor]
+  );
 
-  const lines = venueMap.places
-    .filter((p) => (selection[p.id] ?? 0) > 0)
-    .map((p) => {
-      const typeName = unitNameFor(p.ticketTypeId);
-      return {
-        key: p.id,
-        title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
-        subtitle: p.kind === 'section' ? typeName : undefined,
-        unitPrice: unitPriceFor(p.ticketTypeId),
-        quantity: selection[p.id] ?? 0,
-        max: p.available,
-        onQuantityChange: (next: number) => setQuantity(p.id, next),
-      };
-    });
+  const lines = useMemo(
+    () =>
+      venueMap.places
+        .filter((p) => (selection[p.id] ?? 0) > 0)
+        .map((p) => {
+          const typeName = unitNameFor(p.ticketTypeId);
+          return {
+            key: p.id,
+            title: p.kind === 'seat' ? `${typeName} — ${p.label}` : p.label,
+            subtitle: p.kind === 'section' ? typeName : undefined,
+            unitPrice: unitPriceFor(p.ticketTypeId),
+            quantity: selection[p.id] ?? 0,
+            max: p.available,
+            onQuantityChange: (next: number) => setQuantity(p.id, next),
+          };
+        }),
+    [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
+  );
 
-  const handleContinue = async () => {
+  const handleContinue = useCallback(async () => {
     if (!isAuthenticated) {
       saveSelection(event.id, selection);
       const next = encodeURIComponent(eventBuyRoute(event.id));
@@ -121,7 +132,7 @@ export const VenueMapSelector = ({
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [isAuthenticated, selection, placesById, event.id]);
 
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();

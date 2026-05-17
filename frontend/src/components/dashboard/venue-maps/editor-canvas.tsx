@@ -5,6 +5,11 @@ import { Hand, MousePointer2 } from 'lucide-react';
 import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { VenueMapZoomControls } from '@/components/buy/venue-map-zoom-controls';
 import { Button } from '@/components/ui/button';
+import {
+  clientToSvg as svgClientToSvg,
+  pointInRect,
+  rectsOverlap,
+} from '@/lib/svg-utils';
 
 export interface PlaceInput {
   id: string;
@@ -84,30 +89,6 @@ function snapVal(v: number) {
   return Math.round(v / SNAP) * SNAP;
 }
 
-function rectsOverlap(
-  ax: number,
-  ay: number,
-  aw: number,
-  ah: number,
-  bx: number,
-  by: number,
-  bw: number,
-  bh: number
-) {
-  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-}
-
-function pointInRect(
-  px: number,
-  py: number,
-  rx: number,
-  ry: number,
-  rw: number,
-  rh: number
-) {
-  return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
-}
-
 export function EditorCanvas({
   mapWidth,
   mapHeight,
@@ -163,11 +144,7 @@ export function EditorCanvas({
   const clientToSvg = (clientX: number, clientY: number) => {
     const svg = svgRef.current;
     if (!svg) return { x: 0, y: 0 };
-    const pt = svg.createSVGPoint();
-    pt.x = clientX;
-    pt.y = clientY;
-    const { x, y } = pt.matrixTransform(svg.getScreenCTM()!.inverse());
-    return { x, y };
+    return svgClientToSvg(svg, clientX, clientY);
   };
 
   // ── Element drag ────────────────────────────────────────────────────────────
