@@ -44,3 +44,20 @@ export const formatPrice = (price: number): string =>
 
 export const formatPriceFrom = (price: number): string =>
   price === 0 ? 'Free' : `From €${price}`;
+
+export const formatCurrencyEur = (n: number): string =>
+  new Intl.NumberFormat('en-IE', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(n);
+
+export const formatChartDate = (iso: string): string =>
+  new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+
+export const formatPercentage = (n: number, d: number): string =>
+  d === 0 ? '—' : `${((n / d) * 100).toFixed(1)}%`;

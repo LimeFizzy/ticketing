@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { FormField, FormFieldGroup } from '@/components/ui/form-field';
+import { FormField } from '@/components/ui/form-field';
+import { FormFieldGroup } from '@/components/ui/form-field-group';
 import type { PlaceInput, DecorationInput } from './editor-canvas';
 
 interface EditorPanelProps {

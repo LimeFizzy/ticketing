@@ -37,3 +37,8 @@ export const dashboardVenueMapRoute = (id: string) =>
 
 export const dashboardEventVenueMapRoute = (eventId: string) =>
   `/dashboard/events/${eventId}/venue-map` as const;
+
+export const dashboardAnalyticsRoute = () => '/dashboard/analytics' as const;
+
+export const dashboardAnalyticsEventRoute = (eventId: string) =>
+  `/dashboard/analytics/${eventId}` as const;

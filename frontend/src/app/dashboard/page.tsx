@@ -15,7 +15,8 @@ import {
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
