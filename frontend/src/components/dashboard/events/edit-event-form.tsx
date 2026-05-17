@@ -13,7 +13,6 @@ import type { EventCategory, EventDto } from '@/lib/api/types.gen';
 import {
   dashboardEventCheckInRoute,
   dashboardEventTicketsRoute,
-  dashboardEventVenueMapRoute,
   Route,
 } from '@/lib/routes';
 import { toDatetimeLocal } from '@/lib/formatters';
@@ -60,6 +59,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   const [saving, setSaving] = useState<'save' | 'publish' | 'unpublish' | null>(
     null
   );
+  const [locationOpen, setLocationOpen] = useState(false);
 
   const persist = async (
     nextStatus: 'published' | 'draft',
@@ -136,8 +136,11 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
           <VenueCard
             venue={form.venue}
             city={form.city}
-            eventId={id}
-            venueMapId={event.venueMapId}
+            event={event}
+            ticketTypes={event.ticketTypes}
+            onUpdate={(updated) => setEvent(updated)}
+            open={locationOpen}
+            onOpenChange={setLocationOpen}
           />
           <EventTicketTypesCard
             eventId={id}
@@ -196,7 +199,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
                 <Button
                   variant="outline"
                   className="w-full gap-2"
-                  onClick={() => router.push(dashboardEventVenueMapRoute(id))}
+                  onClick={() => setLocationOpen(true)}
                 >
                   <Map className="size-4" />
                   Edit venue map

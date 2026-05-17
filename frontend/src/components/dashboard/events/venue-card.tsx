@@ -1,27 +1,35 @@
-import Link from 'next/link';
+'use client';
+
 import { LayoutGrid, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { dashboardEventVenueMapRoute } from '@/lib/routes';
+import type { EventDto, EventTicketTypeDto } from '@/lib/api/types.gen';
+import { VenueMapModal } from '@/components/dashboard/events/venue-map-modal';
 
 export const VenueCard = ({
   venue,
   city,
-  eventId,
-  venueMapId,
+  event,
+  ticketTypes,
+  onUpdate,
+  open,
+  onOpenChange,
 }: {
   venue: string;
   city: string;
-  eventId: string;
-  venueMapId?: string | null;
+  event: EventDto;
+  ticketTypes: EventTicketTypeDto[];
+  onUpdate: (updated: EventDto) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) => (
   <Card className="glass border-white/40 shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between">
       <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Location
       </CardTitle>
-      {venueMapId && (
+      {event.venueMapId && (
         <Badge variant="secondary" className="text-xs font-normal">
           Map configured
         </Badge>
@@ -47,26 +55,38 @@ export const VenueCard = ({
           <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground/60">
             <LayoutGrid className="size-3" />
             <span>
-              {venueMapId
+              {event.venueMapId
                 ? 'Seating map configured'
                 : 'Seating map not configured'}
             </span>
           </div>
         </div>
       </div>
+
       <div className="mt-4 flex items-center justify-between gap-4">
         <p className="text-xs text-muted-foreground">
-          {venueMapId
+          {event.venueMapId
             ? 'Configure seat-to-ticket-type mappings.'
             : 'Assign a venue map and configure seat-to-ticket-type mappings.'}
         </p>
-        <Link href={dashboardEventVenueMapRoute(eventId)}>
-          <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
-            <MapPin className="size-3.5" />
-            Manage location
-          </Button>
-        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5"
+          onClick={() => onOpenChange(true)}
+        >
+          <MapPin className="size-3.5" />
+          Manage location
+        </Button>
       </div>
+
+      <VenueMapModal
+        event={event}
+        ticketTypes={ticketTypes}
+        onUpdate={onUpdate}
+        open={open}
+        onOpenChange={onOpenChange}
+      />
     </CardContent>
   </Card>
 );

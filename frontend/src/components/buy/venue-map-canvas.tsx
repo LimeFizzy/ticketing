@@ -56,12 +56,14 @@ export const VenueMapCanvas = ({
     ))}
 
     {venueMap.places.map((place) => {
-      const color =
-        colors.get(place.ticketTypeId) ?? colors.values().next().value!;
+      const unassigned = !place.ticketTypeId;
+      const color = unassigned
+        ? { fill: SOLD_FILL, stroke: SOLD_FILL }
+        : (colors.get(place.ticketTypeId) ?? colors.values().next().value!);
       const qty = selection[place.id] ?? 0;
       const price = unitPriceFor(place.ticketTypeId);
       const name = unitNameFor(place.ticketTypeId);
-      const sold = place.available === 0;
+      const sold = place.available === 0 || unassigned;
 
       if (place.kind === 'seat') {
         return (
