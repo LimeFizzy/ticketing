@@ -88,6 +88,7 @@ const NewEventPage = () => {
         imageUrl: form.imageUrl || undefined,
         description: form.description || undefined,
         status: form.status,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
     });
 

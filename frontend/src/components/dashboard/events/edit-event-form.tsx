@@ -86,6 +86,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
           : null,
         venueMapId: event?.venueMapId ?? null,
         status: nextStatus,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
     });
 
