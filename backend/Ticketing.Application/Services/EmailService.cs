@@ -45,8 +45,10 @@ public class EmailService(
         var @event = await eventRepository.GetByIdAsync(eventId);
         if (user == null || @event == null) return;
 
+        var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId);
+
         var subject = $"Reminder: {@event.Title} is tomorrow!";
-        var body = BuildReminderHtml(user, @event);
+        var body = BuildReminderHtml(user, @event, tickets);
 
         await SendEmailAsync(user.Email, subject, body, "EventReminder", eventId: eventId);
     }
@@ -114,11 +116,15 @@ public class EmailService(
         await emailLogRepository.SaveChangesAsync();
     }
 
+    private const string BaseUrl = "https://www.zzzz.lt";
+
     private static string BuildOrderConfirmationHtml(User user, Order order, Event @event)
     {
         var ticketRows = order.Tickets.Select(t =>
-            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;">{t.TicketCode}</td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
+            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
         );
+
+        var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
 
         return $"""
             <!DOCTYPE html>
@@ -126,22 +132,39 @@ public class EmailService(
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
                 <p>Your order for <strong>{@event.Title}</strong> has been confirmed!</p>
+                <p><strong>Your tickets:</strong></p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-                    <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket Type</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Code</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Price</th></tr>
+                    <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket Type</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Price</th></tr>
                     {string.Join("\n", ticketRows)}
                     <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid #ddd;" colspan="2">Total</td><td style="padding:8px;border:1px solid #ddd;">€{order.TotalAmount:F2}</td></tr>
                 </table>
                 <p><strong>Event details:</strong></p>
-                <p>{@event.Date:yyyy-MM-dd HH:mm} &bull; {@event.Venue}, {@event.City}</p>
-                <p>Your QR codes are available in your TicketFlow account.</p>
+                <p>{dateStr} &bull; {@event.Venue}, {@event.City}</p>
+                <p>View all your tickets and QR codes in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
             </body>
             </html>
             """;
     }
 
-    private static string BuildReminderHtml(User user, Event @event)
+    private static string BuildReminderHtml(User user, Event @event, IEnumerable<Ticket> tickets)
     {
+        var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
+
+        var ticketRefs = tickets.ToList();
+        var ticketList = ticketRefs.Count > 0
+            ? $"""
+                <p><strong>Your ticket references:</strong></p>
+                <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                    <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th></tr>
+                    {string.Join("\n", ticketRefs.Select(t =>
+                        $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td></tr>"""
+                    ))}
+                </table>
+                <p>View all your tickets in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
+                """
+            : $"""<p>View your tickets in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>""";
+
         return $"""
             <!DOCTYPE html>
             <html>
@@ -149,10 +172,10 @@ public class EmailService(
                 <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
                 <p>This is a reminder that <strong>{@event.Title}</strong> is happening tomorrow!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Date:yyyy-MM-dd HH:mm}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Venue</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Venue}, {@event.City}</td></tr>
                 </table>
-                <p>Don't forget to bring your ticket with the QR code!</p>
+                {ticketList}
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
             </body>
             </html>
@@ -161,6 +184,8 @@ public class EmailService(
 
     private static string BuildCheckInHtml(User user, Ticket ticket, Event @event)
     {
+        var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
+
         return $"""
             <!DOCTYPE html>
             <html>
@@ -169,12 +194,35 @@ public class EmailService(
                 <p>You've been successfully checked in to <strong>{@event.Title}</strong>!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Event</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Title}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;">{ticket.TicketCode}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{ticket.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{ticket.TicketCode}</strong></a></td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Checked in at</strong></td><td style="padding:8px;border:1px solid #ddd;">{ticket.CheckedInAt:yyyy-MM-dd HH:mm} UTC</td></tr>
                 </table>
                 <p>Enjoy the event!<br><strong>TicketFlow Team</strong></p>
             </body>
             </html>
             """;
+    }
+
+    private static string FormatDateInTimeZone(DateTime utcDate, string? timeZoneId)
+    {
+        if (!string.IsNullOrEmpty(timeZoneId))
+        {
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                var localDate = TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.SpecifyKind(utcDate, DateTimeKind.Utc), tz);
+                var offset = tz.GetUtcOffset(DateTime.SpecifyKind(utcDate, DateTimeKind.Utc));
+                var offsetStr = offset.TotalMinutes >= 0
+                    ? $"UTC+{offset.Hours}:{offset.Minutes:D2}"
+                    : $"UTC{offset.Hours}:{offset.Minutes:D2}";
+                return $"{localDate:yyyy-MM-dd HH:mm} ({offsetStr})";
+            }
+            catch { }
+        }
+
+        var defaultDate = DateTime.SpecifyKind(utcDate, DateTimeKind.Utc).AddHours(3);
+        return $"{defaultDate:yyyy-MM-dd HH:mm} (UTC+3)";
     }
 }
