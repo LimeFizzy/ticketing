@@ -1,6 +1,8 @@
+using System.Net.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
@@ -93,7 +95,8 @@ public class EmailService(
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var client = new SmtpClient();
-            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, true);
+            client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None || errors == SslPolicyErrors.RemoteCertificateChainErrors;
+            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
