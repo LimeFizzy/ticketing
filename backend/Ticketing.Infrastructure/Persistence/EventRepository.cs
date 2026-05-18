@@ -18,7 +18,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
     {
         var query = context.Events
             .Include(e => e.TicketTypes)
-            .Where(e => !e.IsDeleted);
+            .Where(e => !e.IsDeleted && e.Date >= DateTime.UtcNow);
 
         if (filter != null)
         {
