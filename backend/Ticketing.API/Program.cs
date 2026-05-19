@@ -71,6 +71,8 @@ builder.Services.AddScoped<IVenueMapRepository, VenueMapRepository>();
 builder.Services.AddScoped<IVenueMapService, VenueMapService>();
 builder.Services.AddScoped<IEventVenueMapPlaceRepository, EventVenueMapPlaceRepository>();
 builder.Services.AddScoped<IEventVenueMapPlaceService, EventVenueMapPlaceService>();
+builder.Services.AddScoped<IEventScannerRepository, EventScannerRepository>();
+builder.Services.AddScoped<IScannerService, ScannerService>();
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 

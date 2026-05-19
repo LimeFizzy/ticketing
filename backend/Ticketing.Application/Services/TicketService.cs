@@ -8,10 +8,10 @@ public interface ITicketService
 {
     Task<IEnumerable<TicketDto>> GetByUserIdAsync(Guid userId);
     Task<TicketDto?> GetByIdAsync(Guid id);
-    Task<CheckInResponse> CheckInAsync(Guid organizerId, CheckInRequest request);
+    Task<CheckInResponse> CheckInAsync(Guid userId, CheckInRequest request);
 }
 
-public class TicketService(ITicketRepository ticketRepository) : ITicketService
+public class TicketService(ITicketRepository ticketRepository, IEventScannerRepository eventScannerRepository) : ITicketService
 {
     public async Task<IEnumerable<TicketDto>> GetByUserIdAsync(Guid userId)
     {
@@ -26,7 +26,7 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
         return MapToDto(ticket);
     }
 
-    public async Task<CheckInResponse> CheckInAsync(Guid organizerId, CheckInRequest request)
+    public async Task<CheckInResponse> CheckInAsync(Guid userId, CheckInRequest request)
     {
         var ticket = await ticketRepository.GetByCodeWithEventAsync(request.TicketCode)
             ?? throw new KeyNotFoundException("Ticket not found.");
@@ -36,8 +36,10 @@ public class TicketService(ITicketRepository ticketRepository) : ITicketService
         if (@event.Id != request.EventId)
             throw new InvalidOperationException("Ticket does not belong to this event.");
 
-        if (@event.OrganizerId != organizerId)
-            throw new UnauthorizedAccessException("You are not the organizer of this event.");
+        var isOrganizer = @event.OrganizerId == userId;
+        var isScanner = await eventScannerRepository.IsScannerForEventAsync(userId, @event.Id);
+        if (!isOrganizer && !isScanner)
+            throw new UnauthorizedAccessException("You are not authorized to check in tickets for this event.");
 
         if (ticket.CheckedInAt.HasValue)
             return new CheckInResponse(MapToDto(ticket), WasAlreadyCheckedIn: true);
