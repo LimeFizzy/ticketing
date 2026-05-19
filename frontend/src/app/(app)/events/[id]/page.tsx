@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { EventPurchaseCard } from '@/components/events/event-purchase-card';
 import { EventDisclaimers } from '@/components/events/event-disclaimers';
+import { EventReviews } from '@/components/events/event-reviews';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
 import { formatEventDateLong, formatEventTime } from '@/lib/formatters';
 import { Route } from '@/lib/routes';
@@ -100,6 +101,8 @@ const EventDetailPage = async ({
           </Card>
 
           <EventDisclaimers extras={event.disclaimers} />
+
+          <EventReviews eventId={id} />
         </div>
       </div>
     </div>

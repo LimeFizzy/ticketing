@@ -117,15 +117,15 @@ export const DesktopSidebar = () => {
               ]}
             />
             <NavLink
-              href={dashboardVenueMapsRoute()}
-              icon={<Map className="size-4" />}
-              label="Venue Maps"
-              collapsed={collapsed}
-            />
-            <NavLink
               href={dashboardAnalyticsRoute()}
               icon={<BarChart2 className="size-4" />}
               label="Analytics"
+              collapsed={collapsed}
+            />
+            <NavLink
+              href={dashboardVenueMapsRoute()}
+              icon={<Map className="size-4" />}
+              label="Venue Maps"
               collapsed={collapsed}
             />
             <NavLink
