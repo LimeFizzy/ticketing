@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -17,7 +16,7 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(Guid eventId, [FromBody] CreatePromoCodeRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             var promoCode = await promoCodeService.CreateAsync(eventId, organizerId, request);
@@ -39,7 +38,7 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(Guid eventId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             var promoCodes = await promoCodeService.GetByEventIdAsync(eventId, organizerId);
@@ -58,7 +57,7 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid eventId, Guid promoCodeId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             await promoCodeService.DeleteAsync(promoCodeId, organizerId);
@@ -73,7 +72,4 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
             return StatusCode(403, new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

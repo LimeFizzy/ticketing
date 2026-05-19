@@ -17,16 +17,26 @@ public class WebhooksController(
     IOrderService orderService,
     IOrderRepository orderRepository,
     IEmailService emailService,
-    IPromoCodeRepository promoCodeRepository,
     IOptions<StripeSettings> options,
     ILogger<WebhooksController> logger) : ControllerBase
 {
+    private const int MaxWebhookBodySize = 1 * 1024 * 1024;
+
     [HttpPost("stripe")]
     [AllowAnonymous]
     [ApiExplorerSettings(IgnoreApi = true)]
+    [RequestSizeLimit(MaxWebhookBodySize)]
     public async Task<IActionResult> HandleStripeWebhook()
     {
-        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        HttpContext.Request.EnableBuffering();
+        using var reader = new StreamReader(HttpContext.Request.Body, leaveOpen: true);
+        var json = await reader.ReadToEndAsync();
+
+        if (string.IsNullOrWhiteSpace(options.Value.WebhookSecret))
+        {
+            logger.LogError("Stripe webhook secret is not configured");
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
 
         Event stripeEvent;
         try
@@ -36,8 +46,9 @@ public class WebhooksController(
                 Request.Headers["Stripe-Signature"],
                 options.Value.WebhookSecret);
         }
-        catch (StripeException)
+        catch (StripeException ex)
         {
+            logger.LogWarning(ex, "Stripe webhook signature validation failed");
             return BadRequest();
         }
 
@@ -89,14 +100,12 @@ public class WebhooksController(
                 var request = new CreateOrderRequest(eventId, items);
                 var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount);
 
-                if (promoCodeId.HasValue)
-                    await promoCodeRepository.IncrementUsageAsync(promoCodeId.Value);
-
                 BackgroundJob.Enqueue(() => emailService.SendOrderConfirmationAsync(order.Id));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Stripe webhook failed processing session {SessionId}", session.Id);
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
 

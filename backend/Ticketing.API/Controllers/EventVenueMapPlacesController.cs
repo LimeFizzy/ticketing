@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -25,7 +24,7 @@ public class EventVenueMapPlacesController(IEventVenueMapPlaceService mappingSer
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetManagedMappings(Guid eventId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             var mappings = await mappingService.GetMappingsAsync(eventId, organizerId);
@@ -47,7 +46,7 @@ public class EventVenueMapPlacesController(IEventVenueMapPlaceService mappingSer
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SetMappings(Guid eventId, [FromBody] UpdateEventVenueMapPlacesRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             await mappingService.SetMappingsAsync(eventId, organizerId, request);
@@ -62,7 +61,4 @@ public class EventVenueMapPlacesController(IEventVenueMapPlaceService mappingSer
             return BadRequest(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

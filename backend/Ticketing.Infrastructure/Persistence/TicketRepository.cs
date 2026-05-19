@@ -16,6 +16,7 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.VenueMapPlace)
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -26,6 +27,7 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.Order)
                 .ThenInclude(o => o.Event)
             .Include(t => t.VenueMapPlace)
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
@@ -37,12 +39,13 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
                 .ThenInclude(o => o.Event)
             .Include(t => t.User)
             .Include(t => t.VenueMapPlace)
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.TicketCode == ticketCode);
     }
 
     public Task<bool> ExistsByCodeAsync(string code)
     {
-        return context.Tickets.AnyAsync(t => t.TicketCode == code);
+        return context.Tickets.AsNoTracking().AnyAsync(t => t.TicketCode == code);
     }
 
     public async Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId)
@@ -51,12 +54,14 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.EventTicketType)
             .Include(t => t.VenueMapPlace)
             .Where(t => t.UserId == userId && t.Order.EventId == eventId && t.Status == TicketStatus.Active)
+            .AsNoTracking()
             .ToListAsync();
     }
 
     public async Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId)
     {
         return await context.Tickets
+            .AsNoTracking()
             .AnyAsync(t => t.UserId == userId && t.Order.EventId == eventId);
     }
 

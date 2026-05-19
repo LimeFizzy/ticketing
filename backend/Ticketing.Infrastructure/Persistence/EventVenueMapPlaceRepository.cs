@@ -9,6 +9,7 @@ public class EventVenueMapPlaceRepository(TicketingDbContext context) : IEventVe
     public async Task<IEnumerable<EventVenueMapPlace>> GetByEventIdAsync(Guid eventId)
     {
         return await context.EventVenueMapPlaces
+            .AsNoTracking()
             .Where(evmp => evmp.EventId == eventId)
             .ToListAsync();
     }

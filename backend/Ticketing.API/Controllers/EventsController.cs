@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 using Ticketing.Domain.Constants;
@@ -46,7 +45,7 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateEventRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         var @event = await eventService.CreateAsync(organizerId, request);
         return CreatedAtRoute("getEventById", new { id = @event.Id }, @event);
     }
@@ -58,7 +57,7 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEventRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         var result = await eventService.UpdateAsync(id, organizerId, request);
         if (result == null) return NotFound(new ProblemDetails { Title = "Event not found or not owned by you" });
 
@@ -71,7 +70,7 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             await eventService.SoftDeleteAsync(id, organizerId);
@@ -100,7 +99,4 @@ public class EventsController(IEventService eventService, IReviewService reviewS
         if (venueMap == null) return NotFound(new ProblemDetails { Title = "No venue map for this event" });
         return Ok(venueMap);
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

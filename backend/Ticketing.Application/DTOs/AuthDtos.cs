@@ -1,18 +1,21 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Ticketing.Domain.Constants;
 
 namespace Ticketing.Application.DTOs;
 
 public record LoginRequest(
-    [Required] string Email,
+    [Required][EmailAddress][MaxLength(256)] string Email,
     [Required] string Password
 );
+
 public record RegisterRequest(
-    [Required] string FirstName,
-    [Required] string LastName,
-    [Required] string Email,
-    [Required][MinLength(8)] string Password
+    [Required][MaxLength(100)] string FirstName,
+    [Required][MaxLength(100)] string LastName,
+    [Required][EmailAddress][MaxLength(256)] string Email,
+    [Required][MinLength(8)][MaxLength(128)] string Password
 );
+
 public record UserDto(
     [property: Required] Guid Id,
     [property: Required] string FirstName,
@@ -22,25 +25,24 @@ public record UserDto(
 );
 
 public record UpdateProfileRequest(
-    [Required] string FirstName,
-    [Required] string LastName,
-    [Required] string Email
+    [Required][MaxLength(100)] string FirstName,
+    [Required][MaxLength(100)] string LastName,
+    [Required][EmailAddress][MaxLength(256)] string Email
 );
 
 public record InviteOrganizerRequest(
-    [Required] string FirstName,
-    [Required] string LastName,
-    [Required] string Email
+    [Required][MaxLength(100)] string FirstName,
+    [Required][MaxLength(100)] string LastName,
+    [Required][EmailAddress][MaxLength(256)] string Email
 );
 
 public record VerifyInviteResponse(
-    [property: Required] bool Valid,
-    string? Email
+    [property: Required] bool Valid
 );
 
 public record AcceptInviteRequest(
     [Required] string Token,
-    [Required][MinLength(8)] string Password
+    [Required][MinLength(8)][MaxLength(128)] string Password
 );
 
 public record OrganizerDto(

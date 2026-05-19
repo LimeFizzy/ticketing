@@ -62,6 +62,18 @@ public class VenueMapService(
             }).ToList() ?? []
         };
 
+        foreach (var place in venueMap.Places)
+        {
+            if (place.X < 0 || place.Y < 0 || place.Width <= 0 || place.Height <= 0)
+                throw new InvalidOperationException($"Place coordinates must be non-negative with positive dimensions: {place.Label}");
+        }
+
+        foreach (var deco in venueMap.Decorations)
+        {
+            if (deco.X < 0 || deco.Y < 0 || deco.Width <= 0 || deco.Height <= 0)
+                throw new InvalidOperationException("Decoration coordinates must be non-negative with positive dimensions");
+        }
+
         var created = await venueMapRepository.CreateAsync(venueMap);
         return await MapToDtoAsync(created);
     }

@@ -5,8 +5,8 @@ namespace Ticketing.Application.DTOs;
 
 public record CreateCheckoutSessionRequest(
     [Required] Guid EventId,
-    [Required] OrderItemRequest[] Items,
-    string? PromoCode
+    [Required][MinLength(1)] OrderItemRequest[] Items,
+    [MaxLength(50)] string? PromoCode
 );
 
 public record OrderItemRequest(
@@ -21,7 +21,7 @@ public record CheckoutSessionDto(
 
 public record CreateOrderRequest(
     [Required] Guid EventId,
-    [Required] OrderItemRequest[] Items
+    [Required][MinLength(1)] OrderItemRequest[] Items
 );
 
 public record OrderDto(

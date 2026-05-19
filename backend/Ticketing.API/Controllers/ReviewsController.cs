@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -16,7 +15,7 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateReviewRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var review = await reviewService.CreateAsync(userId, request);
@@ -35,7 +34,7 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid reviewId, [FromBody] UpdateReviewRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var result = await reviewService.UpdateAsync(reviewId, userId, request);
@@ -55,7 +54,7 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid reviewId)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             await reviewService.DeleteAsync(reviewId, userId);
@@ -76,11 +75,8 @@ public class ReviewsController(IReviewService reviewService) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ReviewableEventDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetReviewableEvents()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var events = await reviewService.GetReviewableEventsAsync(userId);
         return Ok(events);
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

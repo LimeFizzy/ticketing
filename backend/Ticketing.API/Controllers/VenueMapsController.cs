@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -34,7 +33,7 @@ public class VenueMapsController(IVenueMapService venueMapService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create([FromBody] CreateVenueMapRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var map = await venueMapService.CreateAsync(userId, request);
@@ -53,7 +52,7 @@ public class VenueMapsController(IVenueMapService venueMapService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVenueMapRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var result = await venueMapService.UpdateAsync(id, userId, request);
@@ -72,7 +71,7 @@ public class VenueMapsController(IVenueMapService venueMapService) : ControllerB
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             await venueMapService.DeleteAsync(id, userId);
@@ -87,7 +86,4 @@ public class VenueMapsController(IVenueMapService venueMapService) : ControllerB
             return NotFound(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

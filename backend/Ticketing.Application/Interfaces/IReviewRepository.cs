@@ -12,5 +12,6 @@ public interface IReviewRepository
     Task<IEnumerable<Review>> GetByEventIdAsync(Guid eventId);
     Task<double> GetAverageRatingAsync(Guid eventId);
     Task<int> GetReviewCountAsync(Guid eventId);
+    Task<Dictionary<Guid, (double AvgRating, int Count)>> GetRatingsBatchAsync(IEnumerable<Guid> eventIds);
     Task SaveChangesAsync();
 }

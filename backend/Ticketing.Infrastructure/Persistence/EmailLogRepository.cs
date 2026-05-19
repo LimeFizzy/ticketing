@@ -9,7 +9,20 @@ public class EmailLogRepository(TicketingDbContext context) : IEmailLogRepositor
     public async Task<bool> HasBeenSentAsync(string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
     {
         return await context.EmailLogs
+            .AsNoTracking()
             .AnyAsync(e => e.EmailType == emailType
+                && (eventId == null || e.EventId == eventId)
+                && (orderId == null || e.OrderId == orderId)
+                && (ticketId == null || e.TicketId == ticketId)
+                && e.Status == "Sent");
+    }
+
+    public async Task<bool> HasBeenSentToRecipientAsync(string recipientEmail, string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
+    {
+        return await context.EmailLogs
+            .AsNoTracking()
+            .AnyAsync(e => e.RecipientEmail == recipientEmail
+                && e.EmailType == emailType
                 && (eventId == null || e.EventId == eventId)
                 && (orderId == null || e.OrderId == orderId)
                 && (ticketId == null || e.TicketId == ticketId)

@@ -15,6 +15,7 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
     public Task<Order?> GetByIdAsync(Guid id)
     {
         return context.Orders
+            .AsNoTracking()
             .Include(o => o.User)
             .Include(o => o.Event)
             .Include(o => o.Tickets)
@@ -24,7 +25,7 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
 
     public Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId)
     {
-        return context.Orders.FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId);
+        return context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId);
     }
 
     public async Task SaveChangesAsync()

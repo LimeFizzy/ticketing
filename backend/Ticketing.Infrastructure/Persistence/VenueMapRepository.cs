@@ -9,6 +9,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
     public async Task<VenueMap?> GetByIdAsync(Guid id)
     {
         return await context.VenueMaps
+            .AsNoTracking()
             .Include(vm => vm.Places)
             .Include(vm => vm.Decorations)
             .FirstOrDefaultAsync(vm => vm.Id == id);
@@ -17,6 +18,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
     public async Task<IEnumerable<VenueMap>> GetAllAsync()
     {
         return await context.VenueMaps
+            .AsNoTracking()
             .Include(vm => vm.Places)
             .ToListAsync();
     }
@@ -43,7 +45,6 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
         var requestedPlaceIds = newPlaces.Select(p => p.Id).ToHashSet();
         var requestedDecIds = newDecorations.Select(d => d.Id).ToHashSet();
 
-        // Remove places no longer in the request (only if no tickets reference them)
         foreach (var existing in existingPlaces)
         {
             if (!requestedPlaceIds.Contains(existing.Id))
@@ -55,14 +56,12 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
             }
         }
 
-        // Remove decorations no longer in the request
         foreach (var existing in existingDecorations)
         {
             if (!requestedDecIds.Contains(existing.Id))
                 context.VenueMapDecorations.Remove(existing);
         }
 
-        // Add or update places
         foreach (var place in newPlaces)
         {
             var existing = existingPlaces.FirstOrDefault(p => p.Id == place.Id);
@@ -82,7 +81,6 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
             }
         }
 
-        // Add or update decorations
         foreach (var dec in newDecorations)
         {
             var existing = existingDecorations.FirstOrDefault(d => d.Id == dec.Id);
@@ -115,7 +113,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
 
     public async Task<bool> ExistsAsync(Guid id)
     {
-        return await context.VenueMaps.AnyAsync(vm => vm.Id == id);
+        return await context.VenueMaps.AsNoTracking().AnyAsync(vm => vm.Id == id);
     }
 
     public async Task<VenueMapPlace?> GetPlaceByIdAsync(Guid placeId)
@@ -126,6 +124,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
     public async Task<int> GetSoldCountForPlaceAsync(Guid venueMapPlaceId)
     {
         return await context.Tickets
+            .AsNoTracking()
             .CountAsync(t => t.VenueMapPlaceId == venueMapPlaceId);
     }
 
@@ -133,6 +132,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
     {
         var idList = placeIds.ToList();
         return await context.Tickets
+            .AsNoTracking()
             .Where(t => t.VenueMapPlaceId != null && idList.Contains(t.VenueMapPlaceId.Value))
             .GroupBy(t => t.VenueMapPlaceId!.Value)
             .ToDictionaryAsync(g => g.Key, g => g.Count());
@@ -145,6 +145,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
             venueMapPlaceId);
 
         var sold = await context.Tickets
+            .AsNoTracking()
             .CountAsync(t => t.VenueMapPlaceId == venueMapPlaceId);
 
         var place = await context.VenueMapPlaces.FindAsync(venueMapPlaceId)

@@ -44,6 +44,10 @@ if (string.IsNullOrWhiteSpace(stripeSecretKey))
 builder.Services.Configure<StripeSettings>(stripeSection);
 StripeConfiguration.ApiKey = stripeSecretKey;
 
+var webhookSecret = stripeSection["WebhookSecret"];
+if (string.IsNullOrWhiteSpace(webhookSecret))
+    throw new InvalidOperationException("Stripe configuration is missing or invalid. Please configure 'Stripe:WebhookSecret'.");
+
 builder.Services.AddDbContext<TicketingDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -86,7 +90,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins(builder.Configuration["AllowedOrigin"]!)
+        var allowedOrigin = builder.Configuration["AllowedOrigin"]
+            ?? throw new InvalidOperationException("'AllowedOrigin' configuration is missing.");
+        policy.WithOrigins(allowedOrigin)
               .WithHeaders("Content-Type", "Authorization", "Accept")
               .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
               .AllowCredentials();
@@ -116,6 +122,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
@@ -123,9 +130,7 @@ app.MapOpenApi();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = builder.Environment.IsDevelopment()
-        ? []
-        : [new HangfireDashboardAuthFilter()]
+    Authorization = [new HangfireDashboardAuthFilter()]
 });
 RecurringJob.AddOrUpdate<EmailBackgroundJobs>(
     "send-event-reminders",

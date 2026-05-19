@@ -38,12 +38,13 @@ public class EmailService(
 
     public async Task SendEventReminderAsync(Guid eventId, Guid userId)
     {
-        if (await emailLogRepository.HasBeenSentAsync("EventReminder", eventId: eventId))
-            return;
-
         var user = await userRepository.GetByIdAsync(userId);
         var @event = await eventRepository.GetByIdAsync(eventId);
         if (user == null || @event == null) return;
+
+        var existingLogs = await emailLogRepository.HasBeenSentToRecipientAsync(
+            user.Email, "EventReminder", eventId: eventId);
+        if (existingLogs) return;
 
         var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId);
 
@@ -97,7 +98,7 @@ public class EmailService(
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var client = new SmtpClient();
-            client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None || errors == SslPolicyErrors.RemoteCertificateChainErrors;
+            client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None;
             await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass);
             await client.SendAsync(message);
@@ -121,7 +122,7 @@ public class EmailService(
     private string BuildOrderConfirmationHtml(User user, Order order, Event @event)
     {
         var ticketRows = order.Tickets.Select(t =>
-            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
+            $"""<tr><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(t.EventTicketType.Name)}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(t.TicketCode)}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
         );
 
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
@@ -130,8 +131,8 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>Your order for <strong>{@event.Title}</strong> has been confirmed!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>Your order for <strong>{HtmlEncode(@event.Title)}</strong> has been confirmed!</p>
                 <p><strong>Your tickets:</strong></p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket Type</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Price</th></tr>
@@ -139,7 +140,7 @@ public class EmailService(
                     <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid #ddd;" colspan="2">Total</td><td style="padding:8px;border:1px solid #ddd;">€{order.TotalAmount:F2}</td></tr>
                 </table>
                 <p><strong>Event details:</strong></p>
-                <p>{dateStr} &bull; {@event.Venue}, {@event.City}</p>
+                <p>{dateStr} &bull; {HtmlEncode(@event.Venue)}, {HtmlEncode(@event.City)}</p>
                 <p>View all your tickets and QR codes in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
             </body>
@@ -158,7 +159,7 @@ public class EmailService(
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr style="background:#f5f5f5;"><th style="padding:8px;border:1px solid #ddd;text-align:left;">Ticket</th><th style="padding:8px;border:1px solid #ddd;text-align:left;">Reference</th></tr>
                     {string.Join("\n", ticketRefs.Select(t =>
-                        $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td></tr>"""
+                        $"""<tr><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(t.EventTicketType.Name)}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(t.TicketCode)}</strong></a></td></tr>"""
                     ))}
                 </table>
                 <p>View all your tickets in your <a href="{BaseUrl}/tickets" style="color:#1e3a5f;">TicketFlow account</a>.</p>
@@ -169,11 +170,11 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>This is a reminder that <strong>{@event.Title}</strong> is happening tomorrow!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>This is a reminder that <strong>{HtmlEncode(@event.Title)}</strong> is happening tomorrow!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Venue</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Venue}, {@event.City}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Venue</strong></td><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(@event.Venue)}, {HtmlEncode(@event.City)}</td></tr>
                 </table>
                 {ticketList}
                 <p>See you there!<br><strong>TicketFlow Team</strong></p>
@@ -190,12 +191,12 @@ public class EmailService(
             <!DOCTYPE html>
             <html>
             <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-                <h2 style="color:#1e3a5f;">Hi {user.FirstName},</h2>
-                <p>You've been successfully checked in to <strong>{@event.Title}</strong>!</p>
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(user.FirstName)},</h2>
+                <p>You've been successfully checked in to <strong>{HtmlEncode(@event.Title)}</strong>!</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0;">
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Event</strong></td><td style="padding:8px;border:1px solid #ddd;">{@event.Title}</td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Event</strong></td><td style="padding:8px;border:1px solid #ddd;">{HtmlEncode(@event.Title)}</td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd;">{dateStr}</td></tr>
-                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{ticket.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{ticket.TicketCode}</strong></a></td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Ticket</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{ticket.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{HtmlEncode(ticket.TicketCode)}</strong></a></td></tr>
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Checked in at</strong></td><td style="padding:8px;border:1px solid #ddd;">{ticket.CheckedInAt:yyyy-MM-dd HH:mm} UTC</td></tr>
                 </table>
                 <p>Enjoy the event!<br><strong>TicketFlow Team</strong></p>
@@ -204,7 +205,7 @@ public class EmailService(
             """;
     }
 
-    private static string FormatDateInTimeZone(DateTime utcDate, string? timeZoneId)
+    private string FormatDateInTimeZone(DateTime utcDate, string? timeZoneId)
     {
         if (!string.IsNullOrEmpty(timeZoneId))
         {
@@ -219,10 +220,16 @@ public class EmailService(
                     : $"UTC{offset.Hours}:{offset.Minutes:D2}";
                 return $"{localDate:yyyy-MM-dd HH:mm} ({offsetStr})";
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to format date in timezone {TimeZoneId}", timeZoneId);
+            }
         }
 
         var defaultDate = DateTime.SpecifyKind(utcDate, DateTimeKind.Utc).AddHours(3);
         return $"{defaultDate:yyyy-MM-dd HH:mm} (UTC+3)";
     }
+
+    private static string HtmlEncode(string? value) =>
+        string.IsNullOrEmpty(value) ? "" : System.Web.HttpUtility.HtmlEncode(value);
 }

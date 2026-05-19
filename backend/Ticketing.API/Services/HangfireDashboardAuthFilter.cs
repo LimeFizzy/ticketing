@@ -8,6 +8,6 @@ public class HangfireDashboardAuthFilter : IDashboardAuthorizationFilter
     {
         var httpContext = context.GetHttpContext();
         return httpContext.User.Identity?.IsAuthenticated == true
-               && httpContext.User.IsInRole("Admin");
+               && httpContext.User.Claims.Any(c => c.Type == System.Security.Claims.ClaimTypes.Role && c.Value == "Admin");
     }
 }

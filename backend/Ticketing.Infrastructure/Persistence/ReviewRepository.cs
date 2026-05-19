@@ -9,6 +9,7 @@ public class ReviewRepository(TicketingDbContext context) : IReviewRepository
     public async Task<Review?> GetByUserAndEventAsync(Guid userId, Guid eventId)
     {
         return await context.Reviews
+            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId && r.EventId == eventId);
     }
 
@@ -58,6 +59,18 @@ public class ReviewRepository(TicketingDbContext context) : IReviewRepository
     {
         return await context.Reviews
             .CountAsync(r => r.EventId == eventId);
+    }
+
+    public async Task<Dictionary<Guid, (double AvgRating, int Count)>> GetRatingsBatchAsync(IEnumerable<Guid> eventIds)
+    {
+        var idList = eventIds.ToList();
+        return await context.Reviews
+            .Where(r => idList.Contains(r.EventId))
+            .GroupBy(r => r.EventId)
+            .ToDictionaryAsync(
+                g => g.Key,
+                g => (g.Average(r => (double)r.Rating), g.Count())
+            );
     }
 
     public async Task SaveChangesAsync()

@@ -26,7 +26,6 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     {
         var user = await userRepository.GetByEmailAsync(request.Email);
 
-        // Always hash to prevent timing attacks that enumerate emails
         var hashToVerify = user?.PasswordHash ?? "";
         if (user == null || !passwordHasher.Verify(request.Password, hashToVerify))
             return null;
@@ -67,7 +66,8 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         if (user.Email != request.Email)
         {
             var existingUser = await userRepository.GetByEmailAsync(request.Email);
-            if (existingUser != null) return null;
+            if (existingUser != null)
+                throw new InvalidOperationException("A user with this email already exists");
         }
 
         user.FirstName = request.FirstName;
@@ -112,10 +112,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     public async Task<VerifyInviteResponse> VerifyInviteAsync(string token)
     {
         var user = await userRepository.GetByInviteTokenAsync(token);
-        if (user == null)
-            return new VerifyInviteResponse(false, null);
-
-        return new VerifyInviteResponse(true, user.Email);
+        return new VerifyInviteResponse(user != null);
     }
 
     public async Task<UserDto?> AcceptInviteAsync(AcceptInviteRequest request)
@@ -167,8 +164,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
 
     public async Task<bool> HasPasswordAsync(string email)
     {
-        var user = await userRepository.GetByEmailAsync(email);
-        return user != null && !string.IsNullOrEmpty(user.PasswordHash);
+        throw new InvalidOperationException("This endpoint has been deprecated for security reasons");
     }
 
     private static UserDto MapToDto(User user) => new(

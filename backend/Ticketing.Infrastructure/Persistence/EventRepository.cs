@@ -18,6 +18,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
     public async Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null)
     {
         var query = context.Events
+            .AsNoTracking()
             .Include(e => e.TicketTypes)
             .Where(e => !e.IsDeleted && e.Date >= DateTime.UtcNow);
 
@@ -38,7 +39,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                 query = query.Where(e => e.Featured == filter.Featured.Value);
 
             if (!string.IsNullOrEmpty(filter.City))
-                query = query.Where(e => e.City == filter.City);
+                query = query.Where(e => EF.Functions.ILike(e.City, filter.City));
 
             if (!string.IsNullOrEmpty(filter.Search))
             {
@@ -100,7 +101,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
 
     public async Task<bool> ExistsAsync(Guid id)
     {
-        return await context.Events.AnyAsync(e => e.Id == id && !e.IsDeleted);
+        return await context.Events.AsNoTracking().AnyAsync(e => e.Id == id && !e.IsDeleted);
     }
 
     public async Task<Event> CreateAsync(Event @event)

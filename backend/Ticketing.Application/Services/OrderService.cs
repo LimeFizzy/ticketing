@@ -16,7 +16,9 @@ public class OrderService(
     IEventRepository eventRepository,
     IEventTicketTypeRepository eventTicketTypeRepository,
     IVenueMapRepository venueMapRepository,
-    IEventVenueMapPlaceRepository eventVenueMapPlaceRepository) : IOrderService
+    IEventVenueMapPlaceRepository eventVenueMapPlaceRepository,
+    IPromoCodeRepository promoCodeRepository,
+    IPromoCodeService promoCodeService) : IOrderService
 {
     public async Task<OrderDto> CreateOrderAsync(Guid userId, CreateOrderRequest request, string? stripeSessionId = null, Guid? promoCodeId = null, decimal discountAmount = 0)
     {
@@ -29,6 +31,29 @@ public class OrderService(
         {
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out _))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
+        }
+
+        if (promoCodeId.HasValue)
+        {
+            var promoCode = await promoCodeRepository.GetByIdAsync(promoCodeId.Value)
+                ?? throw new InvalidOperationException("Promo code not found");
+
+            if (!promoCode.IsActive)
+                throw new InvalidOperationException("Promo code is no longer active");
+
+            if (promoCode.ExpiresAt.HasValue && promoCode.ExpiresAt.Value < DateTime.UtcNow)
+                throw new InvalidOperationException("Promo code has expired");
+
+            if (promoCode.MaxUses.HasValue && promoCode.CurrentUses >= promoCode.MaxUses.Value)
+                throw new InvalidOperationException("Promo code usage limit reached");
+
+            if (promoCode.EventId != request.EventId)
+                throw new InvalidOperationException("Promo code is not valid for this event");
+
+            var totalOriginal = request.Items.Sum(item => ticketTypeLookup[item.EventTicketTypeId].Price * item.Quantity);
+            var expectedDiscount = promoCodeService.CalculateDiscount(promoCode, totalOriginal);
+            if (Math.Abs(expectedDiscount - discountAmount) > 0.01m)
+                throw new InvalidOperationException("Discount amount does not match promo code");
         }
 
         Order? order = null;
@@ -101,6 +126,9 @@ public class OrderService(
 
             await orderRepository.CreateAsync(order);
             await orderRepository.SaveChangesAsync();
+
+            if (promoCodeId.HasValue)
+                await promoCodeRepository.IncrementUsageAsync(promoCodeId.Value);
         });
 
         return MapToDto(order!, @event);

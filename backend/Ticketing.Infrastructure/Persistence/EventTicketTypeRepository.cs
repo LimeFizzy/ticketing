@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
@@ -14,6 +15,7 @@ public class EventTicketTypeRepository(TicketingDbContext context) : IEventTicke
     public async Task<IEnumerable<EventTicketType>> GetByEventIdAsync(Guid eventId)
     {
         return await context.EventTicketTypes
+            .AsNoTracking()
             .Where(tt => tt.EventId == eventId)
             .ToListAsync();
     }
@@ -44,14 +46,16 @@ public class EventTicketTypeRepository(TicketingDbContext context) : IEventTicke
     public async Task<int> GetSoldCountAsync(Guid eventTicketTypeId)
     {
         return await context.Tickets
-            .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId);
+            .AsNoTracking()
+            .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId && t.Status != TicketStatus.Cancelled);
     }
 
     public async Task<Dictionary<Guid, int>> GetSoldCountsBatchAsync(IEnumerable<Guid> eventTicketTypeIds)
     {
         var idList = eventTicketTypeIds.ToList();
         return await context.Tickets
-            .Where(t => idList.Contains(t.EventTicketTypeId))
+            .AsNoTracking()
+            .Where(t => idList.Contains(t.EventTicketTypeId) && t.Status != TicketStatus.Cancelled)
             .GroupBy(t => t.EventTicketTypeId)
             .ToDictionaryAsync(g => g.Key, g => g.Count());
     }
@@ -63,7 +67,8 @@ public class EventTicketTypeRepository(TicketingDbContext context) : IEventTicke
             eventTicketTypeId);
 
         return await context.Tickets
-            .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId);
+            .AsNoTracking()
+            .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId && t.Status != TicketStatus.Cancelled);
     }
 
     public async Task SaveChangesAsync()

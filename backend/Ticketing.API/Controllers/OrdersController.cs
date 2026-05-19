@@ -16,7 +16,7 @@ public class OrdersController(IStripeService stripeService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var email = User.FindFirst(ClaimTypes.Email)?.Value!;
 
         try
@@ -29,7 +29,4 @@ public class OrdersController(IStripeService stripeService) : ControllerBase
             return BadRequest(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

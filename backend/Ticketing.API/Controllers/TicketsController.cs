@@ -1,7 +1,6 @@
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
@@ -17,7 +16,7 @@ public class TicketsController(ITicketService ticketService, IEmailService email
     [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyTickets()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var tickets = await ticketService.GetByUserIdAsync(userId);
         return Ok(tickets);
     }
@@ -29,7 +28,7 @@ public class TicketsController(ITicketService ticketService, IEmailService email
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var ticket = await ticketService.GetByIdAsync(id, userId);
@@ -50,7 +49,7 @@ public class TicketsController(ITicketService ticketService, IEmailService email
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CheckIn([FromBody] CheckInRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         try
         {
             var result = await ticketService.CheckInAsync(userId, request);
@@ -63,7 +62,4 @@ public class TicketsController(ITicketService ticketService, IEmailService email
             return StatusCode(403, new ProblemDetails { Title = "Not authorized to check in tickets for this event" });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

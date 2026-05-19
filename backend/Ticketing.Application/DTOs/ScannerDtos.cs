@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Ticketing.Application.DTOs;
 
 public record InviteScannerRequest(
-    [Required, EmailAddress] string Email,
-    string? FirstName,
-    string? LastName,
+    [Required][EmailAddress][MaxLength(256)] string Email,
+    [MaxLength(100)] string? FirstName,
+    [MaxLength(100)] string? LastName,
     Guid? EventId,
     [Required] bool AssignToAllEvents
 );

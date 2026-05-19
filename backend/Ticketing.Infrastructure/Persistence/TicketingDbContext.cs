@@ -127,7 +127,52 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<Review>()
             .HasIndex(r => r.EventId);
 
-        // VenueMap
+        modelBuilder.Entity<Review>().ToTable(t =>
+            t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" BETWEEN 1 AND 5"));
+
+        modelBuilder.Entity<EventTicketType>().ToTable(t =>
+        {
+            t.HasCheckConstraint("CK_EventTicketType_Price", "\"Price\" >= 0");
+            t.HasCheckConstraint("CK_EventTicketType_Capacity", "\"Capacity\" > 0");
+        });
+
+        modelBuilder.Entity<PromoCode>().ToTable(t =>
+            t.HasCheckConstraint("CK_PromoCode_DiscountValue", "\"DiscountValue\" > 0"));
+
+        modelBuilder.Entity<User>().Property(u => u.Email).HasMaxLength(256);
+        modelBuilder.Entity<User>().Property(u => u.FirstName).HasMaxLength(100);
+        modelBuilder.Entity<User>().Property(u => u.LastName).HasMaxLength(100);
+        modelBuilder.Entity<User>().Property(u => u.InviteToken).HasMaxLength(64);
+
+        modelBuilder.Entity<Event>().Property(e => e.Title).HasMaxLength(200);
+        modelBuilder.Entity<Event>().Property(e => e.Venue).HasMaxLength(200);
+        modelBuilder.Entity<Event>().Property(e => e.City).HasMaxLength(100);
+        modelBuilder.Entity<Event>().Property(e => e.ImageUrl).HasMaxLength(500);
+        modelBuilder.Entity<Event>().Property(e => e.Description).HasMaxLength(2000);
+        modelBuilder.Entity<Event>().Property(e => e.Disclaimers).HasMaxLength(2000);
+        modelBuilder.Entity<Event>().Property(e => e.TimeZone).HasMaxLength(100);
+
+        modelBuilder.Entity<EventTicketType>().Property(t => t.Name).HasMaxLength(100);
+        modelBuilder.Entity<EventTicketType>().Property(t => t.Description).HasMaxLength(500);
+
+        modelBuilder.Entity<Ticket>().Property(t => t.TicketCode).HasMaxLength(50);
+
+        modelBuilder.Entity<PromoCode>().Property(p => p.Code).HasMaxLength(50);
+
+        modelBuilder.Entity<Review>().Property(r => r.Comment).HasMaxLength(2000);
+
+        modelBuilder.Entity<VenueMap>().Property(v => v.Name).HasMaxLength(200);
+        modelBuilder.Entity<VenueMapPlace>().Property(p => p.Label).HasMaxLength(100);
+        modelBuilder.Entity<VenueMapDecoration>().Property(d => d.Label).HasMaxLength(100);
+
+        modelBuilder.Entity<EmailLog>().Property(e => e.RecipientEmail).HasMaxLength(256);
+        modelBuilder.Entity<EmailLog>().Property(e => e.Subject).HasMaxLength(500);
+        modelBuilder.Entity<EmailLog>().Property(e => e.EmailType).HasMaxLength(50);
+        modelBuilder.Entity<EmailLog>().Property(e => e.Status).HasMaxLength(20);
+
+        modelBuilder.Entity<Event>()
+            .HasIndex(e => e.City);
+
         modelBuilder.Entity<VenueMap>()
             .HasOne(vm => vm.CreatedByUser)
             .WithMany()
@@ -137,21 +182,18 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<VenueMap>()
             .HasIndex(vm => vm.CreatedBy);
 
-        // VenueMapPlace
         modelBuilder.Entity<VenueMapPlace>()
             .HasOne(p => p.VenueMap)
             .WithMany(vm => vm.Places)
             .HasForeignKey(p => p.VenueMapId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // VenueMapDecoration
         modelBuilder.Entity<VenueMapDecoration>()
             .HasOne(d => d.VenueMap)
             .WithMany(vm => vm.Decorations)
             .HasForeignKey(d => d.VenueMapId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Event -> VenueMap
         modelBuilder.Entity<Event>()
             .HasOne(e => e.VenueMap)
             .WithMany()
@@ -159,7 +201,6 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
-        // Ticket -> VenueMapPlace
         modelBuilder.Entity<Ticket>()
             .HasOne(t => t.VenueMapPlace)
             .WithMany(p => p.Tickets)
@@ -170,7 +211,6 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<Ticket>()
             .HasIndex(t => t.VenueMapPlaceId);
 
-        // EventVenueMapPlace
         modelBuilder.Entity<EventVenueMapPlace>()
             .HasOne(evmp => evmp.Event)
             .WithMany()
@@ -193,7 +233,6 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
             .HasIndex(evmp => new { evmp.EventId, evmp.VenueMapPlaceId })
             .IsUnique();
 
-        // EventScanner
         modelBuilder.Entity<EventScanner>()
             .HasOne(es => es.Event)
             .WithMany()

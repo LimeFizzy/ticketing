@@ -7,8 +7,8 @@ namespace Ticketing.Application.Services;
 public interface ITicketTypeService
 {
     Task<OrganizerEventTicketTypeDto> CreateAsync(Guid eventId, Guid organizerId, CreateEventTicketTypeRequest request);
-    Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request);
-    Task DeleteAsync(Guid ticketTypeId, Guid organizerId);
+    Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request);
+    Task DeleteAsync(Guid eventId, Guid ticketTypeId, Guid organizerId);
 }
 
 public class TicketTypeService(
@@ -39,10 +39,13 @@ public class TicketTypeService(
         );
     }
 
-    public async Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request)
+    public async Task<OrganizerEventTicketTypeDto?> UpdateAsync(Guid eventId, Guid ticketTypeId, Guid organizerId, UpdateEventTicketTypeRequest request)
     {
         var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId);
         if (ticketType == null) return null;
+
+        if (ticketType.EventId != eventId)
+            throw new UnauthorizedAccessException("Ticket type does not belong to this event");
 
         var @event = await eventRepository.GetByIdAsync(ticketType.EventId);
         if (@event == null || @event.OrganizerId != organizerId)
@@ -66,10 +69,13 @@ public class TicketTypeService(
         );
     }
 
-    public async Task DeleteAsync(Guid ticketTypeId, Guid organizerId)
+    public async Task DeleteAsync(Guid eventId, Guid ticketTypeId, Guid organizerId)
     {
         var ticketType = await ticketTypeRepository.GetByIdAsync(ticketTypeId)
             ?? throw new InvalidOperationException("Ticket type not found");
+
+        if (ticketType.EventId != eventId)
+            throw new UnauthorizedAccessException("Ticket type does not belong to this event");
 
         var @event = await eventRepository.GetByIdAsync(ticketType.EventId);
         if (@event == null || @event.OrganizerId != organizerId)

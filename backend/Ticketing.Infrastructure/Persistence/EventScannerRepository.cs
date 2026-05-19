@@ -15,6 +15,7 @@ public class EventScannerRepository(TicketingDbContext context) : IEventScannerR
     public async Task<IEnumerable<EventScanner>> GetByEventIdAsync(Guid eventId)
     {
         return await context.EventScanners
+            .AsNoTracking()
             .Include(es => es.ScannerUser)
             .Where(es => es.EventId == eventId)
             .ToListAsync();
@@ -23,6 +24,7 @@ public class EventScannerRepository(TicketingDbContext context) : IEventScannerR
     public async Task<IEnumerable<EventScanner>> GetByOrganizerIdAsync(Guid organizerId)
     {
         return await context.EventScanners
+            .AsNoTracking()
             .Include(es => es.ScannerUser)
             .Include(es => es.Event)
             .Where(es => es.OrganizerId == organizerId)
@@ -32,6 +34,7 @@ public class EventScannerRepository(TicketingDbContext context) : IEventScannerR
     public async Task<IEnumerable<EventScanner>> GetByScannerUserIdAsync(Guid scannerUserId)
     {
         return await context.EventScanners
+            .AsNoTracking()
             .Include(es => es.Event)
             .Include(es => es.Organizer)
             .Where(es => es.ScannerUserId == scannerUserId)
@@ -48,6 +51,7 @@ public class EventScannerRepository(TicketingDbContext context) : IEventScannerR
         if (@event == null) return false;
 
         return await context.EventScanners
+            .AsNoTracking()
             .AnyAsync(es => es.ScannerUserId == scannerUserId &&
                 (es.EventId == eventId ||
                     (es.AssignToAllEvents && es.OrganizerId == @event)));
@@ -56,6 +60,7 @@ public class EventScannerRepository(TicketingDbContext context) : IEventScannerR
     public async Task<EventScanner?> GetByIdAsync(Guid id)
     {
         return await context.EventScanners
+            .AsNoTracking()
             .Include(es => es.ScannerUser)
             .Include(es => es.Event)
             .FirstOrDefaultAsync(es => es.Id == id);

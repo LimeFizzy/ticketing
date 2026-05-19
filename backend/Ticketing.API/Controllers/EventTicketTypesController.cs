@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -16,7 +15,7 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(Guid eventId, [FromBody] CreateEventTicketTypeRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
             var result = await ticketTypeService.CreateAsync(eventId, organizerId, request);
@@ -38,10 +37,10 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid eventId, Guid ticketTypeId, [FromBody] UpdateEventTicketTypeRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var result = await ticketTypeService.UpdateAsync(ticketTypeId, organizerId, request);
+            var result = await ticketTypeService.UpdateAsync(eventId, ticketTypeId, organizerId, request);
             if (result == null) return NotFound(new ProblemDetails { Title = "Ticket type not found" });
             return Ok(result);
         }
@@ -56,10 +55,10 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid eventId, Guid ticketTypeId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            await ticketTypeService.DeleteAsync(ticketTypeId, organizerId);
+            await ticketTypeService.DeleteAsync(eventId, ticketTypeId, organizerId);
             return NoContent();
         }
         catch (UnauthorizedAccessException)
@@ -71,7 +70,4 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
             return NotFound(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

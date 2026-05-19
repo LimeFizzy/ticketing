@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -17,14 +16,14 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> InviteScanner(Guid eventId, [FromBody] InviteScannerRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
 
         var actualRequest = request with { EventId = eventId, AssignToAllEvents = false };
 
         try
         {
             var (scanner, inviteToken) = await scannerService.InviteScannerAsync(organizerId, actualRequest);
-            return Ok(new { scanner, inviteToken });
+            return Ok(new { scanner });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -46,7 +45,7 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetScanners(Guid eventId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
 
         try
         {
@@ -69,7 +68,7 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveScanner(Guid eventId, Guid assignmentId)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
 
         try
         {
@@ -85,7 +84,4 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
             return NotFound(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

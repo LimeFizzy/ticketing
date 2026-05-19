@@ -14,11 +14,11 @@ public record EventTicketTypeDto(
 
 public record EventDto(
     [property: Required] Guid Id,
-    [property: Required] string Title,
+    [property: Required][MaxLength(200)] string Title,
     [property: Required] EventCategory Category,
     [property: Required] DateTime Date,
-    [property: Required] string Venue,
-    [property: Required] string City,
+    [property: Required][MaxLength(200)] string Venue,
+    [property: Required][MaxLength(100)] string City,
     [property: Required] decimal PriceFrom,
     [property: Required] EventTicketTypeDto[] TicketTypes,
     [property: Required] string ImageUrl,
@@ -28,7 +28,6 @@ public record EventDto(
     string[]? Disclaimers,
     Guid? VenueMapId,
     [property: Required] EventStatus Status,
-    Guid? OrganizerId,
     string? TimeZone,
     double? AverageRating = null,
     int ReviewCount = 0
@@ -43,8 +42,8 @@ public record EventsQueryDto(
     string? Price,
     Guid? OrganizerId,
     EventStatus? Status,
-    int Page = 1,
-    int PageSize = 20
+    [Range(1, int.MaxValue)] int Page = 1,
+    [Range(1, 100)] int PageSize = 20
 );
 
 public record PaginatedResult<T>(
@@ -60,44 +59,44 @@ public record PaginatedResult<T>(
 }
 
 public record CreateEventRequest(
-    [Required] string Title,
+    [Required][MaxLength(200)] string Title,
     [Required] EventCategory Category,
     [Required] DateTime Date,
-    [Required] string Venue,
-    [Required] string City,
-    string? ImageUrl,
-    string? Description,
+    [Required][MaxLength(200)] string Venue,
+    [Required][MaxLength(100)] string City,
+    [MaxLength(500)] string? ImageUrl,
+    [MaxLength(2000)] string? Description,
     EventStatus Status,
     CreateEventTicketTypeRequest[]? TicketTypes,
-    string? TimeZone
+    [MaxLength(100)] string? TimeZone
 );
 
 public record UpdateEventRequest(
-    [Required] string Title,
+    [Required][MaxLength(200)] string Title,
     [Required] EventCategory Category,
     [Required] DateTime Date,
-    [Required] string Venue,
-    [Required] string City,
-    string? ImageUrl,
-    string? Description,
+    [Required][MaxLength(200)] string Venue,
+    [Required][MaxLength(100)] string City,
+    [MaxLength(500)] string? ImageUrl,
+    [MaxLength(2000)] string? Description,
     bool Featured,
-    string? Disclaimers,
+    [MaxLength(2000)] string? Disclaimers,
     Guid? VenueMapId,
     [Required] EventStatus Status,
-    string? TimeZone
+    [MaxLength(100)] string? TimeZone
 );
 
 public record CreateEventTicketTypeRequest(
-    [Required] string Name,
-    [Range(0, double.MaxValue)] decimal Price,
-    string? Description,
+    [Required][MaxLength(100)] string Name,
+    [Range(0.01, double.MaxValue)] decimal Price,
+    [MaxLength(500)] string? Description,
     [Range(1, int.MaxValue)] int Capacity
 );
 
 public record UpdateEventTicketTypeRequest(
-    [Required] string Name,
-    [Range(0, double.MaxValue)] decimal Price,
-    string? Description,
+    [Required][MaxLength(100)] string Name,
+    [Range(0.01, double.MaxValue)] decimal Price,
+    [MaxLength(500)] string? Description,
     [Range(1, int.MaxValue)] int Capacity
 );
 

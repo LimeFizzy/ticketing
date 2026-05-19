@@ -30,12 +30,22 @@ public class EventService(
     public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null)
     {
         var (events, totalCount) = await eventRepository.GetAllAsync(filter);
-        var dtos = new List<EventDto>();
-        foreach (var e in events)
-            dtos.Add(await MapToDtoAsync(e));
+        var eventList = events.ToList();
 
         var page = Math.Max(filter?.Page ?? 1, 1);
         var pageSize = Math.Clamp(filter?.PageSize ?? 20, 1, 100);
+
+        var allTypeIds = eventList.SelectMany(e => e.TicketTypes.Select(t => t.Id)).ToList();
+        var soldCounts = allTypeIds.Count > 0
+            ? await ticketTypeRepository.GetSoldCountsBatchAsync(allTypeIds)
+            : [];
+
+        var eventIds = eventList.Select(e => e.Id).ToList();
+        var ratings = eventIds.Count > 0
+            ? await reviewRepository.GetRatingsBatchAsync(eventIds)
+            : [];
+
+        var dtos = eventList.Select(e => MapToDto(e, soldCounts, ratings)).ToList();
 
         return new PaginatedResult<EventDto>(dtos, totalCount, page, pageSize);
     }
@@ -140,7 +150,50 @@ public class EventService(
             disclaimers,
             @event.VenueMapId,
             @event.Status,
-            @event.OrganizerId,
+            @event.TimeZone,
+            reviewCount > 0 ? Math.Round(avgRating, 1) : null,
+            reviewCount
+        );
+    }
+
+    private static EventDto MapToDto(Event @event, Dictionary<Guid, int> soldCounts, Dictionary<Guid, (double AvgRating, int Count)> ratings)
+    {
+        var disclaimers = string.IsNullOrEmpty(@event.Disclaimers)
+            ? []
+            : @event.Disclaimers.Split('|', StringSplitOptions.RemoveEmptyEntries);
+
+        var types = @event.TicketTypes.OrderBy(t => t.Price).ToList();
+
+        var ticketTypes = types.Select(t =>
+        {
+            var sold = soldCounts.GetValueOrDefault(t.Id);
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold);
+        }).ToArray();
+
+        var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
+        var availableTypes = ticketTypes.Where(t => t.Capacity > t.Sold).ToList();
+        var priceFrom = availableTypes.Count > 0 ? availableTypes.Min(t => t.Price) : 0;
+
+        var rating = ratings.GetValueOrDefault(@event.Id);
+        var avgRating = rating.AvgRating;
+        var reviewCount = rating.Count;
+
+        return new EventDto(
+            @event.Id,
+            @event.Title,
+            @event.Category,
+            @event.Date,
+            @event.Venue,
+            @event.City,
+            priceFrom,
+            ticketTypes,
+            @event.ImageUrl,
+            @event.Description,
+            availableTickets,
+            @event.Featured,
+            disclaimers,
+            @event.VenueMapId,
+            @event.Status,
             @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
             reviewCount

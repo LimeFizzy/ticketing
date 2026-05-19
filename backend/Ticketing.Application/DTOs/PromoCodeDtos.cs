@@ -16,7 +16,7 @@ public record PromoCodeDto(
 );
 
 public record CreatePromoCodeRequest(
-    [Required] string Code,
+    [Required][MaxLength(50)] string Code,
     [Required] DiscountType DiscountType,
     [Required][Range(0.01, double.MaxValue)] decimal DiscountValue,
     int? MaxUses,

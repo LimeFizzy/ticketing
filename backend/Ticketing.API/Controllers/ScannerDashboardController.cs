@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -15,7 +14,7 @@ public class ScannerDashboardController(IScannerService scannerService) : Contro
     [ProducesResponseType(typeof(IEnumerable<ScannerEventDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAssignedEvents()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var events = await scannerService.GetAssignedEventsAsync(userId);
         return Ok(events);
     }
@@ -24,11 +23,8 @@ public class ScannerDashboardController(IScannerService scannerService) : Contro
     [ProducesResponseType(typeof(ScannerStatusDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStatus()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var isScanner = await scannerService.IsScannerAsync(userId);
         return Ok(new ScannerStatusDto(isScanner));
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

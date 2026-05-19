@@ -13,13 +13,16 @@ public class PromoCodeRepository(TicketingDbContext context) : IPromoCodeReposit
 
     public async Task<PromoCode?> GetByCodeAsync(string code, Guid eventId)
     {
+        var upperCode = code.ToUpperInvariant();
         return await context.PromoCodes
-            .FirstOrDefaultAsync(p => p.Code == code && p.EventId == eventId);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Code.ToUpper() == upperCode && p.EventId == eventId);
     }
 
     public async Task<IEnumerable<PromoCode>> GetByEventIdAsync(Guid eventId)
     {
         return await context.PromoCodes
+            .AsNoTracking()
             .Where(p => p.EventId == eventId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -49,7 +52,7 @@ public class PromoCodeRepository(TicketingDbContext context) : IPromoCodeReposit
     public async Task<bool> IncrementUsageAsync(Guid promoCodeId)
     {
         var affected = await context.Database.ExecuteSqlRawAsync(
-            """UPDATE "PromoCodes" SET "CurrentUses" = "CurrentUses" + 1 WHERE "Id" = {0} AND ("MaxUses" IS NULL OR "CurrentUses" < "MaxUses")""",
+            """UPDATE "PromoCodes" SET "CurrentUses" = "CurrentUses" + 1 WHERE "Id" = {0} AND "IsActive" = true AND ("MaxUses" IS NULL OR "CurrentUses" < "MaxUses")""",
             promoCodeId);
         return affected > 0;
     }

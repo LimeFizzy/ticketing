@@ -57,7 +57,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         if (!User.Identity?.IsAuthenticated ?? true)
             return Unauthorized();
 
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var user = await authService.GetUserByIdAsync(userId);
         if (user == null) return Unauthorized();
 
@@ -70,7 +70,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         var result = await authService.UpdateProfileAsync(userId, request);
         if (result == null) return NotFound(new ProblemDetails { Title = "User not found or email already taken" });
 
@@ -83,11 +83,11 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> InviteOrganizer([FromBody] InviteOrganizerRequest request)
     {
-        var adminUserId = GetUserIdFromClaims();
+        var adminUserId = this.GetUserIdFromClaims();
         try
         {
             var (user, inviteToken) = await authService.InviteOrganizerAsync(adminUserId, request);
-            return Ok(new { user, inviteToken });
+            return Ok(new { user });
         }
         catch (UnauthorizedAccessException)
         {
@@ -127,7 +127,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetOrganizers()
     {
-        var userId = GetUserIdFromClaims();
+        var userId = this.GetUserIdFromClaims();
         if (!await authService.IsAdminAsync(userId))
             return StatusCode(403, new ProblemDetails { Title = "Only admins can view organizers" });
 
@@ -141,7 +141,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveOrganizer(Guid id)
     {
-        var adminUserId = GetUserIdFromClaims();
+        var adminUserId = this.GetUserIdFromClaims();
         try
         {
             await authService.RemoveOrganizerAsync(id, adminUserId);
@@ -157,9 +157,6 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
     }
 
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
     private async Task SignInUserAsync(UserDto user)
     {
         var claims = new List<Claim>
@@ -168,13 +165,14 @@ public class AuthController(IAuthService authService) : ControllerBase
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
-            new("Role", user.Role.ToString())
+            new(ClaimTypes.Role, user.Role.ToString())
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true,
+            AllowRefresh = true,
             ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
         };
 

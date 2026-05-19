@@ -66,8 +66,9 @@ public class ReviewService(
         await reviewRepository.UpdateAsync(review);
         await reviewRepository.SaveChangesAsync();
 
-        var user = await userRepository.GetByIdAsync(userId)!;
-        return MapToDto(review, user!);
+        var user = await userRepository.GetByIdAsync(userId)
+            ?? throw new KeyNotFoundException("User not found");
+        return MapToDto(review, user);
     }
 
     public async Task DeleteAsync(Guid reviewId, Guid userId)
@@ -124,23 +125,39 @@ public class ReviewService(
             .Distinct()
             .ToList();
 
-        var result = new List<ReviewableEventDto>();
+        if (pastEventIds.Count == 0) return [];
+
+        var events = new Dictionary<Guid, Event>();
         foreach (var eventId in pastEventIds)
         {
-            var @event = await eventRepository.GetByIdAsync(eventId);
-            if (@event == null) continue;
-
-            var existingReview = await reviewRepository.GetByUserAndEventAsync(userId, eventId);
-            result.Add(new ReviewableEventDto(
-                @event.Id,
-                @event.Title,
-                @event.Date,
-                @event.ImageUrl,
-                existingReview != null ? MapToDto(existingReview, (await userRepository.GetByIdAsync(userId))!) : null
-            ));
+            var evt = await eventRepository.GetByIdAsync(eventId);
+            if (evt != null) events[eventId] = evt;
         }
 
-        return result.OrderByDescending(r => r.EventDate);
+        var existingReviews = new Dictionary<Guid, Review>();
+        foreach (var eventId in pastEventIds)
+        {
+            var review = await reviewRepository.GetByUserAndEventAsync(userId, eventId);
+            if (review != null) existingReviews[eventId] = review;
+        }
+
+        var user = await userRepository.GetByIdAsync(userId);
+
+        return pastEventIds
+            .Where(events.ContainsKey)
+            .Select(eventId =>
+            {
+                var evt = events[eventId];
+                var review = existingReviews.GetValueOrDefault(eventId);
+                return new ReviewableEventDto(
+                    evt.Id,
+                    evt.Title,
+                    evt.Date,
+                    evt.ImageUrl,
+                    review != null && user != null ? MapToDto(review, user) : null
+                );
+            })
+            .OrderByDescending(r => r.EventDate);
     }
 
     private static ReviewDto MapToDto(Review review, User user) => new(

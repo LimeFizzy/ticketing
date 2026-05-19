@@ -41,7 +41,7 @@ public class StripeService(
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
 
-            var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
+            var soldCount = await eventTicketTypeRepository.GetSoldCountWithLockAsync(tt.Id);
             if (soldCount + item.Quantity > tt.Capacity)
                 throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
 

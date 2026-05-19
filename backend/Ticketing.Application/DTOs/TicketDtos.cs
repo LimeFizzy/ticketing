@@ -22,8 +22,8 @@ public record TicketDto(
 );
 
 public record CheckInRequest(
-    string TicketCode,
-    Guid EventId
+    [Required][MaxLength(50)] string TicketCode,
+    [Required] Guid EventId
 );
 
 public record CheckInResponse(
