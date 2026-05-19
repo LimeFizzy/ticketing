@@ -48,6 +48,7 @@ public class EventService(
             Description = request.Description ?? "",
             Status = request.Status ?? "draft",
             OrganizerId = organizerId,
+            TimeZone = request.TimeZone,
             PriceFrom = request.TicketTypes?.Length > 0
                 ? request.TicketTypes.Min(t => t.Price)
                 : 0,
@@ -81,6 +82,7 @@ public class EventService(
         @event.Disclaimers = request.Disclaimers;
         @event.VenueMapId = request.VenueMapId;
         @event.Status = request.Status;
+        @event.TimeZone = request.TimeZone;
 
         await eventRepository.UpdateAsync(@event);
         return await MapToDtoAsync(@event);
@@ -132,6 +134,7 @@ public class EventService(
             @event.VenueMapId,
             @event.Status,
             @event.OrganizerId,
+            @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
             reviewCount
         );

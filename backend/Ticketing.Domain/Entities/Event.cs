@@ -18,6 +18,7 @@ public class Event
     public string? Disclaimers { get; set; }
     public Guid? VenueMapId { get; set; }
     public VenueMap? VenueMap { get; set; }
+    public string? TimeZone { get; set; }
     public string Status { get; set; } = "draft";
     public bool IsDeleted { get; set; }
     public Guid? OrganizerId { get; set; }
