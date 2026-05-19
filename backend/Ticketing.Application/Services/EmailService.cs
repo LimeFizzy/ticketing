@@ -116,9 +116,9 @@ public class EmailService(
         await emailLogRepository.SaveChangesAsync();
     }
 
-    private const string BaseUrl = "https://www.zzzz.lt";
+    private string BaseUrl => emailSettings.Value.BaseUrl;
 
-    private static string BuildOrderConfirmationHtml(User user, Order order, Event @event)
+    private string BuildOrderConfirmationHtml(User user, Order order, Event @event)
     {
         var ticketRows = order.Tickets.Select(t =>
             $"""<tr><td style="padding:8px;border:1px solid #ddd;">{t.EventTicketType.Name}</td><td style="padding:8px;border:1px solid #ddd;"><a href="{BaseUrl}/tickets/{t.Id}" style="color:#1e3a5f;text-decoration:none;"><strong>{t.TicketCode}</strong></a></td><td style="padding:8px;border:1px solid #ddd;">€{t.PricePaid:F2}</td></tr>"""
@@ -147,7 +147,7 @@ public class EmailService(
             """;
     }
 
-    private static string BuildReminderHtml(User user, Event @event, IEnumerable<Ticket> tickets)
+    private string BuildReminderHtml(User user, Event @event, IEnumerable<Ticket> tickets)
     {
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
 
@@ -182,7 +182,7 @@ public class EmailService(
             """;
     }
 
-    private static string BuildCheckInHtml(User user, Ticket ticket, Event @event)
+    private string BuildCheckInHtml(User user, Ticket ticket, Event @event)
     {
         var dateStr = FormatDateInTimeZone(@event.Date, @event.TimeZone);
 

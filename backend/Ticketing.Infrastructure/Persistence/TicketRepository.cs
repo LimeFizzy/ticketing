@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
@@ -49,8 +50,14 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
         return await context.Tickets
             .Include(t => t.EventTicketType)
             .Include(t => t.VenueMapPlace)
-            .Where(t => t.UserId == userId && t.Order.EventId == eventId && t.Status == "Active")
+            .Where(t => t.UserId == userId && t.Order.EventId == eventId && t.Status == TicketStatus.Active)
             .ToListAsync();
+    }
+
+    public async Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId)
+    {
+        return await context.Tickets
+            .AnyAsync(t => t.UserId == userId && t.Order.EventId == eventId);
     }
 
     public async Task SaveChangesAsync()

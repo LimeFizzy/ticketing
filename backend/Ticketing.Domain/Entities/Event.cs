@@ -19,7 +19,7 @@ public class Event
     public Guid? VenueMapId { get; set; }
     public VenueMap? VenueMap { get; set; }
     public string? TimeZone { get; set; }
-    public string Status { get; set; } = "draft";
+    public EventStatus Status { get; set; } = EventStatus.Draft;
     public bool IsDeleted { get; set; }
     public Guid? OrganizerId { get; set; }
     public User? Organizer { get; set; }

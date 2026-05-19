@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
@@ -21,6 +23,12 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
+        modelBuilder.Entity<Event>().Property(e => e.Status).HasConversion<string>();
+        modelBuilder.Entity<Order>().Property(o => o.Status).HasConversion<string>();
+        modelBuilder.Entity<Ticket>().Property(t => t.Status).HasConversion<string>();
+        modelBuilder.Entity<PromoCode>().Property(p => p.DiscountType).HasConversion<string>();
+
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         modelBuilder.Entity<User>().HasIndex(u => u.InviteToken);
 
@@ -46,6 +54,9 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<Event>()
             .HasIndex(e => e.IsDeleted);
 
+        modelBuilder.Entity<Event>()
+            .HasIndex(e => e.Title);
+
         modelBuilder.Entity<EventTicketType>()
             .HasIndex(et => new { et.EventId, et.Name });
 
@@ -54,6 +65,9 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
 
         modelBuilder.Entity<Order>()
             .HasIndex(o => new { o.EventId, o.CreatedAt });
+
+        modelBuilder.Entity<Order>()
+            .HasIndex(o => o.StripeSessionId);
 
         modelBuilder.Entity<Ticket>()
             .HasIndex(t => t.UserId);
@@ -108,7 +122,7 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
             .HasOne(r => r.User)
             .WithMany(u => u.Reviews)
             .HasForeignKey(r => r.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Review>()
             .HasIndex(r => r.EventId);
@@ -197,7 +211,7 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
             .HasOne(es => es.ScannerUser)
             .WithMany()
             .HasForeignKey(es => es.ScannerUserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<EventScanner>()
             .HasIndex(es => new { es.ScannerUserId, es.EventId })

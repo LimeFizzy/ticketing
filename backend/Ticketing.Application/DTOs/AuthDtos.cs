@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Ticketing.Domain.Constants;
 
 namespace Ticketing.Application.DTOs;
 
@@ -10,14 +11,14 @@ public record RegisterRequest(
     [Required] string FirstName,
     [Required] string LastName,
     [Required] string Email,
-    [Required] string Password
+    [Required][MinLength(8)] string Password
 );
 public record UserDto(
     [property: Required] Guid Id,
     [property: Required] string FirstName,
     [property: Required] string LastName,
     [property: Required] string Email,
-    [property: Required] string Role
+    [property: Required] UserRole Role
 );
 
 public record UpdateProfileRequest(
@@ -39,7 +40,7 @@ public record VerifyInviteResponse(
 
 public record AcceptInviteRequest(
     [Required] string Token,
-    [Required] string Password
+    [Required][MinLength(8)] string Password
 );
 
 public record OrganizerDto(

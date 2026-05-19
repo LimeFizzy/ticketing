@@ -8,4 +8,5 @@ public class EmailSettings
     public int SmtpPort { get; set; } = 465;
     public string SmtpUser { get; set; } = "";
     public string SmtpPass { get; set; } = "";
+    public string BaseUrl { get; set; } = "https://www.zzzz.lt";
 }

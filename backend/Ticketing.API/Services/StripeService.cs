@@ -18,6 +18,7 @@ public interface IStripeService
 public class StripeService(
     IOptions<StripeSettings> options,
     IEventRepository eventRepository,
+    IEventTicketTypeRepository eventTicketTypeRepository,
     IPromoCodeService promoCodeService,
     IPromoCodeRepository promoCodeRepository) : IStripeService
 {
@@ -39,6 +40,10 @@ public class StripeService(
 
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
+
+            var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
+            if (soldCount + item.Quantity > tt.Capacity)
+                throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
 
             totalOriginal += tt.Price * item.Quantity;
 

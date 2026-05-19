@@ -1,3 +1,5 @@
+using Ticketing.Domain.Constants;
+
 namespace Ticketing.Domain.Entities;
 
 public class Order
@@ -6,7 +8,7 @@ public class Order
     public required Guid UserId { get; set; }
     public required Guid EventId { get; set; }
     public required decimal TotalAmount { get; set; }
-    public required string Status { get; set; } = "Pending";
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? StripeSessionId { get; set; }
     public Guid? PromoCodeId { get; set; }

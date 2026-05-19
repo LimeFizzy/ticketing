@@ -27,7 +27,7 @@ public record EventDto(
     [property: Required] bool Featured,
     string[]? Disclaimers,
     Guid? VenueMapId,
-    [property: Required] string Status,
+    [property: Required] EventStatus Status,
     Guid? OrganizerId,
     string? TimeZone,
     double? AverageRating = null,
@@ -42,8 +42,22 @@ public record EventsQueryDto(
     string? Date,
     string? Price,
     Guid? OrganizerId,
-    string? Status
+    EventStatus? Status,
+    int Page = 1,
+    int PageSize = 20
 );
+
+public record PaginatedResult<T>(
+    [property: Required] IReadOnlyList<T> Items,
+    [property: Required] int TotalCount,
+    [property: Required] int Page,
+    [property: Required] int PageSize
+)
+{
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+    public bool HasNextPage => Page < TotalPages;
+    public bool HasPreviousPage => Page > 1;
+}
 
 public record CreateEventRequest(
     [Required] string Title,
@@ -53,7 +67,7 @@ public record CreateEventRequest(
     [Required] string City,
     string? ImageUrl,
     string? Description,
-    string Status,
+    EventStatus Status,
     CreateEventTicketTypeRequest[]? TicketTypes,
     string? TimeZone
 );
@@ -69,20 +83,20 @@ public record UpdateEventRequest(
     bool Featured,
     string? Disclaimers,
     Guid? VenueMapId,
-    [Required] string Status,
+    [Required] EventStatus Status,
     string? TimeZone
 );
 
 public record CreateEventTicketTypeRequest(
     [Required] string Name,
-    decimal Price,
+    [Range(0, double.MaxValue)] decimal Price,
     string? Description,
     [Range(1, int.MaxValue)] int Capacity
 );
 
 public record UpdateEventTicketTypeRequest(
     [Required] string Name,
-    decimal Price,
+    [Range(0, double.MaxValue)] decimal Price,
     string? Description,
     [Range(1, int.MaxValue)] int Capacity
 );

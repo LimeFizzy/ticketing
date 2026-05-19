@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -7,7 +8,7 @@ namespace Ticketing.Application.Services;
 public interface ITicketService
 {
     Task<IEnumerable<TicketDto>> GetByUserIdAsync(Guid userId);
-    Task<TicketDto?> GetByIdAsync(Guid id);
+    Task<TicketDto?> GetByIdAsync(Guid id, Guid requestingUserId);
     Task<CheckInResponse> CheckInAsync(Guid userId, CheckInRequest request);
 }
 
@@ -19,10 +20,14 @@ public class TicketService(ITicketRepository ticketRepository, IEventScannerRepo
         return tickets.Select(MapToDto);
     }
 
-    public async Task<TicketDto?> GetByIdAsync(Guid id)
+    public async Task<TicketDto?> GetByIdAsync(Guid id, Guid requestingUserId)
     {
         var ticket = await ticketRepository.GetByIdAsync(id);
         if (ticket == null) return null;
+
+        if (ticket.UserId != requestingUserId)
+            throw new UnauthorizedAccessException("You do not have access to this ticket.");
+
         return MapToDto(ticket);
     }
 
@@ -44,7 +49,7 @@ public class TicketService(ITicketRepository ticketRepository, IEventScannerRepo
         if (ticket.CheckedInAt.HasValue)
             return new CheckInResponse(MapToDto(ticket), WasAlreadyCheckedIn: true);
 
-        ticket.Status = "CheckedIn";
+        ticket.Status = TicketStatus.CheckedIn;
         ticket.CheckedInAt = DateTime.UtcNow;
         await ticketRepository.SaveChangesAsync();
 

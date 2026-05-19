@@ -129,6 +129,30 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
             .CountAsync(t => t.VenueMapPlaceId == venueMapPlaceId);
     }
 
+    public async Task<Dictionary<Guid, int>> GetSoldCountsForPlacesBatchAsync(IEnumerable<Guid> placeIds)
+    {
+        var idList = placeIds.ToList();
+        return await context.Tickets
+            .Where(t => t.VenueMapPlaceId != null && idList.Contains(t.VenueMapPlaceId.Value))
+            .GroupBy(t => t.VenueMapPlaceId!.Value)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    public async Task<(int SoldCount, int Capacity)> GetPlaceCapacityWithLockAsync(Guid venueMapPlaceId)
+    {
+        await context.Database.ExecuteSqlRawAsync(
+            """SELECT 1 FROM "VenueMapPlaces" WHERE "Id" = {0} FOR UPDATE""",
+            venueMapPlaceId);
+
+        var sold = await context.Tickets
+            .CountAsync(t => t.VenueMapPlaceId == venueMapPlaceId);
+
+        var place = await context.VenueMapPlaces.FindAsync(venueMapPlaceId)
+            ?? throw new InvalidOperationException($"Place {venueMapPlaceId} not found");
+
+        return (sold, place.Capacity);
+    }
+
     public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();

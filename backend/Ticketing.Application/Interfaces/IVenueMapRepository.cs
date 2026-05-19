@@ -13,5 +13,7 @@ public interface IVenueMapRepository
     Task<bool> ExistsAsync(Guid id);
     Task<VenueMapPlace?> GetPlaceByIdAsync(Guid placeId);
     Task<int> GetSoldCountForPlaceAsync(Guid venueMapPlaceId);
+    Task<Dictionary<Guid, int>> GetSoldCountsForPlacesBatchAsync(IEnumerable<Guid> placeIds);
+    Task<(int SoldCount, int Capacity)> GetPlaceCapacityWithLockAsync(Guid venueMapPlaceId);
     Task SaveChangesAsync();
 }

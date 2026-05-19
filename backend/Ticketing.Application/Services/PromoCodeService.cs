@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -24,6 +25,12 @@ public class PromoCodeService(
 
         if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You are not the organizer of this event");
+
+        if (request.DiscountValue <= 0)
+            throw new InvalidOperationException("Discount value must be greater than zero");
+
+        if (request.DiscountType == DiscountType.Percentage && request.DiscountValue > 100)
+            throw new InvalidOperationException("Percentage discount cannot exceed 100%");
 
         var existing = await promoCodeRepository.GetByCodeAsync(request.Code.ToUpperInvariant(), eventId);
         if (existing != null)
@@ -97,8 +104,8 @@ public class PromoCodeService(
     {
         return promoCode.DiscountType switch
         {
-            "Percentage" => Math.Round(originalTotal * promoCode.DiscountValue / 100, 2),
-            "FixedAmount" => Math.Min(promoCode.DiscountValue, originalTotal),
+            DiscountType.Percentage => Math.Round(originalTotal * promoCode.DiscountValue / 100, 2),
+            DiscountType.FixedAmount => Math.Min(promoCode.DiscountValue, originalTotal),
             _ => 0
         };
     }

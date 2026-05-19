@@ -31,4 +31,19 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
     {
         await context.SaveChangesAsync();
     }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> action)
+    {
+        using var transaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            await action();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
 }

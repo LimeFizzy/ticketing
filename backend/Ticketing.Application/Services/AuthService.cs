@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -24,9 +25,10 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     public async Task<UserDto?> LoginAsync(LoginRequest request)
     {
         var user = await userRepository.GetByEmailAsync(request.Email);
-        if (user == null) return null;
 
-        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
+        // Always hash to prevent timing attacks that enumerate emails
+        var hashToVerify = user?.PasswordHash ?? "";
+        if (user == null || !passwordHasher.Verify(request.Password, hashToVerify))
             return null;
 
         return MapToDto(user);
@@ -81,7 +83,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     public async Task<(UserDto User, string InviteToken)> InviteOrganizerAsync(Guid adminUserId, InviteOrganizerRequest request)
     {
         var admin = await userRepository.GetByIdAsync(adminUserId);
-        if (admin?.Role != "admin")
+        if (admin?.Role != UserRole.Admin)
             throw new UnauthorizedAccessException("Only admins can invite organizers");
 
         var existingUser = await userRepository.GetByEmailAsync(request.Email);
@@ -96,7 +98,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
             LastName = request.LastName,
             Email = request.Email,
             PasswordHash = "",
-            Role = "organizer",
+            Role = UserRole.Organizer,
             InviteToken = inviteToken,
             InviteTokenExpires = DateTime.UtcNow.AddDays(7)
         };
@@ -121,6 +123,9 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         var user = await userRepository.GetByInviteTokenAsync(request.Token);
         if (user == null) return null;
 
+        if (user.InviteTokenExpires.HasValue && user.InviteTokenExpires < DateTime.UtcNow)
+            return null;
+
         user.PasswordHash = passwordHasher.Hash(request.Password);
         user.InviteToken = null;
         user.InviteTokenExpires = null;
@@ -133,7 +138,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
 
     public async Task<IEnumerable<OrganizerDto>> GetOrganizersAsync()
     {
-        var organizers = await userRepository.GetByRoleAsync("organizer");
+        var organizers = await userRepository.GetByRoleAsync(UserRole.Organizer);
         return organizers.Select(o => new OrganizerDto(
             o.Id, o.FirstName, o.LastName, o.Email,
             !string.IsNullOrEmpty(o.PasswordHash)
@@ -143,11 +148,11 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     public async Task RemoveOrganizerAsync(Guid organizerId, Guid adminUserId)
     {
         var admin = await userRepository.GetByIdAsync(adminUserId);
-        if (admin?.Role != "admin")
+        if (admin?.Role != UserRole.Admin)
             throw new UnauthorizedAccessException("Only admins can remove organizers");
 
         var organizer = await userRepository.GetByIdAsync(organizerId);
-        if (organizer == null || organizer.Role != "organizer")
+        if (organizer == null || organizer.Role != UserRole.Organizer)
             throw new InvalidOperationException("Organizer not found");
 
         await userRepository.DeleteAsync(organizer);
@@ -157,7 +162,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     public async Task<bool> IsAdminAsync(Guid userId)
     {
         var user = await userRepository.GetByIdAsync(userId);
-        return user?.Role == "admin";
+        return user?.Role == UserRole.Admin;
     }
 
     public async Task<bool> HasPasswordAsync(string email)

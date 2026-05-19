@@ -18,7 +18,8 @@ public class WebhooksController(
     IOrderRepository orderRepository,
     IEmailService emailService,
     IPromoCodeRepository promoCodeRepository,
-    IOptions<StripeSettings> options) : ControllerBase
+    IOptions<StripeSettings> options,
+    ILogger<WebhooksController> logger) : ControllerBase
 {
     [HttpPost("stripe")]
     [AllowAnonymous]
@@ -50,22 +51,53 @@ public class WebhooksController(
                 if (existing != null) return Ok();
             }
 
-            var userId = Guid.Parse(session.Metadata["userId"]);
-            var eventId = Guid.Parse(session.Metadata["eventId"]);
-            var items = System.Text.Json.JsonSerializer.Deserialize<OrderItemRequest[]>(session.Metadata["items"])!;
+            try
+            {
+                if (!session.Metadata.TryGetValue("userId", out var userIdStr) ||
+                    !Guid.TryParse(userIdStr, out var userId))
+                {
+                    logger.LogWarning("Stripe webhook missing or invalid userId in session {SessionId}", session.Id);
+                    return Ok();
+                }
 
-            Guid? promoCodeId = session.Metadata.TryGetValue("promoCodeId", out var pcId) && Guid.TryParse(pcId, out var parsed)
-                ? parsed : null;
-            decimal discountAmount = session.Metadata.TryGetValue("discountAmount", out var da) && decimal.TryParse(da, out var parsedDa)
-                ? parsedDa : 0;
+                if (!session.Metadata.TryGetValue("eventId", out var eventIdStr) ||
+                    !Guid.TryParse(eventIdStr, out var eventId))
+                {
+                    logger.LogWarning("Stripe webhook missing or invalid eventId in session {SessionId}", session.Id);
+                    return Ok();
+                }
 
-            var request = new CreateOrderRequest(eventId, items);
-            var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount);
+                if (!session.Metadata.TryGetValue("items", out var itemsJson) ||
+                    string.IsNullOrEmpty(itemsJson))
+                {
+                    logger.LogWarning("Stripe webhook missing items in session {SessionId}", session.Id);
+                    return Ok();
+                }
 
-            if (promoCodeId.HasValue)
-                await promoCodeRepository.IncrementUsageAsync(promoCodeId.Value);
+                var items = System.Text.Json.JsonSerializer.Deserialize<OrderItemRequest[]>(itemsJson);
+                if (items == null || items.Length == 0)
+                {
+                    logger.LogWarning("Stripe webhook empty items in session {SessionId}", session.Id);
+                    return Ok();
+                }
 
-            BackgroundJob.Enqueue(() => emailService.SendOrderConfirmationAsync(order.Id));
+                Guid? promoCodeId = session.Metadata.TryGetValue("promoCodeId", out var pcId) && Guid.TryParse(pcId, out var parsed)
+                    ? parsed : null;
+                decimal discountAmount = session.Metadata.TryGetValue("discountAmount", out var da) && decimal.TryParse(da, out var parsedDa)
+                    ? parsedDa : 0;
+
+                var request = new CreateOrderRequest(eventId, items);
+                var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount);
+
+                if (promoCodeId.HasValue)
+                    await promoCodeRepository.IncrementUsageAsync(promoCodeId.Value);
+
+                BackgroundJob.Enqueue(() => emailService.SendOrderConfirmationAsync(order.Id));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Stripe webhook failed processing session {SessionId}", session.Id);
+            }
         }
 
         return Ok();

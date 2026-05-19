@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -39,7 +40,7 @@ public class ScannerService(
 
         if (existingUser != null)
         {
-            if (existingUser.Role != "attendee")
+            if (existingUser.Role != UserRole.Attendee)
                 throw new InvalidOperationException("Cannot assign an organizer or admin as a scanner.");
 
             if (request.EventId.HasValue)
@@ -61,7 +62,7 @@ public class ScannerService(
                 LastName = request.LastName ?? "",
                 Email = request.Email,
                 PasswordHash = "",
-                Role = "attendee",
+                Role = UserRole.Attendee,
                 InviteToken = inviteToken,
                 InviteTokenExpires = DateTime.UtcNow.AddDays(7)
             };
@@ -121,7 +122,7 @@ public class ScannerService(
             }
             else if (assignment.AssignToAllEvents)
             {
-                var organizerEvents = await eventRepository.GetAllAsync(new EventsQueryDto(
+                var (organizerEvents, _) = await eventRepository.GetAllAsync(new EventsQueryDto(
                     Category: null, Featured: null, City: null, Search: null,
                     Date: null, Price: null, OrganizerId: assignment.OrganizerId, Status: null
                 ));

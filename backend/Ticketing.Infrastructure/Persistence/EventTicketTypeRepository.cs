@@ -47,6 +47,25 @@ public class EventTicketTypeRepository(TicketingDbContext context) : IEventTicke
             .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId);
     }
 
+    public async Task<Dictionary<Guid, int>> GetSoldCountsBatchAsync(IEnumerable<Guid> eventTicketTypeIds)
+    {
+        var idList = eventTicketTypeIds.ToList();
+        return await context.Tickets
+            .Where(t => idList.Contains(t.EventTicketTypeId))
+            .GroupBy(t => t.EventTicketTypeId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    public async Task<int> GetSoldCountWithLockAsync(Guid eventTicketTypeId)
+    {
+        await context.Database.ExecuteSqlRawAsync(
+            """SELECT 1 FROM "EventTicketTypes" WHERE "Id" = {0} FOR UPDATE""",
+            eventTicketTypeId);
+
+        return await context.Tickets
+            .CountAsync(t => t.EventTicketTypeId == eventTicketTypeId);
+    }
+
     public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();

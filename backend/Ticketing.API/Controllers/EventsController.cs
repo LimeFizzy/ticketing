@@ -12,7 +12,7 @@ namespace Ticketing.API.Controllers;
 public class EventsController(IEventService eventService, IReviewService reviewService, IVenueMapService venueMapService) : ControllerBase
 {
     [HttpGet(Name = "getEvents")]
-    [ProducesResponseType(typeof(IEnumerable<EventDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResult<EventDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] EventCategory? category,
         [FromQuery] bool? featured,
@@ -21,9 +21,11 @@ public class EventsController(IEventService eventService, IReviewService reviewS
         [FromQuery] string? date,
         [FromQuery] string? price,
         [FromQuery] Guid? organizerId,
-        [FromQuery] string? status)
+        [FromQuery] EventStatus? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var filter = new EventsQueryDto(category, featured, city, search, date, price, organizerId, status);
+        var filter = new EventsQueryDto(category, featured, city, search, date, price, organizerId, status, page, pageSize);
         var events = await eventService.GetAllAsync(filter);
         return Ok(events);
     }
@@ -40,7 +42,7 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     }
 
     [HttpPost(Name = "createEvent")]
-    [Authorize]
+    [Authorize(Roles = "Organizer,Admin")]
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateEventRequest request)
     {

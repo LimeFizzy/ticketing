@@ -48,12 +48,10 @@ public class PromoCodeRepository(TicketingDbContext context) : IPromoCodeReposit
 
     public async Task<bool> IncrementUsageAsync(Guid promoCodeId)
     {
-        var promoCode = await context.PromoCodes.FindAsync(promoCodeId);
-        if (promoCode == null) return false;
-
-        promoCode.CurrentUses++;
-        await context.SaveChangesAsync();
-        return true;
+        var affected = await context.Database.ExecuteSqlRawAsync(
+            """UPDATE "PromoCodes" SET "CurrentUses" = "CurrentUses" + 1 WHERE "Id" = {0} AND ("MaxUses" IS NULL OR "CurrentUses" < "MaxUses")""",
+            promoCodeId);
+        return affected > 0;
     }
 
     public async Task SaveChangesAsync()

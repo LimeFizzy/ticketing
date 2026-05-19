@@ -1,3 +1,5 @@
+using Ticketing.Domain.Constants;
+
 namespace Ticketing.Domain.Entities;
 
 public class User
@@ -7,7 +9,7 @@ public class User
     public required string LastName { get; set; }
     public required string Email { get; set; }
     public required string PasswordHash { get; set; }
-    public string Role { get; set; } = "attendee";
+    public UserRole Role { get; set; } = UserRole.Attendee;
     public string? InviteToken { get; set; }
     public DateTime? InviteTokenExpires { get; set; }
 

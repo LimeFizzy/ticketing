@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Infrastructure.Persistence;
@@ -14,7 +15,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
             .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
     }
 
-    public async Task<IEnumerable<Event>> GetAllAsync(EventsQueryDto? filter = null)
+    public async Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null)
     {
         var query = context.Events
             .Include(e => e.TicketTypes)
@@ -25,10 +26,10 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
             if (filter.OrganizerId.HasValue)
                 query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value);
 
-            if (!string.IsNullOrEmpty(filter.Status))
-                query = query.Where(e => e.Status == filter.Status);
+            if (filter.Status.HasValue)
+                query = query.Where(e => e.Status == filter.Status.Value);
             else if (!filter.OrganizerId.HasValue)
-                query = query.Where(e => e.Status == "published");
+                query = query.Where(e => e.Status == EventStatus.Published);
 
             if (filter.Category.HasValue)
                 query = query.Where(e => e.Category == filter.Category.Value);
@@ -60,7 +61,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                         query = query.Where(e => e.Date >= now && e.Date < now.AddDays(7));
                         break;
                     case "month":
-                        query = query.Where(e => e.Date >= now && e.Date < now.AddDays(30));
+                        query = query.Where(e => e.Date >= now && e.Date < now.AddMonths(1));
                         break;
                 }
             }
@@ -80,10 +81,21 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
         }
         else
         {
-            query = query.Where(e => e.Status == "published");
+            query = query.Where(e => e.Status == EventStatus.Published);
         }
 
-        return await query.ToListAsync();
+        var totalCount = await query.CountAsync();
+
+        var page = Math.Max(filter?.Page ?? 1, 1);
+        var pageSize = Math.Clamp(filter?.PageSize ?? 20, 1, 100);
+
+        var events = await query
+            .OrderBy(e => e.Date)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (events, totalCount);
     }
 
     public async Task<bool> ExistsAsync(Guid id)

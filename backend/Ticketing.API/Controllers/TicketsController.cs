@@ -26,11 +26,20 @@ public class TicketsController(ITicketService ticketService, IEmailService email
     [Authorize]
     [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var ticket = await ticketService.GetByIdAsync(id);
-        if (ticket == null) return NotFound(new ProblemDetails { Title = "Ticket not found" });
-        return Ok(ticket);
+        var userId = GetUserIdFromClaims();
+        try
+        {
+            var ticket = await ticketService.GetByIdAsync(id, userId);
+            if (ticket == null) return NotFound(new ProblemDetails { Title = "Ticket not found" });
+            return Ok(ticket);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return StatusCode(403, new ProblemDetails { Title = "You do not have access to this ticket" });
+        }
     }
 
     [HttpPost("check-in", Name = "checkInTicket")]
@@ -41,13 +50,18 @@ public class TicketsController(ITicketService ticketService, IEmailService email
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CheckIn([FromBody] CheckInRequest request)
     {
-        var organizerId = GetUserIdFromClaims();
-        var result = await ticketService.CheckInAsync(organizerId, request);
-
-        if (!result.WasAlreadyCheckedIn)
-            BackgroundJob.Enqueue(() => emailService.SendCheckInConfirmationAsync(result.Ticket.Id));
-
-        return Ok(result);
+        var userId = GetUserIdFromClaims();
+        try
+        {
+            var result = await ticketService.CheckInAsync(userId, request);
+            if (!result.WasAlreadyCheckedIn)
+                BackgroundJob.Enqueue(() => emailService.SendCheckInConfirmationAsync(result.Ticket.Id));
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return StatusCode(403, new ProblemDetails { Title = "Not authorized to check in tickets for this event" });
+        }
     }
 
     private Guid GetUserIdFromClaims() =>

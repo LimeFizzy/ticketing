@@ -30,8 +30,8 @@ public class ReviewService(
         if (@event.Date > DateTime.UtcNow)
             throw new InvalidOperationException("Cannot review an event that hasn't happened yet");
 
-        var hasTicket = await ticketRepository.GetByUserIdAsync(userId);
-        if (!hasTicket.Any(t => t.Order.EventId == request.EventId))
+        var hasTicket = await ticketRepository.HasTicketForEventAsync(userId, request.EventId);
+        if (!hasTicket)
             throw new InvalidOperationException("You must have a ticket for this event to review it");
 
         var existing = await reviewRepository.GetByUserAndEventAsync(userId, request.EventId);
@@ -87,25 +87,30 @@ public class ReviewService(
         var reviews = await reviewRepository.GetByEventIdAsync(eventId);
         var reviewList = reviews.ToList();
 
+        var userIds = reviewList.Select(r => r.UserId).Distinct().ToList();
+        var users = await userRepository.GetByIdsAsync(userIds);
+        var userLookup = users.ToDictionary(u => u.Id);
+
         var distribution = new int[5];
         foreach (var r in reviewList)
-            distribution[r.Rating - 1]++;
+        {
+            if (r.Rating >= 1 && r.Rating <= 5)
+                distribution[r.Rating - 1]++;
+        }
 
         var avgRating = reviewList.Count > 0
             ? reviewList.Average(r => r.Rating)
             : 0;
 
-        var reviewDtos = new List<ReviewDto>();
-        foreach (var r in reviewList)
-        {
-            var user = await userRepository.GetByIdAsync(r.UserId);
-            reviewDtos.Add(MapToDto(r, user!));
-        }
+        var reviewDtos = reviewList
+            .Where(r => userLookup.ContainsKey(r.UserId))
+            .Select(r => MapToDto(r, userLookup[r.UserId]))
+            .ToArray();
 
         return new EventReviewsSummaryDto(
             Math.Round(avgRating, 1),
             reviewList.Count,
-            reviewDtos.ToArray(),
+            reviewDtos,
             distribution
         );
     }

@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -130,26 +131,28 @@ public class VenueMapService(
     private async Task ValidateAdminAsync(Guid userId)
     {
         var user = await userRepository.GetByIdAsync(userId);
-        if (user?.Role != "admin")
+        if (user?.Role != UserRole.Admin)
             throw new UnauthorizedAccessException("Only administrators can manage venue maps");
     }
 
     private async Task<VenueMapDto> MapToDtoAsync(VenueMap map)
     {
-        var placeDtos = new List<VenueMapPlaceDto>();
-        foreach (var p in map.Places)
+        var placeIds = map.Places.Select(p => p.Id).ToList();
+        var soldCounts = await venueMapRepository.GetSoldCountsForPlacesBatchAsync(placeIds);
+
+        var placeDtos = map.Places.Select(p =>
         {
-            var sold = await venueMapRepository.GetSoldCountForPlaceAsync(p.Id);
-            placeDtos.Add(new VenueMapPlaceDto(
+            var sold = soldCounts.GetValueOrDefault(p.Id);
+            return new VenueMapPlaceDto(
                 p.Id, p.Kind, p.Label, p.X, p.Y,
                 p.Width, p.Height, p.Capacity, p.Capacity - sold
-            ));
-        }
+            );
+        }).ToArray();
 
         var decorationDtos = map.Decorations.Select(d =>
             new VenueMapDecorationDto(d.Id, d.X, d.Y, d.Width, d.Height, d.Label))
             .ToArray();
 
-        return new VenueMapDto(map.Id, map.Name, map.Width, map.Height, decorationDtos, placeDtos.ToArray());
+        return new VenueMapDto(map.Id, map.Name, map.Width, map.Height, decorationDtos, placeDtos);
     }
 }

@@ -10,5 +10,7 @@ public interface IEventTicketTypeRepository
     Task UpdateAsync(EventTicketType ticketType);
     Task DeleteAsync(Guid id);
     Task<int> GetSoldCountAsync(Guid eventTicketTypeId);
+    Task<Dictionary<Guid, int>> GetSoldCountsBatchAsync(IEnumerable<Guid> eventTicketTypeIds);
+    Task<int> GetSoldCountWithLockAsync(Guid eventTicketTypeId);
     Task SaveChangesAsync();
 }

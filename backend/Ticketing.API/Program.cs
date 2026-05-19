@@ -87,8 +87,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FrontendPolicy", policy =>
     {
         policy.WithOrigins(builder.Configuration["AllowedOrigin"]!)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
+              .WithHeaders("Content-Type", "Authorization", "Accept")
+              .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
               .AllowCredentials();
     });
 });
@@ -121,7 +121,12 @@ var app = builder.Build();
 
 app.MapOpenApi();
 
-app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = builder.Environment.IsDevelopment()
+        ? []
+        : [new HangfireDashboardAuthFilter()]
+});
 RecurringJob.AddOrUpdate<EmailBackgroundJobs>(
     "send-event-reminders",
     x => x.SendEventReminders(),

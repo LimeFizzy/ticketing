@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -7,7 +8,7 @@ namespace Ticketing.Application.Services;
 public interface IEventService
 {
     Task<EventDto?> GetByIdAsync(Guid id);
-    Task<IEnumerable<EventDto>> GetAllAsync(EventsQueryDto? filter = null);
+    Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null);
     Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request);
     Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request);
     Task SoftDeleteAsync(Guid eventId, Guid organizerId);
@@ -26,13 +27,17 @@ public class EventService(
         return await MapToDtoAsync(@event);
     }
 
-    public async Task<IEnumerable<EventDto>> GetAllAsync(EventsQueryDto? filter = null)
+    public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null)
     {
-        var events = await eventRepository.GetAllAsync(filter);
+        var (events, totalCount) = await eventRepository.GetAllAsync(filter);
         var dtos = new List<EventDto>();
         foreach (var e in events)
             dtos.Add(await MapToDtoAsync(e));
-        return dtos;
+
+        var page = Math.Max(filter?.Page ?? 1, 1);
+        var pageSize = Math.Clamp(filter?.PageSize ?? 20, 1, 100);
+
+        return new PaginatedResult<EventDto>(dtos, totalCount, page, pageSize);
     }
 
     public async Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request)
@@ -46,7 +51,7 @@ public class EventService(
             City = request.City,
             ImageUrl = request.ImageUrl ?? "https://placehold.co/600x400/1e3a5f/ffffff?text=Event",
             Description = request.Description ?? "",
-            Status = request.Status ?? "draft",
+            Status = request.Status == default ? EventStatus.Draft : request.Status,
             OrganizerId = organizerId,
             TimeZone = request.TimeZone,
             PriceFrom = request.TicketTypes?.Length > 0
@@ -103,12 +108,14 @@ public class EventService(
             ? []
             : @event.Disclaimers.Split('|', StringSplitOptions.RemoveEmptyEntries);
 
-        var ticketTypes = new List<EventTicketTypeDto>();
-        foreach (var t in @event.TicketTypes.OrderBy(t => t.Price))
+        var types = @event.TicketTypes.OrderBy(t => t.Price).ToList();
+        var soldCounts = await ticketTypeRepository.GetSoldCountsBatchAsync(types.Select(t => t.Id));
+
+        var ticketTypes = types.Select(t =>
         {
-            var sold = await ticketTypeRepository.GetSoldCountAsync(t.Id);
-            ticketTypes.Add(new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold));
-        }
+            var sold = soldCounts.GetValueOrDefault(t.Id);
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold);
+        }).ToArray();
 
         var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
         var availableTypes = ticketTypes.Where(t => t.Capacity > t.Sold).ToList();
@@ -125,7 +132,7 @@ public class EventService(
             @event.Venue,
             @event.City,
             priceFrom,
-            ticketTypes.ToArray(),
+            ticketTypes,
             @event.ImageUrl,
             @event.Description,
             availableTickets,

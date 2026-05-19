@@ -9,5 +9,6 @@ public interface ITicketRepository
     Task<Ticket?> GetByCodeWithEventAsync(string ticketCode);
     Task<bool> ExistsByCodeAsync(string code);
     Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId);
+    Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId);
     Task SaveChangesAsync();
 }

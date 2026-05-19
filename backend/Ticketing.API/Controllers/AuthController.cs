@@ -168,7 +168,7 @@ public class AuthController(IAuthService authService) : ControllerBase
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
-            new("Role", user.Role)
+            new("Role", user.Role.ToString())
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

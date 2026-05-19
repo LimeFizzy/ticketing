@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 
 namespace Ticketing.Infrastructure.Persistence;
 
@@ -10,22 +11,25 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
 {
     public async Task<OrganizerAnalyticsSummaryDto> GetOrganizerSummaryAsync(Guid organizerId)
     {
-        var events = await context.Events
+        var eventIds = await context.Events
             .Where(e => e.OrganizerId == organizerId && !e.IsDeleted)
             .Select(e => e.Id)
             .ToListAsync();
 
-        var tickets = await context.Tickets
-            .Where(t => events.Contains(t.Order.EventId))
-            .ToListAsync();
+        var totalRevenue = await context.Tickets
+            .Where(t => eventIds.Contains(t.Order.EventId))
+            .SumAsync(t => t.PricePaid);
 
-        var totalRevenue = tickets.Sum(t => t.PricePaid);
-        var totalSold = tickets.Count;
-        var totalCheckedIn = tickets.Count(t => t.Status == "CheckedIn");
+        var totalSold = await context.Tickets
+            .CountAsync(t => eventIds.Contains(t.Order.EventId));
+
+        var totalCheckedIn = await context.Tickets
+            .CountAsync(t => eventIds.Contains(t.Order.EventId) && t.Status == TicketStatus.CheckedIn);
+
         var checkInRate = totalSold > 0 ? Math.Round((double)totalCheckedIn / totalSold * 100, 1) : 0;
 
         return new OrganizerAnalyticsSummaryDto(
-            events.Count,
+            eventIds.Count,
             totalRevenue,
             totalSold,
             totalCheckedIn,
@@ -44,35 +48,42 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
             .Where(tt => tt.EventId == eventId)
             .ToListAsync();
 
-        var tickets = await context.Tickets
-            .Where(t => t.Order.EventId == eventId)
-            .ToListAsync();
+        var ticketTypeIds = ticketTypes.Select(tt => tt.Id).ToList();
 
-        var orders = await context.Orders
-            .Where(o => o.EventId == eventId && o.Status == "Confirmed")
-            .ToListAsync();
+        var byType = await context.Tickets
+            .Where(t => ticketTypeIds.Contains(t.EventTicketTypeId))
+            .GroupBy(t => t.EventTicketTypeId)
+            .Select(g => new
+            {
+                TicketTypeId = g.Key,
+                Sold = g.Count(),
+                Revenue = g.Sum(t => t.PricePaid)
+            })
+            .ToDictionaryAsync(x => x.TicketTypeId, x => x);
 
-        var totalRevenue = tickets.Sum(t => t.PricePaid);
-        var totalSold = tickets.Count;
-        var totalCapacity = ticketTypes.Sum(tt => tt.Capacity);
-        var totalCheckedIn = tickets.Count(t => t.Status == "CheckedIn");
-        var checkInRate = totalSold > 0 ? Math.Round((double)totalCheckedIn / totalSold * 100, 1) : 0;
-
-        var byType = ticketTypes.Select(tt =>
+        var typeDtos = ticketTypes.Select(tt =>
         {
-            var sold = tickets.Count(t => t.EventTicketTypeId == tt.Id);
-            var revenue = tickets.Where(t => t.EventTicketTypeId == tt.Id).Sum(t => t.PricePaid);
-            return new TicketTypeAnalyticsDto(tt.Name, sold, tt.Capacity, revenue);
+            var data = byType.GetValueOrDefault(tt.Id);
+            return new TicketTypeAnalyticsDto(tt.Name, data?.Sold ?? 0, tt.Capacity, data?.Revenue ?? 0);
         }).ToArray();
 
-        var dailySales = orders
+        var totalRevenue = typeDtos.Sum(t => t.Revenue);
+        var totalSold = typeDtos.Sum(t => t.Sold);
+        var totalCapacity = ticketTypes.Sum(tt => tt.Capacity);
+        var totalCheckedIn = await context.Tickets
+            .CountAsync(t => ticketTypeIds.Contains(t.EventTicketTypeId) && t.Status == TicketStatus.CheckedIn);
+        var checkInRate = totalSold > 0 ? Math.Round((double)totalCheckedIn / totalSold * 100, 1) : 0;
+
+        var dailySales = await context.Orders
+            .Where(o => o.EventId == eventId && o.Status == OrderStatus.Confirmed)
             .GroupBy(o => o.CreatedAt.Date)
             .OrderBy(g => g.Key)
-            .Select(g =>
-            {
-                var dayTickets = tickets.Where(t => orders.Where(o => o.CreatedAt.Date == g.Key).SelectMany(o => o.Tickets.Select(tk => tk.Id)).Contains(t.Id)).ToList();
-                return new DailySalesDto(g.Key, dayTickets.Count, dayTickets.Sum(t => t.PricePaid));
-            }).ToArray();
+            .Select(g => new DailySalesDto(
+                g.Key,
+                g.SelectMany(o => o.Tickets).Count(),
+                g.SelectMany(o => o.Tickets).Sum(t => t.PricePaid)
+            ))
+            .ToArrayAsync();
 
         return new EventAnalyticsDto(
             eventId,
@@ -82,22 +93,23 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
             totalCapacity,
             totalCheckedIn,
             checkInRate,
-            byType,
+            typeDtos,
             dailySales
         );
     }
 
     public async Task<IEnumerable<EventAnalyticsDto>> GetAllEventAnalyticsAsync(Guid organizerId)
     {
-        var events = await context.Events
+        var eventIds = await context.Events
             .Where(e => e.OrganizerId == organizerId && !e.IsDeleted)
-            .Select(e => e.Id)
+            .Select(e => new { e.Id, e.Title })
             .ToListAsync();
 
         var result = new List<EventAnalyticsDto>();
-        foreach (var eventId in events)
+
+        foreach (var ev in eventIds)
         {
-            var analytics = await GetEventAnalyticsAsync(eventId, organizerId);
+            var analytics = await GetEventAnalyticsAsync(ev.Id, organizerId);
             if (analytics != null) result.Add(analytics);
         }
 
@@ -142,8 +154,11 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
 
     private static string EscapeCsv(string value)
     {
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        if (value.Length > 0 && "=+-@\t\r".Contains(value[0]) ||
+            value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        {
             return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
         return value;
     }
 }

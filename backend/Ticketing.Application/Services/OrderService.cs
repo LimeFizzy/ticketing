@@ -1,5 +1,6 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
@@ -23,78 +24,86 @@ public class OrderService(
             ?? throw new InvalidOperationException("Event not found");
 
         var ticketTypeLookup = @event.TicketTypes.ToDictionary(t => t.Id);
-        var totalTickets = request.Items.Sum(i => i.Quantity);
-
-        decimal total = 0;
-        var ticketsToCreate = new List<Ticket>();
 
         foreach (var item in request.Items)
         {
-            if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
+            if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out _))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
-
-            if (item.VenueMapPlaceId.HasValue)
-            {
-                var mapping = await eventVenueMapPlaceRepository
-                    .GetByEventAndPlaceAsync(request.EventId, item.VenueMapPlaceId.Value);
-                if (mapping == null)
-                    throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to this event");
-
-                if (mapping.EventTicketTypeId != item.EventTicketTypeId)
-                    throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to ticket type {tt.Name}");
-
-                var placeSold = await venueMapRepository.GetSoldCountForPlaceAsync(item.VenueMapPlaceId.Value);
-                if (placeSold + item.Quantity > await GetPlaceCapacityAsync(item.VenueMapPlaceId.Value))
-                    throw new InvalidOperationException($"Not enough capacity for place");
-            }
-            else
-            {
-                var soldCount = await eventTicketTypeRepository.GetSoldCountAsync(tt.Id);
-                if (soldCount + item.Quantity > tt.Capacity)
-                    throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
-            }
-
-            total += tt.Price * item.Quantity;
-
-            for (var i = 0; i < item.Quantity; i++)
-            {
-                var code = await GenerateUniqueCodeAsync();
-                ticketsToCreate.Add(new Ticket
-                {
-                    TicketCode = code,
-                    EventTicketTypeId = tt.Id,
-                    UserId = userId,
-                    PricePaid = tt.Price,
-                    Status = "Active",
-                    VenueMapPlaceId = item.VenueMapPlaceId
-                });
-            }
         }
 
-        var order = new Order
+        Order? order = null;
+
+        await orderRepository.ExecuteInTransactionAsync(async () =>
         {
-            UserId = userId,
-            EventId = request.EventId,
-            TotalAmount = total - discountAmount,
-            Status = "Confirmed",
-            StripeSessionId = stripeSessionId,
-            PromoCodeId = promoCodeId,
-            DiscountAmount = discountAmount,
-            Tickets = ticketsToCreate
-        };
+            decimal total = 0;
+            var ticketsToCreate = new List<Ticket>();
 
-        await orderRepository.CreateAsync(order);
+            foreach (var item in request.Items)
+            {
+                var tt = ticketTypeLookup[item.EventTicketTypeId];
 
-        await orderRepository.SaveChangesAsync();
+                if (item.VenueMapPlaceId.HasValue)
+                {
+                    var mapping = await eventVenueMapPlaceRepository
+                        .GetByEventAndPlaceAsync(request.EventId, item.VenueMapPlaceId.Value);
+                    if (mapping == null)
+                        throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to this event");
 
-        return MapToDto(order, @event);
-    }
+                    if (mapping.EventTicketTypeId != item.EventTicketTypeId)
+                        throw new InvalidOperationException($"Place {item.VenueMapPlaceId} is not mapped to ticket type {tt.Name}");
 
-    private async Task<int> GetPlaceCapacityAsync(Guid placeId)
-    {
-        var place = await venueMapRepository.GetPlaceByIdAsync(placeId)
-            ?? throw new InvalidOperationException($"Place {placeId} not found");
-        return place.Capacity;
+                    var (placeSold, placeCapacity) = await venueMapRepository.GetPlaceCapacityWithLockAsync(item.VenueMapPlaceId.Value);
+
+                    if (item.Quantity > placeCapacity)
+                        throw new InvalidOperationException($"Cannot order {item.Quantity} tickets for a place with capacity {placeCapacity}");
+
+                    if (placeSold + item.Quantity > placeCapacity)
+                        throw new InvalidOperationException("Not enough capacity for place");
+                }
+                else
+                {
+                    var soldCount = await eventTicketTypeRepository.GetSoldCountWithLockAsync(tt.Id);
+                    if (soldCount + item.Quantity > tt.Capacity)
+                        throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
+                }
+
+                total += tt.Price * item.Quantity;
+
+                for (var i = 0; i < item.Quantity; i++)
+                {
+                    var code = await GenerateUniqueCodeAsync();
+                    ticketsToCreate.Add(new Ticket
+                    {
+                        TicketCode = code,
+                        EventTicketTypeId = tt.Id,
+                        UserId = userId,
+                        PricePaid = tt.Price,
+                        Status = TicketStatus.Active,
+                        VenueMapPlaceId = item.VenueMapPlaceId
+                    });
+                }
+            }
+
+            var effectiveDiscount = Math.Min(discountAmount, total);
+            if (effectiveDiscount < 0) effectiveDiscount = 0;
+
+            order = new Order
+            {
+                UserId = userId,
+                EventId = request.EventId,
+                TotalAmount = total - effectiveDiscount,
+                Status = OrderStatus.Confirmed,
+                StripeSessionId = stripeSessionId,
+                PromoCodeId = promoCodeId,
+                DiscountAmount = effectiveDiscount,
+                Tickets = ticketsToCreate
+            };
+
+            await orderRepository.CreateAsync(order);
+            await orderRepository.SaveChangesAsync();
+        });
+
+        return MapToDto(order!, @event);
     }
 
     private async Task<string> GenerateUniqueCodeAsync()

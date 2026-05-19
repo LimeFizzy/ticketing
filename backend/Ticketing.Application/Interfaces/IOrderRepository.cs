@@ -8,4 +8,5 @@ public interface IOrderRepository
     Task<Order?> GetByIdAsync(Guid id);
     Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId);
     Task SaveChangesAsync();
+    Task ExecuteInTransactionAsync(Func<Task> action);
 }
