@@ -10,7 +10,6 @@ export const formatEventDateShort = (iso: string) =>
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
   });
 
 export const formatEventDateLong = (iso: string) =>
@@ -19,14 +18,12 @@ export const formatEventDateLong = (iso: string) =>
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    timeZone: 'UTC',
   });
 
 export const formatEventTime = (iso: string) =>
   new Date(iso).toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
   });
 
 export const formatTicketDate = (iso: string) =>
@@ -36,7 +33,6 @@ export const formatTicketDate = (iso: string) =>
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
   });
 
 export const formatPrice = (price: number): string =>
@@ -53,11 +49,13 @@ export const formatCurrencyEur = (n: number): string =>
   }).format(n);
 
 export const formatChartDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  });
+  new Date(iso.includes('T') ? iso : iso + 'T00:00:00').toLocaleDateString(
+    'en-GB',
+    {
+      day: 'numeric',
+      month: 'short',
+    }
+  );
 
 export const formatPercentage = (n: number, d: number): string =>
   d === 0 ? '—' : `${((n / d) * 100).toFixed(1)}%`;
