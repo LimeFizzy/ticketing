@@ -10,11 +10,13 @@ import { TicketTypesCard } from '@/components/dashboard/analytics/ticket-types-c
 import { DailySalesCard } from '@/components/dashboard/analytics/daily-sales-card';
 import { CumulativeSalesCard } from '@/components/dashboard/analytics/cumulative-sales-card';
 import { ReviewsCard } from '@/components/dashboard/analytics/reviews-card';
+import { PromoCodesCard } from '@/components/dashboard/analytics/promo-codes-card';
 import { exportAttendeesCsv } from '@/lib/api';
 import type {
   EventAnalyticsDto,
   EventDto,
   EventReviewsSummaryDto,
+  PromoCodeDto,
 } from '@/lib/api/types.gen';
 import { dashboardAnalyticsRoute } from '@/lib/routes';
 import {
@@ -28,12 +30,14 @@ interface Props {
   analytics: EventAnalyticsDto;
   event: EventDto;
   reviews?: EventReviewsSummaryDto | null;
+  promoCodes?: PromoCodeDto[];
 }
 
 export const EventAnalyticsDashboard = ({
   analytics,
   event,
   reviews,
+  promoCodes,
 }: Props) => {
   const [exporting, setExporting] = useState(false);
 
@@ -168,6 +172,10 @@ export const EventAnalyticsDashboard = ({
       )}
 
       {reviews && reviews.totalReviews > 0 && <ReviewsCard reviews={reviews} />}
+
+      {promoCodes && promoCodes.length > 0 && (
+        <PromoCodesCard codes={promoCodes} />
+      )}
     </div>
   );
 };
