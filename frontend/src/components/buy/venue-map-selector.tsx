@@ -103,36 +103,39 @@ export const VenueMapSelector = ({
     [venueMap.places, selection, unitNameFor, unitPriceFor, setQuantity]
   );
 
-  const handleContinue = useCallback(async () => {
-    if (!isAuthenticated) {
-      saveSelection(event.id, selection);
-      const next = encodeURIComponent(eventBuyRoute(event.id));
-      router.push(`${Route.SignUp}?next=${next}`);
-      return;
-    }
-
-    setSubmitting(true);
-    setCheckoutError(null);
-    try {
-      const items = Object.entries(selection)
-        .filter(([, qty]) => qty > 0)
-        .map(([placeId, quantity]) => ({
-          eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
-          quantity,
-          venueMapPlaceId: placeId,
-        }));
-      const { data, error } = await createCheckoutSession({
-        body: { eventId: event.id, items },
-      });
-      if (error || !data?.sessionUrl) {
-        setCheckoutError('Something went wrong. Please try again.');
+  const handleContinue = useCallback(
+    async (promoCode?: string) => {
+      if (!isAuthenticated) {
+        saveSelection(event.id, selection);
+        const next = encodeURIComponent(eventBuyRoute(event.id));
+        router.push(`${Route.SignUp}?next=${next}`);
         return;
       }
-      window.location.href = data.sessionUrl;
-    } finally {
-      setSubmitting(false);
-    }
-  }, [isAuthenticated, selection, placesById, event.id]);
+
+      setSubmitting(true);
+      setCheckoutError(null);
+      try {
+        const items = Object.entries(selection)
+          .filter(([, qty]) => qty > 0)
+          .map(([placeId, quantity]) => ({
+            eventTicketTypeId: placesById.get(placeId)!.ticketTypeId,
+            quantity,
+            venueMapPlaceId: placeId,
+          }));
+        const { data, error } = await createCheckoutSession({
+          body: { eventId: event.id, items, promoCode: promoCode ?? null },
+        });
+        if (error || !data?.sessionUrl) {
+          setCheckoutError('Something went wrong. Please try again.');
+          return;
+        }
+        window.location.href = data.sessionUrl;
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [isAuthenticated, selection, placesById, event.id]
+  );
 
   const stopDrag: React.PointerEventHandler<HTMLDivElement> = (e) =>
     e.stopPropagation();
@@ -174,6 +177,7 @@ export const VenueMapSelector = ({
       </div>
 
       <SelectionSummary
+        eventId={event.id}
         lines={lines}
         totalQuantity={total}
         totalPrice={totalPrice}

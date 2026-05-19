@@ -35,7 +35,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
     0
   );
 
-  const handleContinue = async () => {
+  const handleContinue = async (promoCode?: string) => {
     if (!isAuthenticated) {
       saveSelection(event.id, selection);
       const next = encodeURIComponent(eventBuyRoute(event.id));
@@ -53,7 +53,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
           quantity,
         }));
       const { data, error } = await createCheckoutSession({
-        body: { eventId: event.id, items },
+        body: { eventId: event.id, items, promoCode: promoCode ?? null },
       });
       if (error || !data?.sessionUrl) {
         setCheckoutError('Something went wrong. Please try again.');
@@ -114,6 +114,7 @@ export const TicketTypeSelector = ({ event }: TicketTypeSelectorProps) => {
       </ul>
 
       <SelectionSummary
+        eventId={event.id}
         lines={lines}
         totalQuantity={total}
         totalPrice={totalPrice}

@@ -42,3 +42,9 @@ export const dashboardAnalyticsRoute = () => '/dashboard/analytics' as const;
 
 export const dashboardAnalyticsEventRoute = (eventId: string) =>
   `/dashboard/analytics/${eventId}` as const;
+
+export const reviewRoute = (eventId: string) =>
+  `/review?eventId=${eventId}` as const;
+
+export const dashboardEventPromoCodesRoute = (id: string) =>
+  `/dashboard/events/${id}/promo-codes` as const;
