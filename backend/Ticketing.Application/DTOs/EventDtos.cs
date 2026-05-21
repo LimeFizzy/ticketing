@@ -48,6 +48,11 @@ public record EventsQueryDto(
     [Range(1, 100)] int PageSize = 20
 );
 
+public record SetFeaturedRequest(
+    [Required] bool Featured,
+    [Required] uint RowVersion
+);
+
 public record PaginatedResult<T>(
     [property: Required] IReadOnlyList<T> Items,
     [property: Required] int TotalCount,

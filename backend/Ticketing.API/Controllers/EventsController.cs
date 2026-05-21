@@ -27,8 +27,11 @@ public class EventsController(IEventService eventService, IReviewService reviewS
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
     {
+        var isAdmin = User.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
+
         var filter = new EventsQueryDto(category, featured, city, search, date, price, organizerId, status, page, pageSize);
-        var events = await eventService.GetAllAsync(filter, cancellationToken);
+        var events = await eventService.GetAllAsync(filter, isAdmin, cancellationToken);
+        
         return Ok(events);
     }
 
@@ -62,9 +65,10 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEventRequest request, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
+        var isAdmin = User.IsInRole("Admin");
         try
         {
-            var result = await eventService.UpdateAsync(id, organizerId, request, cancellationToken);
+            var result = await eventService.UpdateAsync(id, organizerId, request, isAdmin, cancellationToken);
             if (result == null) return NotFound(new ProblemDetails { Title = "Event not found" });
 
             return Ok(result);
@@ -83,9 +87,10 @@ public class EventsController(IEventService eventService, IReviewService reviewS
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
+        var isAdmin = User.IsInRole("Admin");
         try
         {
-            await eventService.SoftDeleteAsync(id, organizerId, cancellationToken);
+            await eventService.SoftDeleteAsync(id, organizerId, isAdmin, cancellationToken);
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -96,6 +101,18 @@ public class EventsController(IEventService eventService, IReviewService reviewS
         {
             return StatusCode(403, new ProblemDetails { Title = "Event not found or not owned by you" });
         }
+    }
+
+    [HttpPatch("{id}/featured", Name = "setEventFeatured")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetFeatured(Guid id, [FromBody] SetFeaturedRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await eventService.SetFeaturedAsync(id, request.Featured, request.RowVersion, cancellationToken);
+        if (result == null) return NotFound(new ProblemDetails { Title = "Event not found" });
+
+        return Ok(result);
     }
 
     [HttpGet("{id}/reviews", Name = "getEventReviews")]

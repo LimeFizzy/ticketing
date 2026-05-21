@@ -15,7 +15,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
             .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
 
-    public async Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         var query = context.Events
             .AsNoTracking()
@@ -23,14 +23,23 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
             .Include(e => e.TicketTypes)
             .Where(e => !e.IsDeleted && e.Date >= DateTime.UtcNow);
 
+        if (isAdmin)
+        {
+            query = context.Events
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(e => e.TicketTypes)
+                .Where(e => !e.IsDeleted);
+        }
+
         if (filter != null)
         {
-            if (filter.OrganizerId.HasValue)
+            if (filter.OrganizerId.HasValue && !isAdmin)
                 query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value);
 
             if (filter.Status.HasValue)
                 query = query.Where(e => e.Status == filter.Status.Value);
-            else if (!filter.OrganizerId.HasValue)
+            else if (!filter.OrganizerId.HasValue && !isAdmin)
                 query = query.Where(e => e.Status == EventStatus.Published);
 
             if (filter.Category.HasValue)
