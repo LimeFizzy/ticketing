@@ -26,8 +26,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 import { deleteEvent, getEvents } from '@/lib/api';
 import type { EventCategory, EventDto, EventStatus } from '@/lib/api/types.gen';
+import { extractApiError } from '@/lib/api-error';
 import { CATEGORIES } from '@/types/event';
 import {
   dashboardEventCheckInRoute,
@@ -73,9 +75,19 @@ const DashboardPage = () => {
   useEffect(() => {
     if (!user) return;
     getEvents({ query: { organizerId: user.id, page: 1, pageSize: 20 } })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         // TODO: Implement Pagination
-        if (data) setEvents(data.items);
+        if (error) {
+          toast.error(
+            extractApiError(
+              error,
+              'Failed to load events. Please refresh the page.'
+            ),
+            { duration: Infinity }
+          );
+        } else if (data) {
+          setEvents(data.items);
+        }
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -85,7 +97,12 @@ const DashboardPage = () => {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setDeletingId(id);
-    await deleteEvent({ path: { id } });
+    const { error } = await deleteEvent({ path: { id } });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setDeletingId(null);
+      return;
+    }
     setEvents((prev) => prev.filter((ev) => ev.id !== id));
     setDeletingId(null);
   };

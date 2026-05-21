@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { checkInTicket } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { CheckInResponse, TicketDto } from '@/lib/api/types.gen';
 import { formatTicketDate } from '@/lib/formatters';
 
@@ -55,10 +56,10 @@ export const CheckInUi = ({ eventId, eventTitle, backHref }: Props) => {
       });
 
       if (error || !data) {
-        const message =
-          (error as Record<string, unknown> & { title?: string })?.title ||
-          'Check-in failed. Please try again.';
-        setResult({ type: 'error', message: String(message) });
+        setResult({
+          type: 'error',
+          message: extractApiError(error, 'Check-in failed. Please try again.'),
+        });
         return;
       }
 

@@ -11,6 +11,7 @@ import {
   updateProfile as updateProfileApi,
 } from '@/lib/api';
 import { initAntiforgery, resetAntiforgeryToken } from '@/lib/antiforgery';
+import { extractApiError } from '@/lib/api-error';
 
 const toUser = (dto: UserDto): User => ({ ...dto });
 
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       body: { email, password },
     });
 
-    if (error) throw new Error(error?.title || 'Login failed');
+    if (error) throw new Error(extractApiError(error, 'Sign in failed.'));
     if (data) setUser(toUser(data));
     resetAntiforgeryToken();
   };
@@ -53,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       body: { firstName, lastName, email, password },
     });
 
-    if (error) throw new Error(error?.title || 'Registration failed');
+    if (error) throw new Error(extractApiError(error, 'Registration failed.'));
     if (data) setUser(toUser(data));
     resetAntiforgeryToken();
   };
@@ -76,7 +77,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       },
     });
     if (data) setUser(toUser(data));
-    if (error) throw new Error('Profile update failed');
+    if (error)
+      throw new Error(extractApiError(error, 'Profile update failed.'));
   };
 
   const value: AuthContextValue = {

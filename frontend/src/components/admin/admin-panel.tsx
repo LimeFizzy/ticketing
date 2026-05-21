@@ -11,7 +11,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
+import { toast } from 'sonner';
 import { getOrganizers, inviteOrganizer, removeOrganizer } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { OrganizerDto } from '@/lib/api/types.gen';
 import { useFormState } from '@/hooks/use-form-state';
 
@@ -28,7 +30,6 @@ export const AdminPanel = () => {
     lastName: '',
     email: '',
   });
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchOrganizers = async () => {
@@ -42,7 +43,6 @@ export const AdminPanel = () => {
 
   const handleInvite = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const { error: apiError } = await inviteOrganizer({
@@ -54,18 +54,21 @@ export const AdminPanel = () => {
     });
 
     if (apiError) {
-      setError(apiError?.title || 'Failed to invite organizer');
+      toast.error(extractApiError(apiError), { duration: Infinity });
       setLoading(false);
       return;
     }
 
     await fetchOrganizers();
-
     setLoading(false);
   };
 
   const handleRemove = async (id: string) => {
-    await removeOrganizer({ path: { id } });
+    const { error } = await removeOrganizer({ path: { id } });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      return;
+    }
     await fetchOrganizers();
   };
 
@@ -107,7 +110,6 @@ export const AdminPanel = () => {
                 required
               />
             </FormField>
-            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading}>
               {loading ? 'Inviting…' : 'Send Invite'}
             </Button>

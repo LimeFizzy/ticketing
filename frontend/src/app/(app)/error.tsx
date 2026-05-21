@@ -20,7 +20,8 @@ export default function AppError({
         Something went wrong
       </h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        We couldn&apos;t load this page. Please try again.
+        We couldn&apos;t load this page. This could be a temporary issue — try
+        again, or sign out and back in if the problem persists.
       </p>
       <Button onClick={reset}>Try again</Button>
     </div>

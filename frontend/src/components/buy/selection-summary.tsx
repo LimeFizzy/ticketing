@@ -28,7 +28,6 @@ interface SelectionSummaryProps {
   totalQuantity: number;
   totalPrice: number;
   submitting?: boolean;
-  checkoutError?: string | null;
   onContinue: (promoCode?: string) => void;
 }
 
@@ -48,7 +47,6 @@ export const SelectionSummary = ({
   totalQuantity,
   totalPrice,
   submitting,
-  checkoutError,
   onContinue,
 }: SelectionSummaryProps) => {
   const capRemaining = MAX_PLACES_PER_ORDER - totalQuantity;
@@ -213,10 +211,6 @@ export const SelectionSummary = ({
             Maximum {MAX_PLACES_PER_ORDER} tickets per order.
           </p>
         ) : null}
-
-        {checkoutError && (
-          <p className="text-sm text-destructive">{checkoutError}</p>
-        )}
 
         <Button
           size="lg"

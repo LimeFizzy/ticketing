@@ -18,8 +18,8 @@ const EventAnalyticsPage = async ({
   const headers = { Cookie: cookieStore.toString() };
 
   const [
-    { data: analytics },
-    { data: event },
+    { data: analytics, error: analyticsError },
+    { data: event, error: eventError },
     { data: reviews },
     { data: promoCodes },
   ] = await Promise.all([
@@ -29,6 +29,7 @@ const EventAnalyticsPage = async ({
     getPromoCodes({ path: { eventId }, headers }),
   ]);
 
+  if (eventError?.status === 404 || analyticsError?.status === 404) notFound();
   if (!analytics || !event) notFound();
 
   return (
