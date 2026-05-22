@@ -1,15 +1,16 @@
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
 
 public interface IPromoCodeService
 {
-    Task<PromoCodeDto> CreateAsync(Guid eventId, Guid organizerId, CreatePromoCodeRequest request);
-    Task<IEnumerable<PromoCodeDto>> GetByEventIdAsync(Guid eventId, Guid organizerId);
-    Task DeleteAsync(Guid promoCodeId, Guid organizerId);
-    Task<ValidatePromoCodeResponse> ValidateAsync(ValidatePromoCodeRequest request);
+    Task<PromoCodeDto> CreateAsync(Guid eventId, Guid organizerId, CreatePromoCodeRequest request, CancellationToken cancellationToken = default);
+    Task<IEnumerable<PromoCodeDto>> GetByEventIdAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid promoCodeId, Guid organizerId, CancellationToken cancellationToken = default);
+    Task<ValidatePromoCodeResponse> ValidateAsync(ValidatePromoCodeRequest request, CancellationToken cancellationToken = default);
     decimal CalculateDiscount(PromoCode promoCode, decimal originalTotal);
 }
 
@@ -17,15 +18,27 @@ public class PromoCodeService(
     IPromoCodeRepository promoCodeRepository,
     IEventRepository eventRepository) : IPromoCodeService
 {
-    public async Task<PromoCodeDto> CreateAsync(Guid eventId, Guid organizerId, CreatePromoCodeRequest request)
+    public async Task<PromoCodeDto> CreateAsync(Guid eventId, Guid organizerId, CreatePromoCodeRequest request, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId)
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken)
             ?? throw new KeyNotFoundException("Event not found");
 
         if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You are not the organizer of this event");
 
-        var existing = await promoCodeRepository.GetByCodeAsync(request.Code.ToUpperInvariant(), eventId);
+        if (request.DiscountValue <= 0)
+            throw new InvalidOperationException("Discount value must be greater than zero");
+
+        if (request.DiscountType == DiscountType.Percentage && request.DiscountValue > 100)
+            throw new InvalidOperationException("Percentage discount cannot exceed 100%");
+
+        if (request.MaxUses.HasValue && request.MaxUses.Value <= 0)
+            throw new InvalidOperationException("Max uses must be greater than zero if provided");
+
+        if (request.ExpiresAt.HasValue && request.ExpiresAt.Value <= DateTime.UtcNow)
+            throw new InvalidOperationException("Expiration date must be in the future");
+
+        var existing = await promoCodeRepository.GetByCodeAsync(request.Code.ToUpperInvariant(), eventId, cancellationToken);
         if (existing != null)
             throw new InvalidOperationException("A promo code with this code already exists for this event");
 
@@ -40,43 +53,43 @@ public class PromoCodeService(
             IsActive = true
         };
 
-        var created = await promoCodeRepository.CreateAsync(promoCode);
-        await promoCodeRepository.SaveChangesAsync();
+        var created = await promoCodeRepository.CreateAsync(promoCode, cancellationToken);
+        await promoCodeRepository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(created);
     }
 
-    public async Task<IEnumerable<PromoCodeDto>> GetByEventIdAsync(Guid eventId, Guid organizerId)
+    public async Task<IEnumerable<PromoCodeDto>> GetByEventIdAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId)
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken)
             ?? throw new KeyNotFoundException("Event not found");
 
         if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You are not the organizer of this event");
 
-        var promoCodes = await promoCodeRepository.GetByEventIdAsync(eventId);
+        var promoCodes = await promoCodeRepository.GetByEventIdAsync(eventId, cancellationToken);
         return promoCodes.Select(MapToDto);
     }
 
-    public async Task DeleteAsync(Guid promoCodeId, Guid organizerId)
+    public async Task DeleteAsync(Guid promoCodeId, Guid organizerId, CancellationToken cancellationToken = default)
     {
-        var promoCode = await promoCodeRepository.GetByIdAsync(promoCodeId)
+        var promoCode = await promoCodeRepository.GetByIdAsync(promoCodeId, cancellationToken)
             ?? throw new KeyNotFoundException("Promo code not found");
 
-        var @event = await eventRepository.GetByIdAsync(promoCode.EventId)
+        var @event = await eventRepository.GetByIdAsync(promoCode.EventId, cancellationToken)
             ?? throw new KeyNotFoundException("Event not found");
 
         if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You are not the organizer of this event");
 
         promoCode.IsActive = false;
-        await promoCodeRepository.UpdateAsync(promoCode);
-        await promoCodeRepository.SaveChangesAsync();
+        await promoCodeRepository.UpdateAsync(promoCode, cancellationToken);
+        await promoCodeRepository.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<ValidatePromoCodeResponse> ValidateAsync(ValidatePromoCodeRequest request)
+    public async Task<ValidatePromoCodeResponse> ValidateAsync(ValidatePromoCodeRequest request, CancellationToken cancellationToken = default)
     {
-        var promoCode = await promoCodeRepository.GetByCodeAsync(request.Code.ToUpperInvariant(), request.EventId);
+        var promoCode = await promoCodeRepository.GetByCodeAsync(request.Code.ToUpperInvariant(), request.EventId, cancellationToken);
 
         if (promoCode == null)
             return new ValidatePromoCodeResponse(false, "Promo code not found", null, null, null);
@@ -97,8 +110,8 @@ public class PromoCodeService(
     {
         return promoCode.DiscountType switch
         {
-            "Percentage" => Math.Round(originalTotal * promoCode.DiscountValue / 100, 2),
-            "FixedAmount" => Math.Min(promoCode.DiscountValue, originalTotal),
+            DiscountType.Percentage => Math.Round(originalTotal * promoCode.DiscountValue / 100, 2),
+            DiscountType.FixedAmount => Math.Min(promoCode.DiscountValue, originalTotal),
             _ => 0
         };
     }
@@ -112,6 +125,7 @@ public class PromoCodeService(
         promoCode.CurrentUses,
         promoCode.ExpiresAt,
         promoCode.IsActive,
-        promoCode.CreatedAt
+        promoCode.CreatedAt,
+        promoCode.RowVersion
     );
 }

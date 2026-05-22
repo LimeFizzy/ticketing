@@ -19,6 +19,7 @@ import { EditorPanel } from '@/components/dashboard/venue-maps/editor-panel';
 
 interface VenueMapEditorPageProps {
   mapId: string;
+  rowVersion: number;
   initialName?: string;
   initialWidth?: number;
   initialHeight?: number;
@@ -28,6 +29,7 @@ interface VenueMapEditorPageProps {
 
 export function VenueMapEditorPage({
   mapId: initialMapId,
+  rowVersion: initialRowVersion,
   initialName = '',
   initialWidth = 900,
   initialHeight = 600,
@@ -201,7 +203,7 @@ export function VenueMapEditorPage({
           router.replace(`/dashboard/venue-maps/${data.id}`);
         }
       } else {
-        await updateVenueMap({ path: { id: mapId }, body });
+        await updateVenueMap({ path: { id: mapId }, body: { ...body, rowVersion: initialRowVersion } });
         showSaved();
       }
     } finally {
@@ -209,7 +211,7 @@ export function VenueMapEditorPage({
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'Admin') {
     return (
       <div className="mx-auto flex w-full max-w-screen-xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
         <p className="text-sm text-muted-foreground">

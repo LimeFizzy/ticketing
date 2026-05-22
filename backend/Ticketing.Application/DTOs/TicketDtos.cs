@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Ticketing.Domain.Constants;
 
 namespace Ticketing.Application.DTOs;
 
@@ -10,19 +11,20 @@ public record TicketDto(
     [property: Required] string EventTitle,
     [property: Required] string TicketTypeName,
     [property: Required] decimal PricePaid,
-    [property: Required] string Status,
+    [property: Required] TicketStatus Status,
     [property: Required] DateTime EventDate,
     [property: Required] string Venue,
     [property: Required] string City,
     [property: Required] string ImageUrl,
+    [property: Required] uint RowVersion,
     DateTime? CheckedInAt = null,
     Guid? VenueMapPlaceId = null,
     string? SeatLabel = null
 );
 
 public record CheckInRequest(
-    string TicketCode,
-    Guid EventId
+    [Required][MaxLength(50)] string TicketCode,
+    [Required] Guid EventId
 );
 
 public record CheckInResponse(

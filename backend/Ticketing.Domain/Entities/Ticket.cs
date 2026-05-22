@@ -1,3 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Ticketing.Domain.Constants;
+
 namespace Ticketing.Domain.Entities;
 
 public class Ticket
@@ -7,7 +11,7 @@ public class Ticket
     public required Guid EventTicketTypeId { get; set; }
     public Guid OrderId { get; set; }
     public required decimal PricePaid { get; set; }
-    public required string Status { get; set; } = "Active";
+    public TicketStatus Status { get; set; } = TicketStatus.Active;
     public DateTime? CheckedInAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -17,4 +21,7 @@ public class Ticket
     public EventTicketType EventTicketType { get; set; } = null!;
     public Order Order { get; set; } = null!;
     public VenueMapPlace? VenueMapPlace { get; set; }
+
+    [Timestamp]
+    public uint RowVersion { get; set; }
 }

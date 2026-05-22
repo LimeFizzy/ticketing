@@ -70,6 +70,7 @@ export const EditTicketTypeForm = ({
         description: form.description.trim() || undefined,
         price: Number(form.price),
         capacity: newCapacity,
+        rowVersion: currentTicketType.rowVersion,
       },
     });
 

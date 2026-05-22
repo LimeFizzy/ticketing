@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -8,6 +9,8 @@ using Ticketing.Application.Services;
 using Ticketing.Domain.Constants;
 using Ticketing.Infrastructure.Auth;
 using Ticketing.Infrastructure.Persistence;
+using Ticketing.API.Filters;
+using Ticketing.API.Middleware;
 using Ticketing.API.Services;
 using Hangfire;
 using EventService = Ticketing.Application.Services.EventService;
@@ -15,7 +18,10 @@ using EventService = Ticketing.Application.Services.EventService;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddControllers(options =>
+{
+    options.Filters.AddService<AuditLogFilter>();
+}).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
@@ -44,8 +50,13 @@ if (string.IsNullOrWhiteSpace(stripeSecretKey))
 builder.Services.Configure<StripeSettings>(stripeSection);
 StripeConfiguration.ApiKey = stripeSecretKey;
 
-builder.Services.AddDbContext<TicketingDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var webhookSecret = stripeSection["WebhookSecret"];
+if (string.IsNullOrWhiteSpace(webhookSecret))
+    throw new InvalidOperationException("Stripe configuration is missing or invalid. Please configure 'Stripe:WebhookSecret'.");
+
+builder.Services.AddDbContextPool<TicketingDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")),
+    poolSize: 32);
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -69,6 +80,8 @@ builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IVenueMapRepository, VenueMapRepository>();
 builder.Services.AddScoped<IVenueMapService, VenueMapService>();
+builder.Services.AddMemoryCache();
+builder.Services.Decorate<IVenueMapService, CachingVenueMapService>();
 builder.Services.AddScoped<IEventVenueMapPlaceRepository, EventVenueMapPlaceRepository>();
 builder.Services.AddScoped<IEventVenueMapPlaceService, EventVenueMapPlaceService>();
 builder.Services.AddScoped<IEventScannerRepository, EventScannerRepository>();
@@ -86,9 +99,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins(builder.Configuration["AllowedOrigin"]!)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
+        var allowedOrigin = builder.Configuration["AllowedOrigin"]
+            ?? throw new InvalidOperationException("'AllowedOrigin' configuration is missing.");
+        policy.WithOrigins(allowedOrigin)
+              .WithHeaders("Content-Type", "Authorization", "Accept")
+              .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
               .AllowCredentials();
     });
 });
@@ -116,12 +131,165 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "TicketingXSRF";
+    options.Cookie.HttpOnly = false;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+});
+builder.Services.AddScoped<GlobalExceptionHandler>();
+builder.Services.Configure<AuditLogSettings>(builder.Configuration.GetSection("AuditLogging"));
+builder.Services.AddScoped<AuditLogFilter>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("promo-validate", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("checkout", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("check-in", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("events", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("reviews", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("venue-maps", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("promo-codes", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("scanners", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("analytics", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("webhook", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+});
 
 var app = builder.Build();
 
 app.MapOpenApi();
 
-app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new HangfireDashboardAuthFilter()]
+});
 RecurringJob.AddOrUpdate<EmailBackgroundJobs>(
     "send-event-reminders",
     x => x.SendEventReminders(),
@@ -134,12 +302,28 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ticketing API V1");
     });
 
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
 app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    context.Response.Headers.XFrameOptions = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    await next();
+});
 
 app.UseCors("FrontendPolicy");
 
+app.UseRateLimiter();
+
+app.UseMiddleware<GlobalExceptionHandler>();
+
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapControllers();
 

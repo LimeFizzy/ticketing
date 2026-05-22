@@ -28,7 +28,6 @@ export const AdminPanel = () => {
     lastName: '',
     email: '',
   });
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,10 +43,9 @@ export const AdminPanel = () => {
   const handleInvite = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    setInviteLink(null);
     setLoading(true);
 
-    const { data, error: apiError } = await inviteOrganizer({
+    const { error: apiError } = await inviteOrganizer({
       body: {
         firstName: form.firstName,
         lastName: form.lastName,
@@ -61,12 +59,7 @@ export const AdminPanel = () => {
       return;
     }
 
-    if (data) {
-      const token = (data as { inviteToken: string }).inviteToken;
-      setInviteLink(`${window.location.origin}/accept-invite?token=${token}`);
-      patch({ firstName: '', lastName: '', email: '' });
-      await fetchOrganizers();
-    }
+    await fetchOrganizers();
 
     setLoading(false);
   };
@@ -115,14 +108,6 @@ export const AdminPanel = () => {
               />
             </FormField>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            {inviteLink && (
-              <div className="rounded-lg border bg-muted p-3">
-                <p className="mb-1 text-xs font-medium text-muted-foreground">
-                  Share this link with the organizer:
-                </p>
-                <code className="break-all text-xs">{inviteLink}</code>
-              </div>
-            )}
             <Button type="submit" disabled={loading}>
               {loading ? 'Inviting…' : 'Send Invite'}
             </Button>

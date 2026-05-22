@@ -33,7 +33,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("EmailType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text");
@@ -46,18 +47,21 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("RecipientEmail")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Subject")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid?>("TicketId")
                         .HasColumnType("uuid");
@@ -65,6 +69,8 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RecipientEmail");
 
                     b.HasIndex("EventId", "EmailType");
 
@@ -87,17 +93,20 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<string>("Disclaimers")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<bool>("Featured")
                         .HasColumnType("boolean");
@@ -115,20 +124,29 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<decimal>("PriceFrom")
                         .HasColumnType("numeric");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TimeZone")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Venue")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid?>("VenueMapId")
                         .HasColumnType("uuid");
@@ -137,11 +155,15 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.HasIndex("Category");
 
+                    b.HasIndex("City");
+
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("OrganizerId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Title");
 
                     b.HasIndex("VenueMapId");
 
@@ -167,6 +189,12 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<Guid>("OrganizerId")
                         .HasColumnType("uuid");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<Guid>("ScannerUserId")
                         .HasColumnType("uuid");
@@ -195,23 +223,36 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EventId", "Name");
 
-                    b.ToTable("EventTicketTypes");
+                    b.ToTable("EventTicketTypes", t =>
+                        {
+                            t.HasCheckConstraint("CK_EventTicketType_Capacity", "\"Capacity\" > 0");
+
+                            t.HasCheckConstraint("CK_EventTicketType_Price", "\"Price\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.EventVenueMapPlace", b =>
@@ -225,6 +266,12 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<Guid>("EventTicketTypeId")
                         .HasColumnType("uuid");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<Guid>("VenueMapPlaceId")
                         .HasColumnType("uuid");
@@ -259,6 +306,12 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<Guid?>("PromoCodeId")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -276,6 +329,10 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.HasIndex("PromoCodeId");
 
+                    b.HasIndex("Status");
+
+                    b.HasIndex("StripeSessionId");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("EventId", "CreatedAt");
@@ -291,7 +348,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -318,6 +376,12 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<int?>("MaxUses")
                         .HasColumnType("integer");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
@@ -325,7 +389,10 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasIndex("Code", "EventId")
                         .IsUnique();
 
-                    b.ToTable("PromoCodes");
+                    b.ToTable("PromoCodes", t =>
+                        {
+                            t.HasCheckConstraint("CK_PromoCode_DiscountValue", "\"DiscountValue\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.Review", b =>
@@ -335,7 +402,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Comment")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -346,6 +414,12 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -354,6 +428,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("EventId");
 
                     b.HasIndex("UserId");
@@ -361,7 +437,10 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasIndex("EventId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", t =>
+                        {
+                            t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" BETWEEN 1 AND 5");
+                        });
                 });
 
             modelBuilder.Entity("Ticketing.Domain.Entities.Ticket", b =>
@@ -385,13 +464,20 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<decimal>("PricePaid")
                         .HasColumnType("numeric");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TicketCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -400,6 +486,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("OrderId");
 
@@ -423,21 +511,25 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("InviteToken")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<DateTime?>("InviteTokenExpires")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -446,6 +538,12 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -471,7 +569,14 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<int>("Width")
                         .HasColumnType("integer");
@@ -494,7 +599,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("Label")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("VenueMapId")
                         .HasColumnType("uuid");
@@ -533,7 +639,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<string>("Label")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("VenueMapId")
                         .HasColumnType("uuid");
@@ -587,7 +694,7 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasOne("Ticketing.Domain.Entities.User", "ScannerUser")
                         .WithMany()
                         .HasForeignKey("ScannerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Event");
@@ -683,7 +790,7 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasOne("Ticketing.Domain.Entities.User", "User")
                         .WithMany("Reviews")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Event");

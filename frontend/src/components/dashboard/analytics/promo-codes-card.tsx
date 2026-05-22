@@ -11,7 +11,7 @@ const isExpired = (code: PromoCodeDto) =>
   !!code.expiresAt && new Date(code.expiresAt) < new Date();
 
 const formatDiscount = (code: PromoCodeDto) =>
-  code.discountType === 'percentage'
+  code.discountType === 'Percentage'
     ? `${code.discountValue}%`
     : formatCurrencyEur(code.discountValue);
 

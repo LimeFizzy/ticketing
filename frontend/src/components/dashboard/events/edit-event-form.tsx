@@ -9,7 +9,7 @@ import { DisclaimersCard } from '@/components/dashboard/events/disclaimers-card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deleteEvent, updateEvent } from '@/lib/api';
-import type { EventCategory, EventDto } from '@/lib/api/types.gen';
+import type { EventCategory, EventDto, EventStatus } from '@/lib/api/types.gen';
 import {
   dashboardEventCheckInRoute,
   dashboardEventTicketsRoute,
@@ -34,7 +34,7 @@ type EventForm = {
   city: string;
   description: string;
   imageUrl: string;
-  status: 'published' | 'draft';
+  status: EventStatus;
   disclaimers: string;
 };
 
@@ -52,7 +52,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
     city: initialEvent.city,
     description: initialEvent.description,
     imageUrl: initialEvent.imageUrl,
-    status: initialEvent.status === 'published' ? 'published' : 'draft',
+    status: initialEvent.status,
     disclaimers: initialEvent.disclaimers?.join('\n') ?? '',
   });
 
@@ -63,7 +63,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   const [locationOpen, setLocationOpen] = useState(false);
 
   const persist = async (
-    nextStatus: 'published' | 'draft',
+    nextStatus: EventStatus,
     action: 'save' | 'publish' | 'unpublish'
   ) => {
     setSaving(action);
@@ -78,6 +78,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
         imageUrl: form.imageUrl,
         description: form.description,
         featured: event?.featured ?? false,
+        rowVersion: event.rowVersion,
         disclaimers: form.disclaimers.trim()
           ? form.disclaimers
               .split('\n')
@@ -100,8 +101,8 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   };
 
   const handleSave = () => persist(form.status, 'save');
-  const handlePublish = () => persist('published', 'publish');
-  const handleUnpublish = () => persist('draft', 'unpublish');
+  const handlePublish = () => persist('Published', 'publish');
+  const handleUnpublish = () => persist('Draft', 'unpublish');
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`))
@@ -125,7 +126,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
           {form.title || 'Untitled event'}
         </h1>
         <Badge
-          variant={form.status === 'published' ? 'default' : 'secondary'}
+          variant={form.status === 'Published' ? 'default' : 'secondary'}
           className="shrink-0 capitalize"
         >
           {form.status}
@@ -199,7 +200,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
                 <ScanLine className="size-4" />
                 Check in attendees
               </Button>
-              {user?.role === 'admin' && (
+              {user?.role === 'Admin' && (
                 <Button
                   variant="outline"
                   className="w-full gap-2"

@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Ticketing.Domain.Entities;
 
 public class EventScanner
@@ -8,6 +11,9 @@ public class EventScanner
     public Guid ScannerUserId { get; set; }
     public bool AssignToAllEvents { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Timestamp]
+    public uint RowVersion { get; set; }
 
     public Event? Event { get; set; }
     public User Organizer { get; set; } = null!;

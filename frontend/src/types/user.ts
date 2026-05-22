@@ -1,7 +1,5 @@
 import { type UserDto } from '@/lib/api';
 
-export type UserRole = 'attendee' | 'organizer' | 'admin';
-
 export type User = UserDto;
 
 export interface AuthContextValue {

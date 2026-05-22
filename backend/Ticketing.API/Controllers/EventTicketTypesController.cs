@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -8,18 +7,18 @@ namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/events/{eventId}/ticket-types")]
-[Authorize]
+[Authorize(Roles = "Organizer,Admin")]
 public class EventTicketTypesController(ITicketTypeService ticketTypeService) : ControllerBase
 {
     [HttpPost(Name = "createTicketType")]
     [ProducesResponseType(typeof(OrganizerEventTicketTypeDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Create(Guid eventId, [FromBody] CreateEventTicketTypeRequest request)
+    public async Task<IActionResult> Create(Guid eventId, [FromBody] CreateEventTicketTypeRequest request, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var result = await ticketTypeService.CreateAsync(eventId, organizerId, request);
+            var result = await ticketTypeService.CreateAsync(eventId, organizerId, request, cancellationToken);
             return CreatedAtRoute("getEventById", new { id = eventId }, result);
         }
         catch (UnauthorizedAccessException)
@@ -36,12 +35,12 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
     [ProducesResponseType(typeof(OrganizerEventTicketTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(Guid eventId, Guid ticketTypeId, [FromBody] UpdateEventTicketTypeRequest request)
+    public async Task<IActionResult> Update(Guid eventId, Guid ticketTypeId, [FromBody] UpdateEventTicketTypeRequest request, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var result = await ticketTypeService.UpdateAsync(ticketTypeId, organizerId, request);
+            var result = await ticketTypeService.UpdateAsync(eventId, ticketTypeId, organizerId, request, cancellationToken);
             if (result == null) return NotFound(new ProblemDetails { Title = "Ticket type not found" });
             return Ok(result);
         }
@@ -54,12 +53,12 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
     [HttpDelete("{ticketTypeId}", Name = "deleteTicketType")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Delete(Guid eventId, Guid ticketTypeId)
+    public async Task<IActionResult> Delete(Guid eventId, Guid ticketTypeId, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            await ticketTypeService.DeleteAsync(ticketTypeId, organizerId);
+            await ticketTypeService.DeleteAsync(eventId, ticketTypeId, organizerId, cancellationToken);
             return NoContent();
         }
         catch (UnauthorizedAccessException)
@@ -71,7 +70,4 @@ public class EventTicketTypesController(ITicketTypeService ticketTypeService) : 
             return NotFound(new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

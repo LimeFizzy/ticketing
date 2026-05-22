@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { deleteEvent, getEvents } from '@/lib/api';
-import type { EventCategory, EventDto } from '@/lib/api/types.gen';
+import type { EventCategory, EventDto, EventStatus } from '@/lib/api/types.gen';
 import { CATEGORIES } from '@/types/event';
 import {
   dashboardEventCheckInRoute,
@@ -39,12 +39,10 @@ import { formatEventDateShort } from '@/lib/formatters';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
-type StatusFilter = 'all' | 'published' | 'draft';
-
 const filterEvents = (
   events: EventDto[],
   search: string,
-  status: StatusFilter,
+  status: EventStatus | 'all',
   category: EventCategory | 'all'
 ): EventDto[] => {
   const q = search.trim().toLowerCase();
@@ -69,14 +67,15 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
+  const [status, setStatus] = useState<EventStatus | 'all'>('all');
   const [category, setCategory] = useState<EventCategory | 'all'>('all');
 
   useEffect(() => {
     if (!user) return;
-    getEvents({ query: { organizerId: user.id } })
+    getEvents({ query: { organizerId: user.id, page: 1, pageSize: 20 } })
       .then(({ data }) => {
-        if (data) setEvents(data);
+        // TODO: Implement Pagination
+        if (data) setEvents(data.items);
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -161,14 +160,14 @@ const DashboardPage = () => {
 
             <Select
               value={status}
-              onValueChange={(v) => setStatus(v as StatusFilter)}
+              onValueChange={(v) => setStatus(v as EventStatus | 'all')}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue>
                   {() =>
                     status === 'all'
                       ? 'All statuses'
-                      : status === 'published'
+                      : status === 'Published'
                         ? 'Published'
                         : 'Draft'
                   }
@@ -176,8 +175,8 @@ const DashboardPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="Published">Published</SelectItem>
+                <SelectItem value="Draft">Draft</SelectItem>
               </SelectContent>
             </Select>
 
@@ -280,7 +279,7 @@ const DashboardPage = () => {
                         <td className="py-3 pr-4">
                           <Badge
                             variant={
-                              event.status === 'published'
+                              event.status === 'Published'
                                 ? 'default'
                                 : 'secondary'
                             }

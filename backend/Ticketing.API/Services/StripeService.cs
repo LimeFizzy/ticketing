@@ -12,19 +12,20 @@ namespace Ticketing.API.Services;
 public interface IStripeService
 {
     Task<CheckoutSessionDto> CreateCheckoutSessionAsync(
-        Guid userId, string userEmail, CreateCheckoutSessionRequest request);
+        Guid userId, string userEmail, CreateCheckoutSessionRequest request, CancellationToken cancellationToken = default);
 }
 
 public class StripeService(
     IOptions<StripeSettings> options,
     IEventRepository eventRepository,
+    IEventTicketTypeRepository eventTicketTypeRepository,
     IPromoCodeService promoCodeService,
     IPromoCodeRepository promoCodeRepository) : IStripeService
 {
     public async Task<CheckoutSessionDto> CreateCheckoutSessionAsync(
-        Guid userId, string userEmail, CreateCheckoutSessionRequest request)
+        Guid userId, string userEmail, CreateCheckoutSessionRequest request, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(request.EventId)
+        var @event = await eventRepository.GetByIdAsync(request.EventId, cancellationToken)
             ?? throw new InvalidOperationException("Event not found");
 
         var ticketTypeLookup = @event.TicketTypes.ToDictionary(t => t.Id);
@@ -39,6 +40,10 @@ public class StripeService(
 
             if (!ticketTypeLookup.TryGetValue(item.EventTicketTypeId, out var tt))
                 throw new InvalidOperationException($"Ticket type {item.EventTicketTypeId} not found");
+
+            var soldCount = await eventTicketTypeRepository.GetSoldCountWithLockAsync(tt.Id, cancellationToken);
+            if (soldCount + item.Quantity > tt.Capacity)
+                throw new InvalidOperationException($"Not enough capacity for ticket type {tt.Name}");
 
             totalOriginal += tt.Price * item.Quantity;
 
@@ -68,16 +73,17 @@ public class StripeService(
 
         Guid? promoCodeId = null;
         decimal discountAmount = 0;
+        List<SessionDiscountOptions>? discounts = null;
 
         if (!string.IsNullOrWhiteSpace(request.PromoCode))
         {
             var validation = await promoCodeService.ValidateAsync(
-                new ValidatePromoCodeRequest(request.PromoCode, request.EventId));
+                new ValidatePromoCodeRequest(request.PromoCode, request.EventId), cancellationToken);
 
             if (validation.Valid && validation.PromoCodeId.HasValue)
             {
                 promoCodeId = validation.PromoCodeId.Value;
-                var promoCode = await promoCodeRepository.GetByIdAsync(promoCodeId.Value);
+                var promoCode = await promoCodeRepository.GetByIdAsync(promoCodeId.Value, cancellationToken);
                 if (promoCode != null)
                 {
                     discountAmount = promoCodeService.CalculateDiscount(promoCode, totalOriginal);
@@ -86,20 +92,24 @@ public class StripeService(
 
                     if (discountAmount > 0)
                     {
-                        var discountCents = (long)Math.Round(discountAmount * 100, MidpointRounding.AwayFromZero);
-                        lineItems.Add(new SessionLineItemOptions
-                        {
-                            PriceData = new SessionLineItemPriceDataOptions
+                        var couponService = new CouponService();
+                        var couponOptions = promoCode.DiscountType == DiscountType.Percentage
+                            ? new CouponCreateOptions
                             {
+                                PercentOff = promoCode.DiscountValue,
+                                Duration = "once",
+                                Name = $"Promo code {promoCode.Code}"
+                            }
+                            : new CouponCreateOptions
+                            {
+                                AmountOff = (long)Math.Round(discountAmount * 100, MidpointRounding.AwayFromZero),
                                 Currency = "eur",
-                                UnitAmount = -discountCents,
-                                ProductData = new SessionLineItemPriceDataProductDataOptions
-                                {
-                                    Name = "Promo code discount",
-                                }
-                            },
-                            Quantity = 1,
-                        });
+                                Duration = "once",
+                                Name = $"Promo code {promoCode.Code}"
+                            };
+
+                        var coupon = await couponService.CreateAsync(couponOptions, cancellationToken: cancellationToken);
+                        discounts = [new SessionDiscountOptions { Coupon = coupon.Id }];
                     }
                 }
             }
@@ -113,10 +123,11 @@ public class StripeService(
             CancelUrl = options.Value.CancelUrl,
             CustomerEmail = userEmail,
             Metadata = metadata,
+            Discounts = discounts,
         };
 
         var service = new SessionService();
-        var session = await service.CreateAsync(sessionOptions);
+        var session = await service.CreateAsync(sessionOptions, cancellationToken: cancellationToken);
 
         if (string.IsNullOrWhiteSpace(session.Url))
             throw new InvalidOperationException("Stripe checkout session was created without a session URL.");

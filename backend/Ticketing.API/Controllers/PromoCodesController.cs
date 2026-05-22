@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -8,19 +8,20 @@ namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/events/{eventId}/promo-codes")]
+[EnableRateLimiting("promo-codes")]
 public class PromoCodesController(IPromoCodeService promoCodeService) : ControllerBase
 {
     [HttpPost(Name = "createPromoCode")]
-    [Authorize]
+    [Authorize(Roles = "Organizer,Admin")]
     [ProducesResponseType(typeof(PromoCodeDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Create(Guid eventId, [FromBody] CreatePromoCodeRequest request)
+    public async Task<IActionResult> Create(Guid eventId, [FromBody] CreatePromoCodeRequest request, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var promoCode = await promoCodeService.CreateAsync(eventId, organizerId, request);
+            var promoCode = await promoCodeService.CreateAsync(eventId, organizerId, request, cancellationToken);
             return CreatedAtRoute("getPromoCodes", new { eventId }, promoCode);
         }
         catch (UnauthorizedAccessException ex)
@@ -34,15 +35,15 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
     }
 
     [HttpGet(Name = "getPromoCodes")]
-    [Authorize]
+    [Authorize(Roles = "Organizer,Admin")]
     [ProducesResponseType(typeof(IEnumerable<PromoCodeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetAll(Guid eventId)
+    public async Task<IActionResult> GetAll(Guid eventId, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var promoCodes = await promoCodeService.GetByEventIdAsync(eventId, organizerId);
+            var promoCodes = await promoCodeService.GetByEventIdAsync(eventId, organizerId, cancellationToken);
             return Ok(promoCodes);
         }
         catch (UnauthorizedAccessException ex)
@@ -52,16 +53,16 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
     }
 
     [HttpDelete("{promoCodeId}", Name = "deletePromoCode")]
-    [Authorize]
+    [Authorize(Roles = "Organizer,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid eventId, Guid promoCodeId)
+    public async Task<IActionResult> Delete(Guid eventId, Guid promoCodeId, CancellationToken cancellationToken = default)
     {
-        var organizerId = GetUserIdFromClaims();
+        var organizerId = this.GetUserIdFromClaims();
         try
         {
-            await promoCodeService.DeleteAsync(promoCodeId, organizerId);
+            await promoCodeService.DeleteAsync(promoCodeId, organizerId, cancellationToken);
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -73,7 +74,4 @@ public class PromoCodesController(IPromoCodeService promoCodeService) : Controll
             return StatusCode(403, new ProblemDetails { Title = ex.Message });
         }
     }
-
-    private Guid GetUserIdFromClaims() =>
-        Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 }

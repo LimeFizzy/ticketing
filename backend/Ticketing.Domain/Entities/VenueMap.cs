@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Ticketing.Domain.Entities;
 
 public class VenueMap
@@ -8,6 +11,9 @@ public class VenueMap
     public required int Height { get; set; }
     public Guid CreatedBy { get; set; }
     public User CreatedByUser { get; set; } = null!;
+
+    [Timestamp]
+    public uint RowVersion { get; set; }
 
     public ICollection<VenueMapPlace> Places { get; set; } = [];
     public ICollection<VenueMapDecoration> Decorations { get; set; } = [];

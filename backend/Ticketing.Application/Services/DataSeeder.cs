@@ -26,7 +26,7 @@ public static class DataSeeder
                 AvailableTickets = 480,
                 Featured = true,
                 Disclaimers = "Outdoor event — performances continue rain or shine.|No professional cameras or recording equipment.",
-                Status = "published",
+                Status = EventStatus.Published,
                 TicketTypes =
                 [
                     new EventTicketType
@@ -68,7 +68,7 @@ public static class DataSeeder
                 AvailableTickets = 92,
                 Featured = true,
                 VenueMapId = ZalgirioVenueMapId,
-                Status = "published",
+                Status = EventStatus.Published,
                 TicketTypes =
                 [
                     new EventTicketType
@@ -110,7 +110,7 @@ public static class DataSeeder
                 Featured = true,
                 Disclaimers = "Strictly 18+. Photo ID required at the gate.",
                 VenueMapId = LakesideVenueMapId,
-                Status = "published",
+                Status = EventStatus.Published,
                 TicketTypes =
                 [
                     new EventTicketType

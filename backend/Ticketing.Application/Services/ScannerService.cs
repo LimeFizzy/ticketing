@@ -1,17 +1,20 @@
+using System.Security.Cryptography;
+using System.Text;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Interfaces;
+using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
 namespace Ticketing.Application.Services;
 
 public interface IScannerService
 {
-    Task<(ScannerDto Scanner, string? InviteToken)> InviteScannerAsync(Guid organizerId, InviteScannerRequest request);
-    Task<IEnumerable<ScannerDto>> GetScannersForEventAsync(Guid organizerId, Guid eventId);
-    Task<IEnumerable<ScannerDto>> GetScannersForOrganizerAsync(Guid organizerId);
-    Task<IEnumerable<ScannerEventDto>> GetAssignedEventsAsync(Guid scannerUserId);
-    Task RemoveScannerAsync(Guid organizerId, Guid assignmentId);
-    Task<bool> IsScannerAsync(Guid userId);
+    Task<(ScannerDto Scanner, string? InviteToken)> InviteScannerAsync(Guid organizerId, InviteScannerRequest request, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScannerDto>> GetScannersForEventAsync(Guid organizerId, Guid eventId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScannerDto>> GetScannersForOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ScannerEventDto>> GetAssignedEventsAsync(Guid scannerUserId, CancellationToken cancellationToken = default);
+    Task RemoveScannerAsync(Guid organizerId, Guid assignmentId, CancellationToken cancellationToken = default);
+    Task<bool> IsScannerAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
 public class ScannerService(
@@ -19,11 +22,11 @@ public class ScannerService(
     IUserRepository userRepository,
     IEventRepository eventRepository) : IScannerService
 {
-    public async Task<(ScannerDto Scanner, string? InviteToken)> InviteScannerAsync(Guid organizerId, InviteScannerRequest request)
+    public async Task<(ScannerDto Scanner, string? InviteToken)> InviteScannerAsync(Guid organizerId, InviteScannerRequest request, CancellationToken cancellationToken = default)
     {
         if (request.EventId.HasValue)
         {
-            var @event = await eventRepository.GetByIdAsync(request.EventId.Value)
+            var @event = await eventRepository.GetByIdAsync(request.EventId.Value, cancellationToken)
                 ?? throw new KeyNotFoundException("Event not found.");
 
             if (@event.OrganizerId != organizerId)
@@ -33,18 +36,19 @@ public class ScannerService(
         if (!request.AssignToAllEvents && !request.EventId.HasValue)
             throw new InvalidOperationException("Either EventId or AssignToAllEvents must be specified.");
 
-        var existingUser = await userRepository.GetByEmailAsync(request.Email);
+        var normalizedEmail = request.Email.ToLowerInvariant();
+        var existingUser = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
         string? inviteToken = null;
         User scannerUser;
 
         if (existingUser != null)
         {
-            if (existingUser.Role != "attendee")
+            if (existingUser.Role != UserRole.Attendee)
                 throw new InvalidOperationException("Cannot assign an organizer or admin as a scanner.");
 
             if (request.EventId.HasValue)
             {
-                var alreadyAssigned = await eventScannerRepository.IsScannerForEventAsync(existingUser.Id, request.EventId.Value);
+                var alreadyAssigned = await eventScannerRepository.IsScannerForEventAsync(existingUser.Id, request.EventId.Value, cancellationToken);
                 if (alreadyAssigned)
                     throw new InvalidOperationException("This user is already a scanner for this event.");
             }
@@ -54,20 +58,21 @@ public class ScannerService(
         else
         {
             inviteToken = Guid.NewGuid().ToString("N");
+            var hashedToken = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(inviteToken))).ToLowerInvariant();
 
             scannerUser = new User
             {
-                FirstName = request.FirstName ?? request.Email.Split('@')[0],
+                FirstName = request.FirstName ?? GetFirstNameFromEmail(request.Email),
                 LastName = request.LastName ?? "",
-                Email = request.Email,
+                Email = normalizedEmail,
                 PasswordHash = "",
-                Role = "attendee",
-                InviteToken = inviteToken,
+                Role = UserRole.Attendee,
+                InviteToken = hashedToken,
                 InviteTokenExpires = DateTime.UtcNow.AddDays(7)
             };
 
-            await userRepository.AddAsync(scannerUser);
-            await userRepository.SaveChangesAsync();
+            await userRepository.AddAsync(scannerUser, cancellationToken);
+            await userRepository.SaveChangesAsync(cancellationToken);
         }
 
         var assignment = new EventScanner
@@ -78,22 +83,22 @@ public class ScannerService(
             AssignToAllEvents = request.AssignToAllEvents
         };
 
-        await eventScannerRepository.AddAsync(assignment);
-        await eventScannerRepository.SaveChangesAsync();
+        await eventScannerRepository.AddAsync(assignment, cancellationToken);
+        await eventScannerRepository.SaveChangesAsync(cancellationToken);
 
         return (MapToDto(assignment, scannerUser), inviteToken);
     }
 
-    public async Task<IEnumerable<ScannerDto>> GetScannersForEventAsync(Guid organizerId, Guid eventId)
+    public async Task<IEnumerable<ScannerDto>> GetScannersForEventAsync(Guid organizerId, Guid eventId, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId)
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken)
             ?? throw new KeyNotFoundException("Event not found.");
 
         if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You are not the organizer of this event.");
 
-        var perEvent = await eventScannerRepository.GetByEventIdAsync(eventId);
-        var allOrganizer = await eventScannerRepository.GetByOrganizerIdAsync(organizerId);
+        var perEvent = await eventScannerRepository.GetByEventIdAsync(eventId, cancellationToken);
+        var allOrganizer = await eventScannerRepository.GetByOrganizerIdAsync(organizerId, cancellationToken);
         var allEvents = allOrganizer.Where(es => es.AssignToAllEvents);
 
         var all = perEvent.Concat(allEvents).DistinctBy(es => es.Id);
@@ -101,16 +106,38 @@ public class ScannerService(
         return all.Select(es => MapToDto(es, es.ScannerUser));
     }
 
-    public async Task<IEnumerable<ScannerDto>> GetScannersForOrganizerAsync(Guid organizerId)
+    public async Task<IEnumerable<ScannerDto>> GetScannersForOrganizerAsync(Guid organizerId, CancellationToken cancellationToken = default)
     {
-        var assignments = await eventScannerRepository.GetByOrganizerIdAsync(organizerId);
+        var assignments = await eventScannerRepository.GetByOrganizerIdAsync(organizerId, cancellationToken);
         return assignments.Select(es => MapToDto(es, es.ScannerUser));
     }
 
-    public async Task<IEnumerable<ScannerEventDto>> GetAssignedEventsAsync(Guid scannerUserId)
+    public async Task<IEnumerable<ScannerEventDto>> GetAssignedEventsAsync(Guid scannerUserId, CancellationToken cancellationToken = default)
     {
-        var assignments = await eventScannerRepository.GetByScannerUserIdAsync(scannerUserId);
+        var assignments = await eventScannerRepository.GetByScannerUserIdAsync(scannerUserId, cancellationToken);
         var events = new Dictionary<Guid, ScannerEventDto>();
+
+        var allOrganizerIds = assignments
+            .Where(a => a.AssignToAllEvents)
+            .Select(a => a.OrganizerId)
+            .Distinct()
+            .ToList();
+
+        Dictionary<Guid, Event> allOrganizerEvents = [];
+        if (allOrganizerIds.Count > 0)
+        {
+            var allEventIds = new List<Guid>();
+            foreach (var oid in allOrganizerIds)
+            {
+                var (evts, _) = await eventRepository.GetAllAsync(new EventsQueryDto(
+                    Category: null, Featured: null, City: null, Search: null,
+                    Date: null, Price: null, OrganizerId: oid, Status: null
+                ), cancellationToken);
+                allEventIds.AddRange(evts.Select(e => e.Id));
+            }
+
+            allOrganizerEvents = await eventRepository.GetByIdsAsync(allEventIds.Distinct(), cancellationToken);
+        }
 
         foreach (var assignment in assignments)
         {
@@ -121,12 +148,7 @@ public class ScannerService(
             }
             else if (assignment.AssignToAllEvents)
             {
-                var organizerEvents = await eventRepository.GetAllAsync(new EventsQueryDto(
-                    Category: null, Featured: null, City: null, Search: null,
-                    Date: null, Price: null, OrganizerId: assignment.OrganizerId, Status: null
-                ));
-
-                foreach (var evt in organizerEvents)
+                foreach (var evt in allOrganizerEvents.Values)
                 {
                     if (!events.ContainsKey(evt.Id))
                         events[evt.Id] = MapEventToDto(evt);
@@ -137,21 +159,21 @@ public class ScannerService(
         return events.Values;
     }
 
-    public async Task RemoveScannerAsync(Guid organizerId, Guid assignmentId)
+    public async Task RemoveScannerAsync(Guid organizerId, Guid assignmentId, CancellationToken cancellationToken = default)
     {
-        var assignment = await eventScannerRepository.GetByIdAsync(assignmentId)
+        var assignment = await eventScannerRepository.GetByIdAsync(assignmentId, cancellationToken)
             ?? throw new KeyNotFoundException("Scanner assignment not found.");
 
         if (assignment.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("You did not create this scanner assignment.");
 
-        await eventScannerRepository.DeleteAsync(assignment);
-        await eventScannerRepository.SaveChangesAsync();
+        await eventScannerRepository.DeleteAsync(assignment, cancellationToken);
+        await eventScannerRepository.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> IsScannerAsync(Guid userId)
+    public async Task<bool> IsScannerAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var assignments = await eventScannerRepository.GetByScannerUserIdAsync(userId);
+        var assignments = await eventScannerRepository.GetByScannerUserIdAsync(userId, cancellationToken);
         return assignments.Any();
     }
 
@@ -164,7 +186,8 @@ public class ScannerService(
         assignment.EventId,
         assignment.Event?.Title,
         assignment.AssignToAllEvents,
-        !string.IsNullOrEmpty(user.PasswordHash)
+        !string.IsNullOrEmpty(user.PasswordHash),
+        assignment.RowVersion
     );
 
     private static ScannerEventDto MapEventToDto(Event @event) => new(
@@ -174,4 +197,10 @@ public class ScannerService(
         @event.Venue,
         @event.ImageUrl
     );
+
+    private static string GetFirstNameFromEmail(string email)
+    {
+        var atIndex = email.IndexOf('@');
+        return atIndex > 0 ? email[..atIndex] : email;
+    }
 }

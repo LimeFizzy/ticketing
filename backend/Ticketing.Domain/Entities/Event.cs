@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Ticketing.Domain.Constants;
 
 namespace Ticketing.Domain.Entities;
@@ -19,10 +20,13 @@ public class Event
     public Guid? VenueMapId { get; set; }
     public VenueMap? VenueMap { get; set; }
     public string? TimeZone { get; set; }
-    public string Status { get; set; } = "draft";
+    public EventStatus Status { get; set; } = EventStatus.Draft;
     public bool IsDeleted { get; set; }
     public Guid? OrganizerId { get; set; }
     public User? Organizer { get; set; }
+
+    [Timestamp]
+    public uint RowVersion { get; set; }
 
     public ICollection<EventTicketType> TicketTypes { get; set; } = [];
     public ICollection<PromoCode> PromoCodes { get; set; } = [];
