@@ -16,10 +16,10 @@ public record TicketDto(
     [property: Required] string Venue,
     [property: Required] string City,
     [property: Required] string ImageUrl,
+    [property: Required] string RowVersion,
     DateTime? CheckedInAt = null,
     Guid? VenueMapPlaceId = null,
-    string? SeatLabel = null,
-    string? RowVersion = null
+    string? SeatLabel = null
 );
 
 public record CheckInRequest(

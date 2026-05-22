@@ -16,7 +16,7 @@ public class Order
     public decimal DiscountAmount { get; set; }
 
     [Timestamp]
-    public byte[]? RowVersion { get; set; }
+    public byte[] RowVersion { get; set; } = [];
 
     public User User { get; set; } = null!;
     public Event Event { get; set; } = null!;

@@ -10,7 +10,7 @@ public record EventTicketTypeDto(
     string? Description,
     [property: Required] int Capacity,
     [property: Required] int Sold,
-    string? RowVersion = null
+    [property: Required] string RowVersion
 );
 
 public record EventDto(
@@ -26,13 +26,13 @@ public record EventDto(
     [property: Required] string Description,
     [property: Required] int AvailableTickets,
     [property: Required] bool Featured,
+    [property: Required] string RowVersion,
     string[]? Disclaimers,
     Guid? VenueMapId,
     [property: Required] EventStatus Status,
     string? TimeZone,
     double? AverageRating = null,
-    int ReviewCount = 0,
-    string? RowVersion = null
+    int ReviewCount = 0
 );
 
 public record EventsQueryDto(
@@ -86,7 +86,7 @@ public record UpdateEventRequest(
     Guid? VenueMapId,
     [Required] EventStatus Status,
     [MaxLength(100)] string? TimeZone,
-    string? RowVersion = null
+    [Required] string RowVersion
 );
 
 public record CreateEventTicketTypeRequest(
@@ -101,7 +101,7 @@ public record UpdateEventTicketTypeRequest(
     [Range(0.01, double.MaxValue)] decimal Price,
     [MaxLength(500)] string? Description,
     [Range(1, int.MaxValue)] int Capacity,
-    string? RowVersion = null
+    [Required] string RowVersion
 );
 
 public record OrganizerEventTicketTypeDto(
@@ -111,5 +111,5 @@ public record OrganizerEventTicketTypeDto(
     string? Description,
     [property: Required] int Capacity,
     [property: Required] int Sold,
-    string? RowVersion = null
+    [property: Required] string RowVersion
 );

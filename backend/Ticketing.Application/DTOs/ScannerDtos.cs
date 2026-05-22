@@ -20,7 +20,7 @@ public record ScannerDto(
     string? EventTitle,
     [property: Required] bool AssignToAllEvents,
     [property: Required] bool IsActive,
-    string? RowVersion = null
+    [property: Required] string RowVersion
 );
 
 public record ScannerEventDto(

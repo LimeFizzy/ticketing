@@ -73,10 +73,10 @@ public class TicketService(ITicketRepository ticketRepository, IEventScannerRepo
             @event.Venue,
             @event.City,
             @event.ImageUrl,
+            RowVersionHelper.ToBase64(ticket.RowVersion),
             ticket.CheckedInAt,
             ticket.VenueMapPlaceId,
-            ticket.VenueMapPlace?.Label,
-            RowVersionHelper.ToBase64(ticket.RowVersion)
+            ticket.VenueMapPlace?.Label
         );
     }
 }

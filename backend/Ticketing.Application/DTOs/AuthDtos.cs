@@ -23,14 +23,14 @@ public record UserDto(
     [property: Required] string LastName,
     [property: Required] string Email,
     [property: Required] UserRole Role,
-    string? RowVersion = null
+    [property: Required] string RowVersion
 );
 
 public record UpdateProfileRequest(
     [Required][MaxLength(100)] string FirstName,
     [Required][MaxLength(100)] string LastName,
     [Required][EmailAddress][MaxLength(256)] string Email,
-    string? RowVersion = null
+    [Required] string RowVersion
 );
 
 public record InviteOrganizerRequest(

@@ -13,7 +13,7 @@ public record PromoCodeDto(
     DateTime? ExpiresAt,
     [property: Required] bool IsActive,
     [property: Required] DateTime CreatedAt,
-    string? RowVersion = null
+    [property: Required] string RowVersion
 );
 
 public record CreatePromoCodeRequest(

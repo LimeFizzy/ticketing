@@ -158,13 +158,13 @@ public class EventService(
             @event.Description,
             availableTickets,
             @event.Featured,
+            RowVersionHelper.ToBase64(@event.RowVersion),
             disclaimers,
             @event.VenueMapId,
             @event.Status,
             @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
-            reviewCount,
-            RowVersionHelper.ToBase64(@event.RowVersion)
+            reviewCount
         );
     }
 
@@ -203,13 +203,13 @@ public class EventService(
             @event.Description,
             availableTickets,
             @event.Featured,
+            RowVersionHelper.ToBase64(@event.RowVersion),
             disclaimers,
             @event.VenueMapId,
             @event.Status,
             @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
-            reviewCount,
-            RowVersionHelper.ToBase64(@event.RowVersion)
+            reviewCount
         );
     }
 }

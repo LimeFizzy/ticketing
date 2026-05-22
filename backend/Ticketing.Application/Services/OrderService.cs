@@ -1,4 +1,5 @@
 using Ticketing.Application.DTOs;
+using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -163,7 +164,7 @@ public class OrderService(
             order.TotalAmount,
             order.Status,
             order.CreatedAt,
-            order.Tickets.Select(t => new TicketDto(
+            [.. order.Tickets.Select(t => new TicketDto(
                 t.Id,
                 t.TicketCode,
                 @event.Id,
@@ -176,12 +177,12 @@ public class OrderService(
                 @event.Venue,
                 @event.City,
                 @event.ImageUrl,
+                RowVersionHelper.ToBase64(t.RowVersion),
                 null,
                 t.VenueMapPlaceId,
-                t.VenueMapPlace?.Label,
-                null
-            )).ToArray(),
-            null
+                t.VenueMapPlace?.Label
+            ))],
+            RowVersionHelper.ToBase64(order.RowVersion)
         );
     }
 }
