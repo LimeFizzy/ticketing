@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Ticketing.Domain.Constants;
 
 namespace Ticketing.Domain.Entities;
@@ -19,4 +21,7 @@ public class Ticket
     public EventTicketType EventTicketType { get; set; } = null!;
     public Order Order { get; set; } = null!;
     public VenueMapPlace? VenueMapPlace { get; set; }
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 }

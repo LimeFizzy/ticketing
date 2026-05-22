@@ -13,21 +13,21 @@ public class EventVenueMapPlacesController(IEventVenueMapPlaceService mappingSer
     [HttpGet(Name = "getEventVenueMapPlaces")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(IEnumerable<EventVenueMapPlaceDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMappings(Guid eventId)
+    public async Task<IActionResult> GetMappings(Guid eventId, CancellationToken cancellationToken = default)
     {
-        var mappings = await mappingService.GetPublicMappingsAsync(eventId);
+        var mappings = await mappingService.GetPublicMappingsAsync(eventId, cancellationToken);
         return Ok(mappings);
     }
 
     [HttpGet("manage", Name = "getManagedEventVenueMapPlaces")]
     [ProducesResponseType(typeof(IEnumerable<EventVenueMapPlaceDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetManagedMappings(Guid eventId)
+    public async Task<IActionResult> GetManagedMappings(Guid eventId, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
         try
         {
-            var mappings = await mappingService.GetMappingsAsync(eventId, organizerId);
+            var mappings = await mappingService.GetMappingsAsync(eventId, organizerId, cancellationToken);
             return Ok(mappings);
         }
         catch (UnauthorizedAccessException)
@@ -44,12 +44,12 @@ public class EventVenueMapPlacesController(IEventVenueMapPlaceService mappingSer
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> SetMappings(Guid eventId, [FromBody] UpdateEventVenueMapPlacesRequest request)
+    public async Task<IActionResult> SetMappings(Guid eventId, [FromBody] UpdateEventVenueMapPlacesRequest request, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
         try
         {
-            await mappingService.SetMappingsAsync(eventId, organizerId, request);
+            await mappingService.SetMappingsAsync(eventId, organizerId, request, cancellationToken);
             return NoContent();
         }
         catch (UnauthorizedAccessException)

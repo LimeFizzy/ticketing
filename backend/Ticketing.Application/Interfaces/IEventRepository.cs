@@ -5,11 +5,12 @@ namespace Ticketing.Application.Interfaces;
 
 public interface IEventRepository
 {
-    Task<Event?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null);
-    Task<bool> ExistsAsync(Guid id);
-    Task<Event> CreateAsync(Event @event);
-    Task UpdateAsync(Event @event);
-    Task SoftDeleteAsync(Guid id);
-    Task SaveChangesAsync();
+    Task<Event?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, Event>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<Event> Events, int TotalCount)> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Event> CreateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Event @event, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -70,6 +70,8 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.HasIndex("CreatedAt");
 
+                    b.HasIndex("RecipientEmail");
+
                     b.HasIndex("EventId", "EmailType");
 
                     b.HasIndex("OrderId", "EmailType");
@@ -122,6 +124,11 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<decimal>("PriceFrom")
                         .HasColumnType("numeric");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -183,6 +190,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<Guid>("OrganizerId")
                         .HasColumnType("uuid");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<Guid>("ScannerUserId")
                         .HasColumnType("uuid");
 
@@ -224,6 +236,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventId", "Name");
@@ -247,6 +264,11 @@ namespace Ticketing.Infrastructure.Migrations
 
                     b.Property<Guid>("EventTicketTypeId")
                         .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<Guid>("VenueMapPlaceId")
                         .HasColumnType("uuid");
@@ -281,6 +303,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<Guid?>("PromoCodeId")
                         .HasColumnType("uuid");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -297,6 +324,8 @@ namespace Ticketing.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PromoCodeId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("StripeSessionId");
 
@@ -343,6 +372,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<int?>("MaxUses")
                         .HasColumnType("integer");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
@@ -375,6 +409,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -382,6 +421,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("EventId");
 
@@ -417,6 +458,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<decimal>("PricePaid")
                         .HasColumnType("numeric");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -433,6 +479,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("OrderId");
 
@@ -465,8 +513,8 @@ namespace Ticketing.Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("InviteToken")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<DateTime?>("InviteTokenExpires")
                         .HasColumnType("timestamp with time zone");
@@ -483,6 +531,11 @@ namespace Ticketing.Infrastructure.Migrations
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.HasKey("Id");
 
@@ -510,6 +563,11 @@ namespace Ticketing.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<int>("Width")
                         .HasColumnType("integer");

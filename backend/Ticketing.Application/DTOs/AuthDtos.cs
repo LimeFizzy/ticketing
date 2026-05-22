@@ -6,14 +6,15 @@ namespace Ticketing.Application.DTOs;
 
 public record LoginRequest(
     [Required][EmailAddress][MaxLength(256)] string Email,
-    [Required] string Password
+    [Required][MinLength(1)][MaxLength(128)] string Password
 );
 
 public record RegisterRequest(
     [Required][MaxLength(100)] string FirstName,
     [Required][MaxLength(100)] string LastName,
     [Required][EmailAddress][MaxLength(256)] string Email,
-    [Required][MinLength(8)][MaxLength(128)] string Password
+    [Required][MinLength(8)][MaxLength(128)][RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Password must contain uppercase, lowercase, and a digit")]
+    string Password
 );
 
 public record UserDto(
@@ -21,13 +22,15 @@ public record UserDto(
     [property: Required] string FirstName,
     [property: Required] string LastName,
     [property: Required] string Email,
-    [property: Required] UserRole Role
+    [property: Required] UserRole Role,
+    string? RowVersion = null
 );
 
 public record UpdateProfileRequest(
     [Required][MaxLength(100)] string FirstName,
     [Required][MaxLength(100)] string LastName,
-    [Required][EmailAddress][MaxLength(256)] string Email
+    [Required][EmailAddress][MaxLength(256)] string Email,
+    string? RowVersion = null
 );
 
 public record InviteOrganizerRequest(
@@ -41,8 +44,13 @@ public record VerifyInviteResponse(
 );
 
 public record AcceptInviteRequest(
-    [Required] string Token,
-    [Required][MinLength(8)][MaxLength(128)] string Password
+    [Required][MaxLength(256)] string Token,
+    [Required][MinLength(8)][MaxLength(128)][RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "Password must contain uppercase, lowercase, and a digit")]
+    string Password
+);
+
+public record VerifyInviteRequest(
+    [Required][MaxLength(256)] string Token
 );
 
 public record OrganizerDto(

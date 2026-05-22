@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
 
@@ -7,14 +8,15 @@ namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/events/{eventId}/scanners")]
-[Authorize]
+[Authorize(Roles = "Organizer,Admin")]
+[EnableRateLimiting("scanners")]
 public class ScannersController(IScannerService scannerService) : ControllerBase
 {
     [HttpPost("invite", Name = "inviteScanner")]
     [ProducesResponseType(typeof(ScannerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> InviteScanner(Guid eventId, [FromBody] InviteScannerRequest request)
+    public async Task<IActionResult> InviteScanner(Guid eventId, [FromBody] InviteScannerRequest request, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
 
@@ -22,7 +24,7 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
 
         try
         {
-            var (scanner, inviteToken) = await scannerService.InviteScannerAsync(organizerId, actualRequest);
+            var (scanner, inviteToken) = await scannerService.InviteScannerAsync(organizerId, actualRequest, cancellationToken);
             return Ok(new { scanner });
         }
         catch (UnauthorizedAccessException ex)
@@ -43,13 +45,13 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ScannerDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetScanners(Guid eventId)
+    public async Task<IActionResult> GetScanners(Guid eventId, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
 
         try
         {
-            var scanners = await scannerService.GetScannersForEventAsync(organizerId, eventId);
+            var scanners = await scannerService.GetScannersForEventAsync(organizerId, eventId, cancellationToken);
             return Ok(scanners);
         }
         catch (UnauthorizedAccessException ex)
@@ -66,13 +68,13 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveScanner(Guid eventId, Guid assignmentId)
+    public async Task<IActionResult> RemoveScanner(Guid eventId, Guid assignmentId, CancellationToken cancellationToken = default)
     {
         var organizerId = this.GetUserIdFromClaims();
 
         try
         {
-            await scannerService.RemoveScannerAsync(organizerId, assignmentId);
+            await scannerService.RemoveScannerAsync(organizerId, assignmentId, cancellationToken);
             return NoContent();
         }
         catch (UnauthorizedAccessException ex)

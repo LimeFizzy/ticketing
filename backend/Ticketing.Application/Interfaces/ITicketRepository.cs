@@ -4,11 +4,12 @@ namespace Ticketing.Application.Interfaces;
 
 public interface ITicketRepository
 {
-    Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId);
-    Task<Ticket?> GetByIdAsync(Guid id);
-    Task<Ticket?> GetByCodeWithEventAsync(string ticketCode);
-    Task<bool> ExistsByCodeAsync(string code);
-    Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId);
-    Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId);
-    Task SaveChangesAsync();
+    Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Ticket?> GetByCodeWithEventAsync(string ticketCode, CancellationToken cancellationToken = default);
+    Task<Ticket?> GetByCodeForCheckInAsync(string ticketCode, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default);
+    Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

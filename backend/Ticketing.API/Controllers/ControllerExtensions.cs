@@ -11,6 +11,6 @@ internal static class ControllerExtensions
         if (claim != null && Guid.TryParse(claim.Value, out var id))
             return id;
 
-        throw new UnauthorizedAccessException("Invalid or missing user identity");
+        throw new InvalidOperationException("Invalid or missing user identity");
     }
 }

@@ -9,7 +9,8 @@ public record EventTicketTypeDto(
     [property: Required] decimal Price,
     string? Description,
     [property: Required] int Capacity,
-    [property: Required] int Sold
+    [property: Required] int Sold,
+    string? RowVersion = null
 );
 
 public record EventDto(
@@ -30,7 +31,8 @@ public record EventDto(
     [property: Required] EventStatus Status,
     string? TimeZone,
     double? AverageRating = null,
-    int ReviewCount = 0
+    int ReviewCount = 0,
+    string? RowVersion = null
 );
 
 public record EventsQueryDto(
@@ -64,10 +66,10 @@ public record CreateEventRequest(
     [Required] DateTime Date,
     [Required][MaxLength(200)] string Venue,
     [Required][MaxLength(100)] string City,
-    [MaxLength(500)] string? ImageUrl,
+    [Url][MaxLength(500)] string? ImageUrl,
     [MaxLength(2000)] string? Description,
     EventStatus Status,
-    CreateEventTicketTypeRequest[]? TicketTypes,
+    [MinLength(1)][MaxLength(20)] CreateEventTicketTypeRequest[]? TicketTypes,
     [MaxLength(100)] string? TimeZone
 );
 
@@ -77,13 +79,14 @@ public record UpdateEventRequest(
     [Required] DateTime Date,
     [Required][MaxLength(200)] string Venue,
     [Required][MaxLength(100)] string City,
-    [MaxLength(500)] string? ImageUrl,
+    [Url][MaxLength(500)] string? ImageUrl,
     [MaxLength(2000)] string? Description,
     bool Featured,
     [MaxLength(2000)] string? Disclaimers,
     Guid? VenueMapId,
     [Required] EventStatus Status,
-    [MaxLength(100)] string? TimeZone
+    [MaxLength(100)] string? TimeZone,
+    string? RowVersion = null
 );
 
 public record CreateEventTicketTypeRequest(
@@ -97,7 +100,8 @@ public record UpdateEventTicketTypeRequest(
     [Required][MaxLength(100)] string Name,
     [Range(0.01, double.MaxValue)] decimal Price,
     [MaxLength(500)] string? Description,
-    [Range(1, int.MaxValue)] int Capacity
+    [Range(1, int.MaxValue)] int Capacity,
+    string? RowVersion = null
 );
 
 public record OrganizerEventTicketTypeDto(
@@ -106,5 +110,6 @@ public record OrganizerEventTicketTypeDto(
     [property: Required] decimal Price,
     string? Description,
     [property: Required] int Capacity,
-    [property: Required] int Sold
+    [property: Required] int Sold,
+    string? RowVersion = null
 );

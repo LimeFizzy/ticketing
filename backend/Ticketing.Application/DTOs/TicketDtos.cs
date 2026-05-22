@@ -18,7 +18,8 @@ public record TicketDto(
     [property: Required] string ImageUrl,
     DateTime? CheckedInAt = null,
     Guid? VenueMapPlaceId = null,
-    string? SeatLabel = null
+    string? SeatLabel = null,
+    string? RowVersion = null
 );
 
 public record CheckInRequest(

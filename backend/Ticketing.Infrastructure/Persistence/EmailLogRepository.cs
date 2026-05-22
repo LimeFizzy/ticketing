@@ -6,7 +6,7 @@ namespace Ticketing.Infrastructure.Persistence;
 
 public class EmailLogRepository(TicketingDbContext context) : IEmailLogRepository
 {
-    public async Task<bool> HasBeenSentAsync(string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
+    public async Task<bool> HasBeenSentAsync(string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null, CancellationToken cancellationToken = default)
     {
         return await context.EmailLogs
             .AsNoTracking()
@@ -14,10 +14,10 @@ public class EmailLogRepository(TicketingDbContext context) : IEmailLogRepositor
                 && (eventId == null || e.EventId == eventId)
                 && (orderId == null || e.OrderId == orderId)
                 && (ticketId == null || e.TicketId == ticketId)
-                && e.Status == "Sent");
+                && e.Status == "Sent", cancellationToken);
     }
 
-    public async Task<bool> HasBeenSentToRecipientAsync(string recipientEmail, string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
+    public async Task<bool> HasBeenSentToRecipientAsync(string recipientEmail, string emailType, Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null, CancellationToken cancellationToken = default)
     {
         return await context.EmailLogs
             .AsNoTracking()
@@ -26,17 +26,17 @@ public class EmailLogRepository(TicketingDbContext context) : IEmailLogRepositor
                 && (eventId == null || e.EventId == eventId)
                 && (orderId == null || e.OrderId == orderId)
                 && (ticketId == null || e.TicketId == ticketId)
-                && e.Status == "Sent");
+                && e.Status == "Sent", cancellationToken);
     }
 
-    public async Task<EmailLog> LogAsync(EmailLog log)
+    public async Task<EmailLog> LogAsync(EmailLog log, CancellationToken cancellationToken = default)
     {
-        await context.EmailLogs.AddAsync(log);
+        await context.EmailLogs.AddAsync(log, cancellationToken);
         return log;
     }
 
-    public async Task SaveChangesAsync()
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

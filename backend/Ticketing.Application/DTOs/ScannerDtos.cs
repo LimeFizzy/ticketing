@@ -19,7 +19,8 @@ public record ScannerDto(
     Guid? EventId,
     string? EventTitle,
     [property: Required] bool AssignToAllEvents,
-    [property: Required] bool IsActive
+    [property: Required] bool IsActive,
+    string? RowVersion = null
 );
 
 public record ScannerEventDto(

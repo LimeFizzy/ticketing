@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Ticketing.Domain.Entities;
 
 public class EventVenueMapPlace
@@ -6,6 +8,9 @@ public class EventVenueMapPlace
     public Guid EventId { get; set; }
     public Guid VenueMapPlaceId { get; set; }
     public Guid EventTicketTypeId { get; set; }
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
     public VenueMapPlace VenueMapPlace { get; set; } = null!;

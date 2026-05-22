@@ -7,7 +7,7 @@ namespace Ticketing.Infrastructure.Persistence;
 
 public class TicketRepository(TicketingDbContext context) : ITicketRepository
 {
-    public async Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<Ticket>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await context.Tickets
             .Include(t => t.EventTicketType)
@@ -17,10 +17,10 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<Ticket?> GetByIdAsync(Guid id)
+    public async Task<Ticket?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await context.Tickets
             .Include(t => t.EventTicketType)
@@ -28,11 +28,12 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
                 .ThenInclude(o => o.Event)
             .Include(t => t.VenueMapPlace)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
-    public async Task<Ticket?> GetByCodeWithEventAsync(string ticketCode)
+    public async Task<Ticket?> GetByCodeWithEventAsync(string ticketCode, CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticketCode);
         return await context.Tickets
             .Include(t => t.EventTicketType)
             .Include(t => t.Order)
@@ -40,33 +41,44 @@ public class TicketRepository(TicketingDbContext context) : ITicketRepository
             .Include(t => t.User)
             .Include(t => t.VenueMapPlace)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.TicketCode == ticketCode);
+            .FirstOrDefaultAsync(t => t.TicketCode == ticketCode, cancellationToken);
     }
 
-    public Task<bool> ExistsByCodeAsync(string code)
+    public async Task<Ticket?> GetByCodeForCheckInAsync(string ticketCode, CancellationToken cancellationToken = default)
     {
-        return context.Tickets.AsNoTracking().AnyAsync(t => t.TicketCode == code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ticketCode);
+        return await context.Tickets
+            .Include(t => t.EventTicketType)
+            .Include(t => t.Order)
+                .ThenInclude(o => o.Event)
+            .Include(t => t.VenueMapPlace)
+            .FirstOrDefaultAsync(t => t.TicketCode == ticketCode, cancellationToken);
     }
 
-    public async Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId)
+    public Task<bool> ExistsByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        return context.Tickets.AsNoTracking().AnyAsync(t => t.TicketCode == code, cancellationToken);
+    }
+
+    public async Task<IEnumerable<Ticket>> GetByUserAndEventAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default)
     {
         return await context.Tickets
             .Include(t => t.EventTicketType)
             .Include(t => t.VenueMapPlace)
             .Where(t => t.UserId == userId && t.Order.EventId == eventId && t.Status == TicketStatus.Active)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId)
+    public async Task<bool> HasTicketForEventAsync(Guid userId, Guid eventId, CancellationToken cancellationToken = default)
     {
         return await context.Tickets
             .AsNoTracking()
-            .AnyAsync(t => t.UserId == userId && t.Order.EventId == eventId);
+            .AnyAsync(t => t.UserId == userId && t.Order.EventId == eventId, cancellationToken);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

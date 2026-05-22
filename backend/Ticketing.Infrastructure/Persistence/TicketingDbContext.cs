@@ -88,6 +88,9 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<EmailLog>()
             .HasIndex(e => e.CreatedAt);
 
+        modelBuilder.Entity<EmailLog>()
+            .HasIndex(e => e.RecipientEmail);
+
         modelBuilder.Entity<PromoCode>()
             .HasIndex(p => new { p.Code, p.EventId })
             .IsUnique();
@@ -142,7 +145,7 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<User>().Property(u => u.Email).HasMaxLength(256);
         modelBuilder.Entity<User>().Property(u => u.FirstName).HasMaxLength(100);
         modelBuilder.Entity<User>().Property(u => u.LastName).HasMaxLength(100);
-        modelBuilder.Entity<User>().Property(u => u.InviteToken).HasMaxLength(64);
+        modelBuilder.Entity<User>().Property(u => u.InviteToken).HasMaxLength(128);
 
         modelBuilder.Entity<Event>().Property(e => e.Title).HasMaxLength(200);
         modelBuilder.Entity<Event>().Property(e => e.Venue).HasMaxLength(200);
@@ -261,5 +264,17 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
 
         modelBuilder.Entity<EventScanner>()
             .HasIndex(es => es.ScannerUserId);
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.OrderId);
+
+        modelBuilder.Entity<Order>()
+            .HasIndex(o => o.Status);
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.CreatedAt);
+
+        modelBuilder.Entity<Review>()
+            .HasIndex(r => r.CreatedAt);
     }
 }

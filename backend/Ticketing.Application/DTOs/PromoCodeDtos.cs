@@ -12,7 +12,8 @@ public record PromoCodeDto(
     [property: Required] int CurrentUses,
     DateTime? ExpiresAt,
     [property: Required] bool IsActive,
-    [property: Required] DateTime CreatedAt
+    [property: Required] DateTime CreatedAt,
+    string? RowVersion = null
 );
 
 public record CreatePromoCodeRequest(
@@ -24,7 +25,7 @@ public record CreatePromoCodeRequest(
 );
 
 public record ValidatePromoCodeRequest(
-    [Required] string Code,
+    [Required][MaxLength(50)] string Code,
     [Required] Guid EventId
 );
 

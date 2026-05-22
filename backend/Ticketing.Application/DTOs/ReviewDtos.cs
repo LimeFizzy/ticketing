@@ -10,7 +10,8 @@ public record ReviewDto(
     [property: Range(1, 5)] int Rating,
     [MaxLength(2000)] string? Comment,
     [property: Required] DateTime CreatedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    string? RowVersion = null
 );
 
 public record CreateReviewRequest(
@@ -21,7 +22,8 @@ public record CreateReviewRequest(
 
 public record UpdateReviewRequest(
     [Range(1, 5)] int Rating,
-    [MaxLength(2000)] string? Comment
+    [MaxLength(2000)] string? Comment,
+    string? RowVersion = null
 );
 
 public record EventReviewsSummaryDto(

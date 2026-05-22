@@ -1,4 +1,5 @@
 using Ticketing.Application.DTOs;
+using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
 
@@ -6,11 +7,11 @@ namespace Ticketing.Application.Services;
 
 public interface IReviewService
 {
-    Task<ReviewDto> CreateAsync(Guid userId, CreateReviewRequest request);
-    Task<ReviewDto?> UpdateAsync(Guid reviewId, Guid userId, UpdateReviewRequest request);
-    Task DeleteAsync(Guid reviewId, Guid userId);
-    Task<EventReviewsSummaryDto> GetByEventIdAsync(Guid eventId);
-    Task<IEnumerable<ReviewableEventDto>> GetReviewableEventsAsync(Guid userId);
+    Task<ReviewDto> CreateAsync(Guid userId, CreateReviewRequest request, CancellationToken cancellationToken = default);
+    Task<ReviewDto?> UpdateAsync(Guid reviewId, Guid userId, UpdateReviewRequest request, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid reviewId, Guid userId, CancellationToken cancellationToken = default);
+    Task<EventReviewsSummaryDto> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ReviewableEventDto>> GetReviewableEventsAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
 public class ReviewService(
@@ -19,22 +20,22 @@ public class ReviewService(
     IUserRepository userRepository,
     IEventRepository eventRepository) : IReviewService
 {
-    public async Task<ReviewDto> CreateAsync(Guid userId, CreateReviewRequest request)
+    public async Task<ReviewDto> CreateAsync(Guid userId, CreateReviewRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await userRepository.GetByIdAsync(userId)
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken)
             ?? throw new KeyNotFoundException("User not found");
 
-        var @event = await eventRepository.GetByIdAsync(request.EventId)
+        var @event = await eventRepository.GetByIdAsync(request.EventId, cancellationToken)
             ?? throw new KeyNotFoundException("Event not found");
 
         if (@event.Date > DateTime.UtcNow)
             throw new InvalidOperationException("Cannot review an event that hasn't happened yet");
 
-        var hasTicket = await ticketRepository.HasTicketForEventAsync(userId, request.EventId);
+        var hasTicket = await ticketRepository.HasTicketForEventAsync(userId, request.EventId, cancellationToken);
         if (!hasTicket)
             throw new InvalidOperationException("You must have a ticket for this event to review it");
 
-        var existing = await reviewRepository.GetByUserAndEventAsync(userId, request.EventId);
+        var existing = await reviewRepository.GetByUserAndEventAsync(userId, request.EventId, cancellationToken);
         if (existing != null)
             throw new InvalidOperationException("You have already reviewed this event");
 
@@ -43,53 +44,54 @@ public class ReviewService(
             EventId = request.EventId,
             UserId = userId,
             Rating = request.Rating,
-            Comment = request.Comment
+            Comment = SanitizeComment(request.Comment)
         };
 
-        var created = await reviewRepository.CreateAsync(review);
-        await reviewRepository.SaveChangesAsync();
+        var created = await reviewRepository.CreateAsync(review, cancellationToken);
+        await reviewRepository.SaveChangesAsync(cancellationToken);
 
         return MapToDto(created, user);
     }
 
-    public async Task<ReviewDto?> UpdateAsync(Guid reviewId, Guid userId, UpdateReviewRequest request)
+    public async Task<ReviewDto?> UpdateAsync(Guid reviewId, Guid userId, UpdateReviewRequest request, CancellationToken cancellationToken = default)
     {
-        var review = await reviewRepository.GetByIdAsync(reviewId);
+        var review = await reviewRepository.GetByIdAsync(reviewId, cancellationToken);
         if (review == null) return null;
         if (review.UserId != userId)
             throw new UnauthorizedAccessException("You can only update your own reviews");
 
+        review.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
         review.Rating = request.Rating;
-        review.Comment = request.Comment;
+        review.Comment = SanitizeComment(request.Comment);
         review.UpdatedAt = DateTime.UtcNow;
 
-        await reviewRepository.UpdateAsync(review);
-        await reviewRepository.SaveChangesAsync();
+        await reviewRepository.UpdateAsync(review, cancellationToken);
+        await reviewRepository.SaveChangesAsync(cancellationToken);
 
-        var user = await userRepository.GetByIdAsync(userId)
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken)
             ?? throw new KeyNotFoundException("User not found");
         return MapToDto(review, user);
     }
 
-    public async Task DeleteAsync(Guid reviewId, Guid userId)
+    public async Task DeleteAsync(Guid reviewId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var review = await reviewRepository.GetByIdAsync(reviewId)
+        var review = await reviewRepository.GetByIdAsync(reviewId, cancellationToken)
             ?? throw new KeyNotFoundException("Review not found");
 
         if (review.UserId != userId)
             throw new UnauthorizedAccessException("You can only delete your own reviews");
 
-        await reviewRepository.DeleteAsync(reviewId);
-        await reviewRepository.SaveChangesAsync();
+        await reviewRepository.DeleteAsync(reviewId, cancellationToken);
+        await reviewRepository.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<EventReviewsSummaryDto> GetByEventIdAsync(Guid eventId)
+    public async Task<EventReviewsSummaryDto> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
-        var reviews = await reviewRepository.GetByEventIdAsync(eventId);
+        var reviews = await reviewRepository.GetByEventIdAsync(eventId, cancellationToken);
         var reviewList = reviews.ToList();
 
         var userIds = reviewList.Select(r => r.UserId).Distinct().ToList();
-        var users = await userRepository.GetByIdsAsync(userIds);
+        var users = await userRepository.GetByIdsAsync(userIds, cancellationToken);
         var userLookup = users.ToDictionary(u => u.Id);
 
         var distribution = new int[5];
@@ -116,9 +118,9 @@ public class ReviewService(
         );
     }
 
-    public async Task<IEnumerable<ReviewableEventDto>> GetReviewableEventsAsync(Guid userId)
+    public async Task<IEnumerable<ReviewableEventDto>> GetReviewableEventsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var tickets = await ticketRepository.GetByUserIdAsync(userId);
+        var tickets = await ticketRepository.GetByUserIdAsync(userId, cancellationToken);
         var pastEventIds = tickets
             .Where(t => t.Order.Event.Date < DateTime.UtcNow)
             .Select(t => t.Order.EventId)
@@ -127,21 +129,9 @@ public class ReviewService(
 
         if (pastEventIds.Count == 0) return [];
 
-        var events = new Dictionary<Guid, Event>();
-        foreach (var eventId in pastEventIds)
-        {
-            var evt = await eventRepository.GetByIdAsync(eventId);
-            if (evt != null) events[eventId] = evt;
-        }
-
-        var existingReviews = new Dictionary<Guid, Review>();
-        foreach (var eventId in pastEventIds)
-        {
-            var review = await reviewRepository.GetByUserAndEventAsync(userId, eventId);
-            if (review != null) existingReviews[eventId] = review;
-        }
-
-        var user = await userRepository.GetByIdAsync(userId);
+        var events = await eventRepository.GetByIdsAsync(pastEventIds, cancellationToken);
+        var existingReviews = await reviewRepository.GetByUserAndEventsBatchAsync(userId, pastEventIds, cancellationToken);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
 
         return pastEventIds
             .Where(events.ContainsKey)
@@ -168,6 +158,10 @@ public class ReviewService(
         review.Rating,
         review.Comment,
         review.CreatedAt,
-        review.UpdatedAt
+        review.UpdatedAt,
+        RowVersionHelper.ToBase64(review.RowVersion)
     );
+
+    private static string SanitizeComment(string? comment) =>
+        string.IsNullOrWhiteSpace(comment) ? "" : System.Web.HttpUtility.HtmlEncode(comment);
 }

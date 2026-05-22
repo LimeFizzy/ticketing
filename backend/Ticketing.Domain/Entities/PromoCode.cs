@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Ticketing.Domain.Constants;
 
 namespace Ticketing.Domain.Entities;
@@ -14,6 +15,9 @@ public class PromoCode
     public DateTime? ExpiresAt { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
 }

@@ -1,4 +1,5 @@
 using Ticketing.Application.DTOs;
+using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -7,11 +8,11 @@ namespace Ticketing.Application.Services;
 
 public interface IEventService
 {
-    Task<EventDto?> GetByIdAsync(Guid id);
-    Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null);
-    Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request);
-    Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request);
-    Task SoftDeleteAsync(Guid eventId, Guid organizerId);
+    Task<EventDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default);
+    Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request, CancellationToken cancellationToken = default);
+    Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default);
 }
 
 public class EventService(
@@ -19,17 +20,17 @@ public class EventService(
     IEventTicketTypeRepository ticketTypeRepository,
     IReviewRepository reviewRepository) : IEventService
 {
-    public async Task<EventDto?> GetByIdAsync(Guid id)
+    public async Task<EventDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(id);
+        var @event = await eventRepository.GetByIdAsync(id, cancellationToken);
         if (@event == null) return null;
 
-        return await MapToDtoAsync(@event);
+        return await MapToDtoAsync(@event, cancellationToken);
     }
 
-    public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null)
+    public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default)
     {
-        var (events, totalCount) = await eventRepository.GetAllAsync(filter);
+        var (events, totalCount) = await eventRepository.GetAllAsync(filter, cancellationToken);
         var eventList = events.ToList();
 
         var page = Math.Max(filter?.Page ?? 1, 1);
@@ -37,12 +38,12 @@ public class EventService(
 
         var allTypeIds = eventList.SelectMany(e => e.TicketTypes.Select(t => t.Id)).ToList();
         var soldCounts = allTypeIds.Count > 0
-            ? await ticketTypeRepository.GetSoldCountsBatchAsync(allTypeIds)
+            ? await ticketTypeRepository.GetSoldCountsBatchAsync(allTypeIds, cancellationToken)
             : [];
 
         var eventIds = eventList.Select(e => e.Id).ToList();
         var ratings = eventIds.Count > 0
-            ? await reviewRepository.GetRatingsBatchAsync(eventIds)
+            ? await reviewRepository.GetRatingsBatchAsync(eventIds, cancellationToken)
             : [];
 
         var dtos = eventList.Select(e => MapToDto(e, soldCounts, ratings)).ToList();
@@ -50,8 +51,11 @@ public class EventService(
         return new PaginatedResult<EventDto>(dtos, totalCount, page, pageSize);
     }
 
-    public async Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request)
+    public async Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request, CancellationToken cancellationToken = default)
     {
+        if (request.Date <= DateTime.UtcNow)
+            throw new InvalidOperationException("Event date must be in the future");
+
         var @event = new Event
         {
             Title = request.Title,
@@ -77,15 +81,22 @@ public class EventService(
             }).ToList() ?? []
         };
 
-        var created = await eventRepository.CreateAsync(@event);
-        return await MapToDtoAsync(created);
+        var created = await eventRepository.CreateAsync(@event, cancellationToken);
+        return await MapToDtoAsync(created, cancellationToken);
     }
 
-    public async Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request)
+    public async Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId);
-        if (@event == null || @event.OrganizerId != organizerId) return null;
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken);
+        if (@event == null) return null;
 
+        if (@event.OrganizerId != organizerId)
+            throw new UnauthorizedAccessException("Event not found or not owned by you");
+
+        if (request.Date <= DateTime.UtcNow)
+            throw new InvalidOperationException("Event date must be in the future");
+
+        @event.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
         @event.Title = request.Title;
         @event.Category = request.Category;
         @event.Date = request.Date;
@@ -99,40 +110,40 @@ public class EventService(
         @event.Status = request.Status;
         @event.TimeZone = request.TimeZone;
 
-        await eventRepository.UpdateAsync(@event);
-        return await MapToDtoAsync(@event);
+        await eventRepository.UpdateAsync(@event, cancellationToken);
+
+        return await MapToDtoAsync(@event, cancellationToken);
     }
 
-    public async Task SoftDeleteAsync(Guid eventId, Guid organizerId)
+    public async Task SoftDeleteAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetByIdAsync(eventId);
-        if (@event == null || @event.OrganizerId != organizerId)
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new KeyNotFoundException("Event not found");
+        if (@event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("Event not found or not owned by you");
 
-        await eventRepository.SoftDeleteAsync(eventId);
+        await eventRepository.SoftDeleteAsync(eventId, cancellationToken);
     }
 
-    private async Task<EventDto> MapToDtoAsync(Event @event)
+    private async Task<EventDto> MapToDtoAsync(Event @event, CancellationToken cancellationToken)
     {
         var disclaimers = string.IsNullOrEmpty(@event.Disclaimers)
             ? []
             : @event.Disclaimers.Split('|', StringSplitOptions.RemoveEmptyEntries);
 
         var types = @event.TicketTypes.OrderBy(t => t.Price).ToList();
-        var soldCounts = await ticketTypeRepository.GetSoldCountsBatchAsync(types.Select(t => t.Id));
+        var soldCounts = await ticketTypeRepository.GetSoldCountsBatchAsync(types.Select(t => t.Id), cancellationToken);
 
         var ticketTypes = types.Select(t =>
         {
             var sold = soldCounts.GetValueOrDefault(t.Id);
-            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold);
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, RowVersionHelper.ToBase64(t.RowVersion));
         }).ToArray();
 
         var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
         var availableTypes = ticketTypes.Where(t => t.Capacity > t.Sold).ToList();
         var priceFrom = availableTypes.Count > 0 ? availableTypes.Min(t => t.Price) : 0;
 
-        var avgRating = await reviewRepository.GetAverageRatingAsync(@event.Id);
-        var reviewCount = await reviewRepository.GetReviewCountAsync(@event.Id);
+        var (avgRating, reviewCount) = await reviewRepository.GetRatingStatsAsync(@event.Id, cancellationToken);
 
         return new EventDto(
             @event.Id,
@@ -152,7 +163,8 @@ public class EventService(
             @event.Status,
             @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
-            reviewCount
+            reviewCount,
+            RowVersionHelper.ToBase64(@event.RowVersion)
         );
     }
 
@@ -167,7 +179,7 @@ public class EventService(
         var ticketTypes = types.Select(t =>
         {
             var sold = soldCounts.GetValueOrDefault(t.Id);
-            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold);
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, RowVersionHelper.ToBase64(t.RowVersion));
         }).ToArray();
 
         var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
@@ -196,7 +208,8 @@ public class EventService(
             @event.Status,
             @event.TimeZone,
             reviewCount > 0 ? Math.Round(avgRating, 1) : null,
-            reviewCount
+            reviewCount,
+            RowVersionHelper.ToBase64(@event.RowVersion)
         );
     }
 }

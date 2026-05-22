@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Ticketing.Domain.Constants;
 
 namespace Ticketing.Domain.Entities;
@@ -23,6 +24,9 @@ public class Event
     public bool IsDeleted { get; set; }
     public Guid? OrganizerId { get; set; }
     public User? Organizer { get; set; }
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     public ICollection<EventTicketType> TicketTypes { get; set; } = [];
     public ICollection<PromoCode> PromoCodes { get; set; } = [];

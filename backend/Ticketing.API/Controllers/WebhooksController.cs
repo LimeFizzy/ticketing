@@ -1,6 +1,9 @@
 using Hangfire;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
@@ -24,9 +27,11 @@ public class WebhooksController(
 
     [HttpPost("stripe")]
     [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
     [ApiExplorerSettings(IgnoreApi = true)]
+    [EnableRateLimiting("webhook")]
     [RequestSizeLimit(MaxWebhookBodySize)]
-    public async Task<IActionResult> HandleStripeWebhook()
+    public async Task<IActionResult> HandleStripeWebhook(CancellationToken cancellationToken = default)
     {
         HttpContext.Request.EnableBuffering();
         using var reader = new StreamReader(HttpContext.Request.Body, leaveOpen: true);
@@ -35,7 +40,8 @@ public class WebhooksController(
         if (string.IsNullOrWhiteSpace(options.Value.WebhookSecret))
         {
             logger.LogError("Stripe webhook secret is not configured");
-            return StatusCode(StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new ProblemDetails { Title = "Webhook processing error" });
         }
 
         Event stripeEvent;
@@ -49,7 +55,7 @@ public class WebhooksController(
         catch (StripeException ex)
         {
             logger.LogWarning(ex, "Stripe webhook signature validation failed");
-            return BadRequest();
+            return BadRequest(new ProblemDetails { Title = "Invalid webhook signature" });
         }
 
         if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
@@ -58,7 +64,7 @@ public class WebhooksController(
 
             if (!string.IsNullOrEmpty(session.Id))
             {
-                var existing = await orderRepository.GetByStripeSessionIdAsync(session.Id);
+                var existing = await orderRepository.GetByStripeSessionIdAsync(session.Id, cancellationToken);
                 if (existing != null) return Ok();
             }
 
@@ -85,11 +91,32 @@ public class WebhooksController(
                     return Ok();
                 }
 
-                var items = System.Text.Json.JsonSerializer.Deserialize<OrderItemRequest[]>(itemsJson);
-                if (items == null || items.Length == 0)
+                OrderItemRequest[] items;
+                try
+                {
+                    items = System.Text.Json.JsonSerializer.Deserialize<OrderItemRequest[]>(itemsJson)
+                        ?? [];
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    logger.LogWarning(ex, "Stripe webhook invalid items JSON in session {SessionId}", session.Id);
+                    return Ok();
+                }
+
+                if (items.Length == 0)
                 {
                     logger.LogWarning("Stripe webhook empty items in session {SessionId}", session.Id);
                     return Ok();
+                }
+
+                foreach (var item in items)
+                {
+                    if (item.EventTicketTypeId == Guid.Empty || item.Quantity < 1 || item.Quantity > 100)
+                    {
+                        logger.LogWarning("Stripe webhook invalid item in session {SessionId}: TicketTypeId={TypeId}, Quantity={Qty}",
+                            session.Id, item.EventTicketTypeId, item.Quantity);
+                        return BadRequest(new ProblemDetails { Title = "Invalid item data in session" });
+                    }
                 }
 
                 Guid? promoCodeId = session.Metadata.TryGetValue("promoCodeId", out var pcId) && Guid.TryParse(pcId, out var parsed)
@@ -98,13 +125,18 @@ public class WebhooksController(
                     ? parsedDa : 0;
 
                 var request = new CreateOrderRequest(eventId, items);
-                var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount);
+                var order = await orderService.CreateOrderAsync(userId, request, session.Id, promoCodeId, discountAmount, cancellationToken);
 
                 BackgroundJob.Enqueue(() => emailService.SendOrderConfirmationAsync(order.Id));
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
                 logger.LogError(ex, "Stripe webhook failed processing session {SessionId}", session.Id);
+                return BadRequest(new ProblemDetails { Title = "Order creation failed" });
+            }
+            catch (DbUpdateException ex)
+            {
+                logger.LogError(ex, "Stripe webhook database error processing session {SessionId}", session.Id);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

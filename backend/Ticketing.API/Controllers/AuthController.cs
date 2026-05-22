@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using Ticketing.Application.DTOs;
 using Ticketing.Application.Services;
@@ -10,19 +12,24 @@ namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, IAntiforgery antiforgery) : ControllerBase
 {
+    [HttpGet("antiforgery-token", Name = "getAntiforgeryToken")]
+    [AllowAnonymous]
+    public IActionResult GetAntiforgeryToken()
+    {
+        var tokens = antiforgery.GetAndStoreTokens(HttpContext);
+        return Ok(new { token = tokens.RequestToken });
+    }
+
     [HttpPost("sign-in", Name = "postSignIn")]
+    [EnableRateLimiting("auth")]
+    [IgnoreAntiforgeryToken]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> SignIn([FromBody] LoginRequest request)
+    public async Task<IActionResult> SignIn([FromBody] LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var hasPassword = await authService.HasPasswordAsync(request.Email);
-        if (!hasPassword)
-            return StatusCode(403, new ProblemDetails { Title = "Account not activated. Please check your invite email." });
-
-        var user = await authService.LoginAsync(request);
+        var user = await authService.LoginAsync(request, cancellationToken);
         if (user == null) return Unauthorized(new ProblemDetails { Title = "Invalid email or password" });
 
         await SignInUserAsync(user);
@@ -30,11 +37,13 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("sign-up", Name = "postSignUp")]
+    [EnableRateLimiting("auth")]
+    [IgnoreAntiforgeryToken]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SignUp([FromBody] RegisterRequest request)
+    public async Task<IActionResult> SignUp([FromBody] RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await authService.RegisterAsync(request);
+        var user = await authService.RegisterAsync(request, cancellationToken);
         if (user == null) return BadRequest(new ProblemDetails { Title = "Email already exists" });
 
         await SignInUserAsync(user);
@@ -43,7 +52,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("sign-out", Name = "postSignOut")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> SignOutEndpoint()
+    public async Task<IActionResult> SignOutEndpoint(CancellationToken cancellationToken = default)
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Ok();
@@ -52,13 +61,13 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpGet("me", Name = "getMe")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetMe()
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken = default)
     {
         if (!User.Identity?.IsAuthenticated ?? true)
             return Unauthorized();
 
         var userId = this.GetUserIdFromClaims();
-        var user = await authService.GetUserByIdAsync(userId);
+        var user = await authService.GetUserByIdAsync(userId, cancellationToken);
         if (user == null) return Unauthorized();
 
         return Ok(user);
@@ -68,25 +77,25 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
         var userId = this.GetUserIdFromClaims();
-        var result = await authService.UpdateProfileAsync(userId, request);
+        var result = await authService.UpdateProfileAsync(userId, request, cancellationToken);
         if (result == null) return NotFound(new ProblemDetails { Title = "User not found or email already taken" });
 
         return Ok(result);
     }
 
     [HttpPost("invite", Name = "inviteOrganizer")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> InviteOrganizer([FromBody] InviteOrganizerRequest request)
+    public async Task<IActionResult> InviteOrganizer([FromBody] InviteOrganizerRequest request, CancellationToken cancellationToken = default)
     {
         var adminUserId = this.GetUserIdFromClaims();
         try
         {
-            var (user, inviteToken) = await authService.InviteOrganizerAsync(adminUserId, request);
+            var (user, inviteToken) = await authService.InviteOrganizerAsync(adminUserId, request, cancellationToken);
             return Ok(new { user });
         }
         catch (UnauthorizedAccessException)
@@ -99,22 +108,26 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
     }
 
-    [HttpGet("verify-invite", Name = "verifyInvite")]
+    [HttpPost("verify-invite", Name = "verifyInvite")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    [IgnoreAntiforgeryToken]
     [ProducesResponseType(typeof(VerifyInviteResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> VerifyInvite([FromQuery] string token)
+    public async Task<IActionResult> VerifyInvite([FromBody] VerifyInviteRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await authService.VerifyInviteAsync(token);
+        var result = await authService.VerifyInviteAsync(request.Token, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("accept-invite", Name = "acceptInvite")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    [IgnoreAntiforgeryToken]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AcceptInvite([FromBody] AcceptInviteRequest request)
+    public async Task<IActionResult> AcceptInvite([FromBody] AcceptInviteRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await authService.AcceptInviteAsync(request);
+        var user = await authService.AcceptInviteAsync(request, cancellationToken);
         if (user == null) return BadRequest(new ProblemDetails { Title = "Invalid or expired invite token" });
 
         await SignInUserAsync(user);
@@ -122,29 +135,29 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpGet("organizers", Name = "getOrganizers")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(IEnumerable<OrganizerDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetOrganizers()
+    public async Task<IActionResult> GetOrganizers(CancellationToken cancellationToken = default)
     {
         var userId = this.GetUserIdFromClaims();
-        if (!await authService.IsAdminAsync(userId))
+        if (!await authService.IsAdminAsync(userId, cancellationToken))
             return StatusCode(403, new ProblemDetails { Title = "Only admins can view organizers" });
 
-        var organizers = await authService.GetOrganizersAsync();
+        var organizers = await authService.GetOrganizersAsync(cancellationToken);
         return Ok(organizers);
     }
 
     [HttpDelete("organizers/{id}", Name = "removeOrganizer")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> RemoveOrganizer(Guid id)
+    public async Task<IActionResult> RemoveOrganizer(Guid id, CancellationToken cancellationToken = default)
     {
         var adminUserId = this.GetUserIdFromClaims();
         try
         {
-            await authService.RemoveOrganizerAsync(id, adminUserId);
+            await authService.RemoveOrganizerAsync(id, adminUserId, cancellationToken);
             return NoContent();
         }
         catch (UnauthorizedAccessException)

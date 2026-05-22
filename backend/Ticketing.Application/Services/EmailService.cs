@@ -19,12 +19,12 @@ public class EmailService(
     IOptions<EmailSettings> emailSettings,
     ILogger<EmailService> logger) : IEmailService
 {
-    public async Task SendOrderConfirmationAsync(Guid orderId)
+    public async Task SendOrderConfirmationAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        if (await emailLogRepository.HasBeenSentAsync("OrderConfirmation", orderId: orderId))
+        if (await emailLogRepository.HasBeenSentAsync("OrderConfirmation", orderId: orderId, cancellationToken: cancellationToken))
             return;
 
-        var order = await orderRepository.GetByIdAsync(orderId);
+        var order = await orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order == null) return;
 
         var user = order.User;
@@ -33,49 +33,50 @@ public class EmailService(
         var subject = $"Order confirmed: {@event.Title}";
         var body = BuildOrderConfirmationHtml(user, order, @event);
 
-        await SendEmailAsync(user.Email, subject, body, "OrderConfirmation", orderId: orderId, eventId: @event.Id);
+        await SendEmailAsync(user.Email, subject, body, "OrderConfirmation", orderId: orderId, eventId: @event.Id, cancellationToken: cancellationToken);
     }
 
-    public async Task SendEventReminderAsync(Guid eventId, Guid userId)
+    public async Task SendEventReminderAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var user = await userRepository.GetByIdAsync(userId);
-        var @event = await eventRepository.GetByIdAsync(eventId);
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken);
         if (user == null || @event == null) return;
 
         var existingLogs = await emailLogRepository.HasBeenSentToRecipientAsync(
-            user.Email, "EventReminder", eventId: eventId);
+            user.Email, "EventReminder", eventId: eventId, cancellationToken: cancellationToken);
         if (existingLogs) return;
 
-        var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId);
+        var tickets = await ticketRepository.GetByUserAndEventAsync(userId, eventId, cancellationToken);
 
         var subject = $"Reminder: {@event.Title} is tomorrow!";
         var body = BuildReminderHtml(user, @event, tickets);
 
-        await SendEmailAsync(user.Email, subject, body, "EventReminder", eventId: eventId);
+        await SendEmailAsync(user.Email, subject, body, "EventReminder", eventId: eventId, cancellationToken: cancellationToken);
     }
 
-    public async Task SendCheckInConfirmationAsync(Guid ticketId)
+    public async Task SendCheckInConfirmationAsync(Guid ticketId, CancellationToken cancellationToken = default)
     {
-        if (await emailLogRepository.HasBeenSentAsync("CheckInConfirmation", ticketId: ticketId))
+        if (await emailLogRepository.HasBeenSentAsync("CheckInConfirmation", ticketId: ticketId, cancellationToken: cancellationToken))
             return;
 
-        var ticket = await ticketRepository.GetByIdAsync(ticketId);
+        var ticket = await ticketRepository.GetByIdAsync(ticketId, cancellationToken);
         if (ticket == null) return;
 
         var @event = ticket.Order.Event;
-        var user = await userRepository.GetByIdAsync(ticket.UserId);
+        var user = await userRepository.GetByIdAsync(ticket.UserId, cancellationToken);
         if (user == null) return;
 
         var subject = $"Checked in: {@event.Title}";
         var body = BuildCheckInHtml(user, ticket, @event);
 
-        await SendEmailAsync(user.Email, subject, body, "CheckInConfirmation", ticketId: ticketId, eventId: @event.Id);
+        await SendEmailAsync(user.Email, subject, body, "CheckInConfirmation", ticketId: ticketId, eventId: @event.Id, cancellationToken: cancellationToken);
     }
 
     private async Task SendEmailAsync(
         string toEmail, string subject, string htmlBody,
         string emailType,
-        Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null)
+        Guid? eventId = null, Guid? orderId = null, Guid? ticketId = null,
+        CancellationToken cancellationToken = default)
     {
         var settings = emailSettings.Value;
         var log = new EmailLog
@@ -99,10 +100,10 @@ public class EmailService(
 
             using var client = new SmtpClient();
             client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None;
-            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls, cancellationToken);
+            await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass, cancellationToken);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
 
             log.Status = "Sent";
         }
@@ -113,8 +114,15 @@ public class EmailService(
             log.ErrorMessage = ex.Message;
         }
 
-        await emailLogRepository.LogAsync(log);
-        await emailLogRepository.SaveChangesAsync();
+        try
+        {
+            await emailLogRepository.LogAsync(log, cancellationToken);
+            await emailLogRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception logEx)
+        {
+            logger.LogError(logEx, "Failed to log email status for {EmailType} to {Email}", emailType, toEmail);
+        }
     }
 
     private string BaseUrl => emailSettings.Value.BaseUrl;

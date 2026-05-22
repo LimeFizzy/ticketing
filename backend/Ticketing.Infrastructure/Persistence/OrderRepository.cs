@@ -6,13 +6,13 @@ namespace Ticketing.Infrastructure.Persistence;
 
 public class OrderRepository(TicketingDbContext context) : IOrderRepository
 {
-    public async Task<Order> CreateAsync(Order order)
+    public async Task<Order> CreateAsync(Order order, CancellationToken cancellationToken = default)
     {
-        await context.Orders.AddAsync(order);
+        await context.Orders.AddAsync(order, cancellationToken);
         return order;
     }
 
-    public Task<Order?> GetByIdAsync(Guid id)
+    public Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return context.Orders
             .AsNoTracking()
@@ -20,30 +20,31 @@ public class OrderRepository(TicketingDbContext context) : IOrderRepository
             .Include(o => o.Event)
             .Include(o => o.Tickets)
                 .ThenInclude(t => t.EventTicketType)
-            .FirstOrDefaultAsync(o => o.Id == id);
+            .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
     }
 
-    public Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId)
+    public Task<Order?> GetByStripeSessionIdAsync(string stripeSessionId, CancellationToken cancellationToken = default)
     {
-        return context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stripeSessionId);
+        return context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.StripeSessionId == stripeSessionId, cancellationToken);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task ExecuteInTransactionAsync(Func<Task> action)
+    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
     {
-        using var transaction = await context.Database.BeginTransactionAsync();
+        using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            await action();
-            await transaction.CommitAsync();
+            await action(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
