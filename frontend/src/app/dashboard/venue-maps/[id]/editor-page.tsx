@@ -203,7 +203,10 @@ export function VenueMapEditorPage({
           router.replace(`/dashboard/venue-maps/${data.id}`);
         }
       } else {
-        await updateVenueMap({ path: { id: mapId }, body: { ...body, rowVersion: initialRowVersion } });
+        await updateVenueMap({
+          path: { id: mapId },
+          body: { ...body, rowVersion: initialRowVersion },
+        });
         showSaved();
       }
     } finally {

@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Drawer } from '@base-ui/react/drawer';
 import {
   BarChart2,
   CalendarDays,
   LayoutDashboard,
+  ScanQrCode,
   Shield,
   Ticket,
   User,
@@ -19,14 +21,24 @@ import { useAuth } from '@/hooks/use-auth';
 import {
   dashboardAnalyticsRoute,
   dashboardVenueMapsRoute,
+  scannerRoute,
   Route,
 } from '@/lib/routes';
 import { NavLink } from './nav-link';
 import { SidebarAuthSection } from './sidebar-auth-section';
+import { getScannerStatus } from '@/lib/api';
 
 export const MobileDrawer = () => {
   const { mobileOpen, openMobile, closeMobile } = useSidebar();
   const { isAuthenticated, user } = useAuth();
+  const [isScanner, setIsScanner] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    getScannerStatus().then(({ data }) => {
+      if (data?.isScanner) setIsScanner(true);
+    });
+  }, [isAuthenticated]);
 
   return (
     <Drawer.Root
@@ -81,6 +93,14 @@ export const MobileDrawer = () => {
                 label="Account"
                 onClick={closeMobile}
               />
+              {isScanner && (
+                <NavLink
+                  href={scannerRoute()}
+                  icon={<ScanQrCode className="size-4" />}
+                  label="Scanner Portal"
+                  onClick={closeMobile}
+                />
+              )}
               {user?.role === 'Organizer' && (
                 <>
                   <NavLink

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   BarChart2,
   CalendarDays,
@@ -9,6 +10,7 @@ import {
   Map,
   PanelLeftClose,
   PanelLeftOpen,
+  ScanQrCode,
   Shield,
   Ticket,
   User,
@@ -23,12 +25,22 @@ import { cn } from '@/lib/utils';
 import {
   dashboardAnalyticsRoute,
   dashboardVenueMapsRoute,
+  scannerRoute,
   Route,
 } from '@/lib/routes';
+import { getScannerStatus } from '@/lib/api';
 
 export const DesktopSidebar = () => {
   const { collapsed, toggleCollapsed } = useSidebar();
   const { isAuthenticated, user } = useAuth();
+  const [isScanner, setIsScanner] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    getScannerStatus().then(({ data }) => {
+      if (data?.isScanner) setIsScanner(true);
+    });
+  }, [isAuthenticated]);
 
   return (
     <aside
@@ -87,6 +99,14 @@ export const DesktopSidebar = () => {
           label="Account"
           collapsed={collapsed}
         />
+        {isScanner && (
+          <NavLink
+            href={scannerRoute()}
+            icon={<ScanQrCode className="size-4" />}
+            label="Scanner Portal"
+            collapsed={collapsed}
+          />
+        )}
         {user?.role === 'Organizer' && (
           <>
             <NavLink

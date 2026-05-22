@@ -6,4 +6,5 @@ public interface IEmailService
     Task SendEventReminderAsync(Guid eventId, Guid userId, CancellationToken cancellationToken = default);
     Task SendCheckInConfirmationAsync(Guid ticketId, CancellationToken cancellationToken = default);
     Task SendOrganizerInvitationAsync(string email, string firstName, string inviteToken, CancellationToken cancellationToken = default);
+    Task SendScannerInvitationAsync(string email, string firstName, string? eventTitle, string inviteToken, CancellationToken cancellationToken = default);
 }

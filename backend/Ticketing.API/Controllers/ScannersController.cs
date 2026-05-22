@@ -20,12 +20,12 @@ public class ScannersController(IScannerService scannerService) : ControllerBase
     {
         var organizerId = this.GetUserIdFromClaims();
 
-        var actualRequest = request with { EventId = eventId, AssignToAllEvents = false };
+        var actualRequest = request with { EventId = eventId };
 
         try
         {
-            var (scanner, inviteToken) = await scannerService.InviteScannerAsync(organizerId, actualRequest, cancellationToken);
-            return Ok(new { scanner });
+            var (scanner, _) = await scannerService.InviteScannerAsync(organizerId, actualRequest, cancellationToken);
+            return Ok(scanner);
         }
         catch (UnauthorizedAccessException ex)
         {

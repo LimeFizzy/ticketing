@@ -21,6 +21,7 @@ import { EventFormFields } from '@/components/dashboard/events/event-form-fields
 import { VenueCard } from '@/components/dashboard/events/venue-card';
 import { EventTicketTypesCard } from '@/components/dashboard/events/event-ticket-types-card';
 import { EventPromoCodesCard } from '@/components/dashboard/events/event-promo-codes-card';
+import { EventScannersCard } from '@/components/dashboard/events/event-scanners-card';
 import { EventPublishingCard } from '@/components/dashboard/events/event-publishing-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useFormState } from '@/hooks/use-form-state';
@@ -150,6 +151,8 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
             ticketTypes={event.ticketTypes}
             manageRoute={dashboardEventTicketsRoute(id)}
           />
+
+          <EventScannersCard eventId={id} />
 
           <EventPromoCodesCard eventId={id} />
 

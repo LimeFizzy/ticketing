@@ -20,7 +20,8 @@ public interface IScannerService
 public class ScannerService(
     IEventScannerRepository eventScannerRepository,
     IUserRepository userRepository,
-    IEventRepository eventRepository) : IScannerService
+    IEventRepository eventRepository,
+    IEmailService emailService) : IScannerService
 {
     public async Task<(ScannerDto Scanner, string? InviteToken)> InviteScannerAsync(Guid organizerId, InviteScannerRequest request, CancellationToken cancellationToken = default)
     {
@@ -85,6 +86,14 @@ public class ScannerService(
 
         await eventScannerRepository.AddAsync(assignment, cancellationToken);
         await eventScannerRepository.SaveChangesAsync(cancellationToken);
+
+        if (inviteToken != null && request.EventId.HasValue)
+        {
+            string? eventTitle = null;
+            if (!request.AssignToAllEvents)
+                eventTitle = (await eventRepository.GetByIdAsync(request.EventId.Value, cancellationToken))?.Title;
+            await emailService.SendScannerInvitationAsync(scannerUser.Email, scannerUser.FirstName, eventTitle, inviteToken, cancellationToken);
+        }
 
         return (MapToDto(assignment, scannerUser), inviteToken);
     }

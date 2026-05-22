@@ -23,7 +23,10 @@ const AnalyticsPage = async () => {
 
   // TODO: Implement Pagination
   const { data: myEvents } = me?.id
-    ? await getEvents({ headers, query: { organizerId: me.id, page: 1, pageSize: 20 } })
+    ? await getEvents({
+        headers,
+        query: { organizerId: me.id, page: 1, pageSize: 20 },
+      })
     : { data: { items: [] } };
 
   const eventRatings: Record<string, EventRating> = {};

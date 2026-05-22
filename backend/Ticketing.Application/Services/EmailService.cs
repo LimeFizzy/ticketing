@@ -225,6 +225,15 @@ public class EmailService(
             """;
     }
 
+    public async Task SendScannerInvitationAsync(string email, string firstName, string? eventTitle, string inviteToken, CancellationToken cancellationToken = default)
+    {
+        var scopeLabel = eventTitle != null ? eventTitle : "all events";
+        var subject = $"You've been invited to scan tickets for {scopeLabel}";
+        var body = BuildScannerInvitationHtml(firstName, eventTitle, inviteToken);
+
+        await SendEmailAsync(email, subject, body, "ScannerInvitation", cancellationToken: cancellationToken);
+    }
+
     private string BuildInvitationHtml(string firstName, string inviteToken)
     {
         var inviteUrl = $"{BaseUrl}/accept-invite?token={inviteToken}";
@@ -241,6 +250,30 @@ public class EmailService(
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Expires</strong></td><td style="padding:8px;border:1px solid #ddd;">7 days</td></tr>
                 </table>
                 <p>Welcome aboard!<br><strong>TicketFlow Team</strong></p>
+            </body>
+            </html>
+            """;
+    }
+
+    private string BuildScannerInvitationHtml(string firstName, string? eventTitle, string inviteToken)
+    {
+        var inviteUrl = $"{BaseUrl}/accept-invite?token={inviteToken}";
+        var scopeHtml = eventTitle != null
+            ? $"for <strong>{HtmlEncode(eventTitle)}</strong>"
+            : "for <strong>all events</strong> by the organizer";
+
+        return $"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(firstName)},</h2>
+                <p>You've been invited to scan tickets {scopeHtml} on <strong>TicketFlow</strong>.</p>
+                <p>Set up your account to get started:</p>
+                <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Invite link</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{inviteUrl}" style="color:#1e3a5f;text-decoration:none;"><strong>Accept your invitation</strong></a></td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Expires</strong></td><td style="padding:8px;border:1px solid #ddd;">7 days</td></tr>
+                </table>
+                <p>See you at the event!<br><strong>TicketFlow Team</strong></p>
             </body>
             </html>
             """;
