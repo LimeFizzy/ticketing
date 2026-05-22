@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
 
@@ -28,6 +27,18 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<Order>().Property(o => o.Status).HasConversion<string>();
         modelBuilder.Entity<Ticket>().Property(t => t.Status).HasConversion<string>();
         modelBuilder.Entity<PromoCode>().Property(p => p.DiscountType).HasConversion<string>();
+
+        // RowVersion via PostgreSQL xmin system column
+        modelBuilder.Entity<Event>().Property(e => e.RowVersion).IsRowVersion();
+        modelBuilder.Entity<EventTicketType>().Property(e => e.RowVersion).IsRowVersion();
+        modelBuilder.Entity<EventScanner>().Property(e => e.RowVersion).IsRowVersion();
+        modelBuilder.Entity<EventVenueMapPlace>().Property(e => e.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Order>().Property(o => o.RowVersion).IsRowVersion();
+        modelBuilder.Entity<PromoCode>().Property(p => p.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Review>().Property(r => r.RowVersion).IsRowVersion();
+        modelBuilder.Entity<Ticket>().Property(t => t.RowVersion).IsRowVersion();
+        modelBuilder.Entity<User>().Property(u => u.RowVersion).IsRowVersion();
+        modelBuilder.Entity<VenueMap>().Property(v => v.RowVersion).IsRowVersion();
 
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         modelBuilder.Entity<User>().HasIndex(u => u.InviteToken);
@@ -150,7 +161,6 @@ public class TicketingDbContext(DbContextOptions<TicketingDbContext> options) : 
         modelBuilder.Entity<Event>().Property(e => e.Title).HasMaxLength(200);
         modelBuilder.Entity<Event>().Property(e => e.Venue).HasMaxLength(200);
         modelBuilder.Entity<Event>().Property(e => e.City).HasMaxLength(100);
-        modelBuilder.Entity<Event>().Property(e => e.ImageUrl).HasMaxLength(500);
         modelBuilder.Entity<Event>().Property(e => e.Description).HasMaxLength(2000);
         modelBuilder.Entity<Event>().Property(e => e.Disclaimers).HasMaxLength(2000);
         modelBuilder.Entity<Event>().Property(e => e.TimeZone).HasMaxLength(100);

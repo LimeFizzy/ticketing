@@ -13,7 +13,7 @@ public class VenueMap
     public User CreatedByUser { get; set; } = null!;
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public ICollection<VenueMapPlace> Places { get; set; } = [];
     public ICollection<VenueMapDecoration> Decorations { get; set; } = [];

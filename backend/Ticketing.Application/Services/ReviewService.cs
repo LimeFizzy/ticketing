@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
 
@@ -60,7 +59,7 @@ public class ReviewService(
         if (review.UserId != userId)
             throw new UnauthorizedAccessException("You can only update your own reviews");
 
-        review.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
+        review.RowVersion = request.RowVersion;
         review.Rating = request.Rating;
         review.Comment = SanitizeComment(request.Comment);
         review.UpdatedAt = DateTime.UtcNow;
@@ -159,7 +158,7 @@ public class ReviewService(
         review.Comment,
         review.CreatedAt,
         review.UpdatedAt,
-        RowVersionHelper.ToBase64(review.RowVersion)
+        review.RowVersion
     );
 
     private static string SanitizeComment(string? comment) =>

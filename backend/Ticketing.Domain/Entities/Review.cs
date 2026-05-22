@@ -14,7 +14,7 @@ public class Review
     public DateTime? UpdatedAt { get; set; }
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
     public User User { get; set; } = null!;

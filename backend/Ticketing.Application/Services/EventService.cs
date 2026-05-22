@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -96,7 +95,7 @@ public class EventService(
         if (request.Date <= DateTime.UtcNow)
             throw new InvalidOperationException("Event date must be in the future");
 
-        @event.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
+        @event.RowVersion = request.RowVersion;
         @event.Title = request.Title;
         @event.Category = request.Category;
         @event.Date = request.Date;
@@ -136,7 +135,7 @@ public class EventService(
         var ticketTypes = types.Select(t =>
         {
             var sold = soldCounts.GetValueOrDefault(t.Id);
-            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, RowVersionHelper.ToBase64(t.RowVersion));
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, t.RowVersion);
         }).ToArray();
 
         var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
@@ -158,7 +157,7 @@ public class EventService(
             @event.Description,
             availableTickets,
             @event.Featured,
-            RowVersionHelper.ToBase64(@event.RowVersion),
+            @event.RowVersion,
             disclaimers,
             @event.VenueMapId,
             @event.Status,
@@ -179,7 +178,7 @@ public class EventService(
         var ticketTypes = types.Select(t =>
         {
             var sold = soldCounts.GetValueOrDefault(t.Id);
-            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, RowVersionHelper.ToBase64(t.RowVersion));
+            return new EventTicketTypeDto(t.Id, t.Name, t.Price, t.Description, t.Capacity, sold, t.RowVersion);
         }).ToArray();
 
         var availableTickets = ticketTypes.Sum(t => t.Capacity - t.Sold);
@@ -203,7 +202,7 @@ public class EventService(
             @event.Description,
             availableTickets,
             @event.Featured,
-            RowVersionHelper.ToBase64(@event.RowVersion),
+            @event.RowVersion,
             disclaimers,
             @event.VenueMapId,
             @event.Status,

@@ -14,5 +14,5 @@ public class EventTicketType
     public Event Event { get; set; } = null!;
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 }

@@ -86,17 +86,26 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
             .CountAsync(t => ticketTypeIds.Contains(t.EventTicketTypeId) && t.Status == TicketStatus.CheckedIn, cancellationToken);
         var checkInRate = totalSold > 0 ? Math.Round((double)totalCheckedIn / totalSold * 100, 1) : 0;
 
-        var dailySales = await context.Orders
+        var dailySalesRows = await context.Orders
             .AsNoTracking()
             .Where(o => o.EventId == eventId && o.Status == OrderStatus.Confirmed)
-            .GroupBy(o => o.CreatedAt.Date)
+            .SelectMany(o => o.Tickets.Select(t => new
+            {
+                o.EventId,
+                Date = o.CreatedAt.Date,
+                t.PricePaid
+            }))
+            .ToListAsync(cancellationToken);
+
+        var dailySales = dailySalesRows
+            .GroupBy(x => x.Date)
             .OrderBy(g => g.Key)
             .Select(g => new DailySalesDto(
                 g.Key,
-                g.SelectMany(o => o.Tickets).Count(),
-                g.SelectMany(o => o.Tickets).Sum(t => t.PricePaid)
+                g.Count(),
+                g.Sum(x => x.PricePaid)
             ))
-            .ToArrayAsync(cancellationToken);
+            .ToArray();
 
         return new EventAnalyticsDto(
             eventId,
@@ -147,21 +156,24 @@ public class AnalyticsRepository(TicketingDbContext context) : IAnalyticsReposit
             .GroupBy(t => t.Order.EventId)
             .ToDictionaryAsync(g => g.Key, g => g.Count(), cancellationToken);
 
-        var dailySalesByEvent = await context.Orders
+        var dailySalesRows = await context.Orders
             .AsNoTracking()
             .Where(o => eventIds.Contains(o.EventId) && o.Status == OrderStatus.Confirmed)
             .SelectMany(o => o.Tickets.Select(t => new { o.EventId, o.CreatedAt.Date, t.PricePaid }))
-            .GroupBy(x => new { x.EventId, x.Date })
-            .GroupBy(g => g.Key.EventId)
-            .ToDictionaryAsync(
+            .ToListAsync(cancellationToken);
+
+        var dailySalesByEvent = dailySalesRows
+            .GroupBy(x => x.EventId)
+            .ToDictionary(
                 g => g.Key,
-                g => g.Select(eg => new DailySalesDto(
-                    eg.Key.Date,
-                    eg.Count(),
-                    eg.Sum(x => x.PricePaid)
-                )).OrderBy(d => d.Date).ToArray(),
-                cancellationToken
-            );
+                g => g.GroupBy(x => x.Date)
+                    .OrderBy(day => day.Key)
+                    .Select(day => new DailySalesDto(
+                        day.Key,
+                        day.Count(),
+                        day.Sum(x => x.PricePaid)
+                    ))
+                    .ToArray());
 
         var eventTitleLookup = events.ToDictionary(e => e.Id, e => e.Title);
         var ticketTypesByEvent = ticketTypes.GroupBy(tt => tt.EventId).ToDictionary(g => g.Key, g => g.ToList());

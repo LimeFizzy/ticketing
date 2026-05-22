@@ -4,15 +4,17 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Hangfire;
 using System.Security.Claims;
 using Ticketing.Application.DTOs;
+using Ticketing.Application.Interfaces;
 using Ticketing.Application.Services;
 
 namespace Ticketing.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService, IAntiforgery antiforgery) : ControllerBase
+public class AuthController(IAuthService authService, IAntiforgery antiforgery, IEmailService emailService) : ControllerBase
 {
     [HttpGet("antiforgery-token", Name = "getAntiforgeryToken")]
     [AllowAnonymous]
@@ -96,6 +98,7 @@ public class AuthController(IAuthService authService, IAntiforgery antiforgery) 
         try
         {
             var (user, inviteToken) = await authService.InviteOrganizerAsync(adminUserId, request, cancellationToken);
+            BackgroundJob.Enqueue(() => emailService.SendOrganizerInvitationAsync(user.Email, user.FirstName, inviteToken));
             return Ok(new { user });
         }
         catch (UnauthorizedAccessException)

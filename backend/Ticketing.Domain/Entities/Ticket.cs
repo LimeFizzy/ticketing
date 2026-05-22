@@ -23,5 +23,5 @@ public class Ticket
     public VenueMapPlace? VenueMapPlace { get; set; }
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 }

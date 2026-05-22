@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -86,7 +85,7 @@ public class VenueMapService(
         var map = await venueMapRepository.GetByIdAsync(id, cancellationToken);
         if (map == null) return null;
 
-        map.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
+        map.RowVersion = request.RowVersion;
         map.Name = request.Name;
         map.Width = request.Width;
         map.Height = request.Height;
@@ -167,6 +166,6 @@ public class VenueMapService(
             new VenueMapDecorationDto(d.Id, d.X, d.Y, d.Width, d.Height, d.Label))
             .ToArray();
 
-        return new VenueMapDto(map.Id, map.Name, map.Width, map.Height, decorationDtos, placeDtos, RowVersionHelper.ToBase64(map.RowVersion));
+        return new VenueMapDto(map.Id, map.Name, map.Width, map.Height, decorationDtos, placeDtos, map.RowVersion);
     }
 }

@@ -73,6 +73,7 @@ public class StripeService(
 
         Guid? promoCodeId = null;
         decimal discountAmount = 0;
+        List<SessionDiscountOptions>? discounts = null;
 
         if (!string.IsNullOrWhiteSpace(request.PromoCode))
         {
@@ -91,20 +92,24 @@ public class StripeService(
 
                     if (discountAmount > 0)
                     {
-                        var discountCents = (long)Math.Round(discountAmount * 100, MidpointRounding.AwayFromZero);
-                        lineItems.Add(new SessionLineItemOptions
-                        {
-                            PriceData = new SessionLineItemPriceDataOptions
+                        var couponService = new CouponService();
+                        var couponOptions = promoCode.DiscountType == DiscountType.Percentage
+                            ? new CouponCreateOptions
                             {
+                                PercentOff = promoCode.DiscountValue,
+                                Duration = "once",
+                                Name = $"Promo code {promoCode.Code}"
+                            }
+                            : new CouponCreateOptions
+                            {
+                                AmountOff = (long)Math.Round(discountAmount * 100, MidpointRounding.AwayFromZero),
                                 Currency = "eur",
-                                UnitAmount = -discountCents,
-                                ProductData = new SessionLineItemPriceDataProductDataOptions
-                                {
-                                    Name = "Promo code discount",
-                                }
-                            },
-                            Quantity = 1,
-                        });
+                                Duration = "once",
+                                Name = $"Promo code {promoCode.Code}"
+                            };
+
+                        var coupon = await couponService.CreateAsync(couponOptions, cancellationToken: cancellationToken);
+                        discounts = [new SessionDiscountOptions { Coupon = coupon.Id }];
                     }
                 }
             }
@@ -118,6 +123,7 @@ public class StripeService(
             CancelUrl = options.Value.CancelUrl,
             CustomerEmail = userEmail,
             Metadata = metadata,
+            Discounts = discounts,
         };
 
         var service = new SessionService();

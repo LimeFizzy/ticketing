@@ -29,6 +29,7 @@ public class EventTicketTypeRepository(TicketingDbContext context) : IEventTicke
 
     public async Task UpdateAsync(EventTicketType ticketType, CancellationToken cancellationToken = default)
     {
+        context.Entry(ticketType).Property(e => e.RowVersion).OriginalValue = ticketType.RowVersion;
         context.EventTicketTypes.Update(ticketType);
         await context.SaveChangesAsync(cancellationToken);
     }

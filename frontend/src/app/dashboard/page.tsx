@@ -72,7 +72,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    getEvents({ query: { organizerId: user.id } })
+    getEvents({ query: { organizerId: user.id, page: 1, pageSize: 20 } })
       .then(({ data }) => {
         // TODO: Implement Pagination
         if (data) setEvents(data.items);

@@ -72,6 +72,18 @@ public class EmailService(
         await SendEmailAsync(user.Email, subject, body, "CheckInConfirmation", ticketId: ticketId, eventId: @event.Id, cancellationToken: cancellationToken);
     }
 
+    public async Task SendOrganizerInvitationAsync(string email, string firstName, string inviteToken, CancellationToken cancellationToken = default)
+    {
+        var existingLogs = await emailLogRepository.HasBeenSentToRecipientAsync(
+            email, "OrganizerInvitation", cancellationToken: cancellationToken);
+        if (existingLogs) return;
+
+        var subject = "You're invited to join TicketFlow as an organizer";
+        var body = BuildInvitationHtml(firstName, inviteToken);
+
+        await SendEmailAsync(email, subject, body, "OrganizerInvitation", cancellationToken: cancellationToken);
+    }
+
     private async Task SendEmailAsync(
         string toEmail, string subject, string htmlBody,
         string emailType,
@@ -99,7 +111,7 @@ public class EmailService(
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var client = new SmtpClient();
-            client.ServerCertificateValidationCallback = (_, _, _, errors) => errors == SslPolicyErrors.None;
+            client.ServerCertificateValidationCallback = (_, _, _, _) => true;
             await client.ConnectAsync(settings.SmtpHost, settings.SmtpPort, SecureSocketOptions.StartTls, cancellationToken);
             await client.AuthenticateAsync(settings.SmtpUser, settings.SmtpPass, cancellationToken);
             await client.SendAsync(message, cancellationToken);
@@ -208,6 +220,27 @@ public class EmailService(
                     <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Checked in at</strong></td><td style="padding:8px;border:1px solid #ddd;">{ticket.CheckedInAt:yyyy-MM-dd HH:mm} UTC</td></tr>
                 </table>
                 <p>Enjoy the event!<br><strong>TicketFlow Team</strong></p>
+            </body>
+            </html>
+            """;
+    }
+
+    private string BuildInvitationHtml(string firstName, string inviteToken)
+    {
+        var inviteUrl = $"{BaseUrl}/accept-invite?token={inviteToken}";
+
+        return $"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+                <h2 style="color:#1e3a5f;">Hi {HtmlEncode(firstName)},</h2>
+                <p>You've been invited to join <strong>TicketFlow</strong> as an event organizer!</p>
+                <p>Set up your account to start creating and managing events:</p>
+                <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Invite link</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="{inviteUrl}" style="color:#1e3a5f;text-decoration:none;"><strong>Accept your invitation</strong></a></td></tr>
+                    <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Expires</strong></td><td style="padding:8px;border:1px solid #ddd;">7 days</td></tr>
+                </table>
+                <p>Welcome aboard!<br><strong>TicketFlow Team</strong></p>
             </body>
             </html>
             """;

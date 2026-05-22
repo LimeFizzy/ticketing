@@ -32,6 +32,7 @@ public class UserRepository(TicketingDbContext context) : IUserRepository
 
     public Task UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
+        context.Entry(user).Property(u => u.RowVersion).OriginalValue = user.RowVersion;
         context.Users.Update(user);
         return Task.CompletedTask;
     }

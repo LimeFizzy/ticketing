@@ -13,7 +13,7 @@ public class EventScanner
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public Event? Event { get; set; }
     public User Organizer { get; set; } = null!;

@@ -10,7 +10,7 @@ public record EventTicketTypeDto(
     string? Description,
     [property: Required] int Capacity,
     [property: Required] int Sold,
-    [property: Required] string RowVersion
+    [property: Required] uint RowVersion
 );
 
 public record EventDto(
@@ -26,7 +26,7 @@ public record EventDto(
     [property: Required] string Description,
     [property: Required] int AvailableTickets,
     [property: Required] bool Featured,
-    [property: Required] string RowVersion,
+    [property: Required] uint RowVersion,
     string[]? Disclaimers,
     Guid? VenueMapId,
     [property: Required] EventStatus Status,
@@ -66,7 +66,7 @@ public record CreateEventRequest(
     [Required] DateTime Date,
     [Required][MaxLength(200)] string Venue,
     [Required][MaxLength(100)] string City,
-    [Url][MaxLength(500)] string? ImageUrl,
+    string? ImageUrl,
     [MaxLength(2000)] string? Description,
     EventStatus Status,
     [MinLength(1)][MaxLength(20)] CreateEventTicketTypeRequest[]? TicketTypes,
@@ -79,14 +79,14 @@ public record UpdateEventRequest(
     [Required] DateTime Date,
     [Required][MaxLength(200)] string Venue,
     [Required][MaxLength(100)] string City,
-    [Url][MaxLength(500)] string? ImageUrl,
+    string? ImageUrl,
     [MaxLength(2000)] string? Description,
     bool Featured,
     [MaxLength(2000)] string? Disclaimers,
     Guid? VenueMapId,
     [Required] EventStatus Status,
     [MaxLength(100)] string? TimeZone,
-    [property: Required] string RowVersion
+    [Required] uint RowVersion
 );
 
 public record CreateEventTicketTypeRequest(
@@ -101,7 +101,7 @@ public record UpdateEventTicketTypeRequest(
     [Range(0.01, double.MaxValue)] decimal Price,
     [MaxLength(500)] string? Description,
     [Range(1, int.MaxValue)] int Capacity,
-    [property: Required] string RowVersion
+    [Required] uint RowVersion
 );
 
 public record OrganizerEventTicketTypeDto(
@@ -111,5 +111,5 @@ public record OrganizerEventTicketTypeDto(
     string? Description,
     [property: Required] int Capacity,
     [property: Required] int Sold,
-    [property: Required] string RowVersion
+    [Required] uint RowVersion
 );

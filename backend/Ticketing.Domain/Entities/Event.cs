@@ -26,7 +26,7 @@ public class Event
     public User? Organizer { get; set; }
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public ICollection<EventTicketType> TicketTypes { get; set; } = [];
     public ICollection<PromoCode> PromoCodes { get; set; } = [];

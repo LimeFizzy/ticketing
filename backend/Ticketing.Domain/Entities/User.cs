@@ -16,7 +16,7 @@ public class User
     public DateTime? InviteTokenExpires { get; set; }
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public ICollection<Ticket> Tickets { get; set; } = [];
     public ICollection<Review> Reviews { get; set; } = [];

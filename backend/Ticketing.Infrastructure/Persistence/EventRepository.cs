@@ -26,7 +26,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
         if (filter != null)
         {
             if (filter.OrganizerId.HasValue)
-                query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value && e.Status == EventStatus.Published);
+                query = query.Where(e => e.OrganizerId == filter.OrganizerId.Value);
 
             if (filter.Status.HasValue)
                 query = query.Where(e => e.Status == filter.Status.Value);
@@ -81,10 +81,6 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
                 }
             }
         }
-        else
-        {
-            query = query.Where(e => e.Status == EventStatus.Published);
-        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -124,6 +120,7 @@ public class EventRepository(TicketingDbContext context) : IEventRepository
 
     public async Task UpdateAsync(Event @event, CancellationToken cancellationToken = default)
     {
+        context.Entry(@event).Property(e => e.RowVersion).OriginalValue = @event.RowVersion;
         context.Events.Update(@event);
         await context.SaveChangesAsync(cancellationToken);
     }

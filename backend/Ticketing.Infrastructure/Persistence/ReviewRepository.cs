@@ -37,6 +37,7 @@ public class ReviewRepository(TicketingDbContext context) : IReviewRepository
 
     public Task UpdateAsync(Review review, CancellationToken cancellationToken = default)
     {
+        context.Entry(review).Property(r => r.RowVersion).OriginalValue = review.RowVersion;
         context.Reviews.Update(review);
         return Task.CompletedTask;
     }

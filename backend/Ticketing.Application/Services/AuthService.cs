@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -92,7 +91,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
         user.Email = normalizedEmail;
-        user.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
+        user.RowVersion = request.RowVersion;
 
         await userRepository.UpdateAsync(user, cancellationToken);
         await userRepository.SaveChangesAsync(cancellationToken);
@@ -191,6 +190,6 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
 
     private static UserDto MapToDto(User user) => new(
         user.Id, user.FirstName, user.LastName, user.Email, user.Role,
-        RowVersionHelper.ToBase64(user.RowVersion)
+        user.RowVersion
     );
 }

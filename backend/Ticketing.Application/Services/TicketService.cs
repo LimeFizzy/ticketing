@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -73,7 +72,7 @@ public class TicketService(ITicketRepository ticketRepository, IEventScannerRepo
             @event.Venue,
             @event.City,
             @event.ImageUrl,
-            RowVersionHelper.ToBase64(ticket.RowVersion),
+            ticket.RowVersion,
             ticket.CheckedInAt,
             ticket.VenueMapPlaceId,
             ticket.VenueMapPlace?.Label

@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -188,7 +187,7 @@ public class ScannerService(
         assignment.Event?.Title,
         assignment.AssignToAllEvents,
         !string.IsNullOrEmpty(user.PasswordHash),
-        RowVersionHelper.ToBase64(assignment.RowVersion)
+        assignment.RowVersion
     );
 
     private static ScannerEventDto MapEventToDto(Event @event) => new(

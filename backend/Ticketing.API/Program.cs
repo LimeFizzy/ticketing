@@ -137,7 +137,9 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = "TicketingXSRF";
     options.Cookie.HttpOnly = false;
     options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
 });
 builder.Services.AddScoped<GlobalExceptionHandler>();
 builder.Services.Configure<AuditLogSettings>(builder.Configuration.GetSection("AuditLogging"));

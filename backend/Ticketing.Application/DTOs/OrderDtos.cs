@@ -31,5 +31,5 @@ public record OrderDto(
     [property: Required] OrderStatus Status,
     [property: Required] DateTime CreatedAt,
     [property: Required] TicketDto[] Tickets,
-    [property: Required] string RowVersion
+    [property: Required] uint RowVersion
 );

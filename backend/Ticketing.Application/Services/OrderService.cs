@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -177,12 +176,12 @@ public class OrderService(
                 @event.Venue,
                 @event.City,
                 @event.ImageUrl,
-                RowVersionHelper.ToBase64(t.RowVersion),
+                t.RowVersion,
                 null,
                 t.VenueMapPlaceId,
                 t.VenueMapPlace?.Label
             ))],
-            RowVersionHelper.ToBase64(order.RowVersion)
+            order.RowVersion
         );
     }
 }

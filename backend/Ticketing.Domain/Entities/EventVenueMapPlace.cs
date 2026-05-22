@@ -10,7 +10,7 @@ public class EventVenueMapPlace
     public Guid EventTicketTypeId { get; set; }
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
     public VenueMapPlace VenueMapPlace { get; set; } = null!;

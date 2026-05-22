@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
 
@@ -37,7 +36,7 @@ public class TicketTypeService(
 
         return new OrganizerEventTicketTypeDto(
             created.Id, created.Name, created.Price, created.Description, created.Capacity, 0,
-            RowVersionHelper.ToBase64(created.RowVersion)
+            created.RowVersion
         );
     }
 
@@ -57,7 +56,7 @@ public class TicketTypeService(
         if (request.Capacity < sold)
             throw new InvalidOperationException($"Capacity cannot be less than {sold} (tickets already sold)");
 
-        ticketType.RowVersion = RowVersionHelper.FromBase64(request.RowVersion);
+        ticketType.RowVersion = request.RowVersion;
         ticketType.Name = request.Name;
         ticketType.Price = request.Price;
         ticketType.Description = request.Description;
@@ -69,7 +68,7 @@ public class TicketTypeService(
 
         return new OrganizerEventTicketTypeDto(
             ticketType.Id, ticketType.Name, ticketType.Price, ticketType.Description, ticketType.Capacity, soldAfterUpdate,
-            RowVersionHelper.ToBase64(ticketType.RowVersion)
+            ticketType.RowVersion
         );
     }
 

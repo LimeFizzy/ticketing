@@ -17,7 +17,7 @@ public class PromoCode
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Timestamp]
-    public byte[] RowVersion { get; set; } = [];
+    public uint RowVersion { get; set; }
 
     public Event Event { get; set; } = null!;
 }

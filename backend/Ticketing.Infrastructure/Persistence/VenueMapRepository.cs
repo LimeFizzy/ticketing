@@ -32,6 +32,7 @@ public class VenueMapRepository(TicketingDbContext context) : IVenueMapRepositor
 
     public async Task UpdateAsync(VenueMap venueMap, CancellationToken cancellationToken = default)
     {
+        context.Entry(venueMap).Property(v => v.RowVersion).OriginalValue = venueMap.RowVersion;
         context.VenueMaps.Update(venueMap);
         await context.SaveChangesAsync(cancellationToken);
     }

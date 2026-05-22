@@ -1,5 +1,4 @@
 using Ticketing.Application.DTOs;
-using Ticketing.Application.Helpers;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Constants;
 using Ticketing.Domain.Entities;
@@ -127,6 +126,6 @@ public class PromoCodeService(
         promoCode.ExpiresAt,
         promoCode.IsActive,
         promoCode.CreatedAt,
-        RowVersionHelper.ToBase64(promoCode.RowVersion)
+        promoCode.RowVersion
     );
 }
