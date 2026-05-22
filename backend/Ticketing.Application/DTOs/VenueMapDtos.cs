@@ -73,7 +73,7 @@ public record UpdateVenueMapRequest(
     [Required][Range(1, 10000)] int Height,
     [MaxLength(500)] CreateVenueMapDecorationRequest[]? Decorations,
     [MaxLength(500)] CreateVenueMapPlaceRequest[]? Places,
-    [Required] string RowVersion
+    [property: Required] string RowVersion
 );
 
 public record EventVenueMapPlaceDto(

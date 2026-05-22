@@ -21,12 +21,13 @@ const AnalyticsPage = async () => {
     ]
   );
 
+  // TODO: Implement Pagination
   const { data: myEvents } = me?.id
     ? await getEvents({ headers, query: { organizerId: me.id } })
-    : { data: [] };
+    : { data: { items: [] } };
 
   const eventRatings: Record<string, EventRating> = {};
-  for (const e of myEvents ?? []) {
+  for (const e of myEvents?.items ?? []) {
     eventRatings[e.id] = {
       rating: e.averageRating ?? null,
       reviews: e.reviewCount ?? 0,

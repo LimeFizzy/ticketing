@@ -45,9 +45,9 @@ export const AcceptInviteForm = () => {
       return;
     }
 
-    verifyInvite({ query: { token } })
+    verifyInvite({ body: { token } })
       .then(({ data }) => {
-        if (data?.valid && data.email) {
+        if (data?.valid && data?.email) {
           setEmail(data.email);
         } else {
           setError('This invite link is invalid or has expired');

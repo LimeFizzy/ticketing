@@ -135,7 +135,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
     {
         var hashedToken = HashToken(token);
         var user = await userRepository.GetByInviteTokenAsync(hashedToken, cancellationToken);
-        return new VerifyInviteResponse(user != null);
+        return new VerifyInviteResponse(user != null, user?.Email ?? null);
     }
 
     public async Task<UserDto?> AcceptInviteAsync(AcceptInviteRequest request, CancellationToken cancellationToken = default)

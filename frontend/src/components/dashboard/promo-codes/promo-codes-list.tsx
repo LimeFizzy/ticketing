@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { createPromoCode, deletePromoCode } from '@/lib/api';
-import type { PromoCodeDto } from '@/lib/api/types.gen';
+import type { DiscountType, PromoCodeDto } from '@/lib/api/types.gen';
 import { formatCurrencyEur } from '@/lib/formatters';
 
 interface Props {
@@ -25,7 +25,7 @@ interface Props {
 
 interface Draft {
   code: string;
-  discountType: 'percentage' | 'fixed';
+  discountType: DiscountType;
   discountValue: string;
   maxUses: string;
   expiresAt: string;
@@ -33,7 +33,7 @@ interface Draft {
 
 const emptyDraft = (): Draft => ({
   code: '',
-  discountType: 'percentage',
+  discountType: 'Percentage',
   discountValue: '',
   maxUses: '',
   expiresAt: '',
@@ -46,7 +46,7 @@ const isExpired = (code: PromoCodeDto) =>
   !!code.expiresAt && new Date(code.expiresAt) < new Date();
 
 const formatDiscount = (code: PromoCodeDto) =>
-  code.discountType === 'percentage'
+  code.discountType === 'Percentage'
     ? `${code.discountValue}%`
     : formatCurrencyEur(code.discountValue);
 
@@ -204,7 +204,7 @@ export const PromoCodesList = ({ eventId, initialCodes }: Props) => {
                         value={draft.discountType}
                         onValueChange={(v) =>
                           patchDraft({
-                            discountType: v as 'percentage' | 'fixed',
+                            discountType: v as DiscountType,
                           })
                         }
                       >
@@ -212,16 +212,16 @@ export const PromoCodesList = ({ eventId, initialCodes }: Props) => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="percentage">%</SelectItem>
-                          <SelectItem value="fixed">€ fixed</SelectItem>
+                          <SelectItem value="Percentage">%</SelectItem>
+                          <SelectItem value="Fixed">€ fixed</SelectItem>
                         </SelectContent>
                       </Select>
                       <Input
                         type="number"
                         min={0}
-                        step={draft.discountType === 'percentage' ? 1 : 0.01}
+                        step={draft.discountType === 'Percentage' ? 1 : 0.01}
                         max={
-                          draft.discountType === 'percentage' ? 100 : undefined
+                          draft.discountType === 'Percentage' ? 100 : undefined
                         }
                         value={draft.discountValue}
                         onChange={(e) =>

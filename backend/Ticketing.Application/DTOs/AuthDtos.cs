@@ -30,7 +30,7 @@ public record UpdateProfileRequest(
     [Required][MaxLength(100)] string FirstName,
     [Required][MaxLength(100)] string LastName,
     [Required][EmailAddress][MaxLength(256)] string Email,
-    [Required] string RowVersion
+    [property: Required] string RowVersion
 );
 
 public record InviteOrganizerRequest(
@@ -40,7 +40,8 @@ public record InviteOrganizerRequest(
 );
 
 public record VerifyInviteResponse(
-    [property: Required] bool Valid
+    [property: Required] bool Valid,
+    [property: Required][MaxLength(256)] string? Email
 );
 
 public record AcceptInviteRequest(

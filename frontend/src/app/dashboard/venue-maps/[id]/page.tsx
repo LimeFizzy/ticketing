@@ -15,7 +15,7 @@ export default async function Page({
   const { id } = await params;
 
   if (id === 'new') {
-    return <VenueMapEditorPage mapId="new" />;
+    return <VenueMapEditorPage mapId="new" rowVersion="" />;
   }
 
   const cookieStore = await cookies();
@@ -49,6 +49,7 @@ export default async function Page({
   return (
     <VenueMapEditorPage
       mapId={id}
+      rowVersion={data.rowVersion}
       initialName={data.name}
       initialWidth={data.width}
       initialHeight={data.height}

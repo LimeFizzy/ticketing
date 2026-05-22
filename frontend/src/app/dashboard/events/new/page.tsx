@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { EventCategory } from '@/lib/api/types.gen';
+import type { EventCategory, EventStatus } from '@/lib/api/types.gen';
 import { createEvent } from '@/lib/api';
 import { dashboardEventRoute, Route } from '@/lib/routes';
 import { CoverImageField } from '@/components/dashboard/events/cover-image-field';
@@ -28,7 +28,7 @@ type EventForm = {
   city: string;
   description: string;
   imageUrl: string;
-  status: 'published' | 'draft';
+  status: EventStatus;
 };
 
 const INITIAL_FORM: EventForm = {
@@ -39,7 +39,7 @@ const INITIAL_FORM: EventForm = {
   city: '',
   description: '',
   imageUrl: '',
-  status: 'draft',
+  status: 'Draft',
 };
 
 type FieldErrors = Partial<Record<'title' | 'date' | 'venue' | 'city', string>>;
@@ -143,17 +143,17 @@ const NewEventPage = () => {
             </CardHeader>
             <CardContent className="flex flex-col gap-3 p-6 pt-0">
               <div className="flex items-center gap-2.5 rounded-lg bg-muted/40 px-3 py-2.5">
-                {form.status === 'published' ? (
+                {form.status === 'Published' ? (
                   <Globe className="size-4 shrink-0 text-primary" />
                 ) : (
                   <Lock className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {form.status === 'published' ? 'Published' : 'Draft'}
+                    {form.status === 'Published' ? 'Published' : 'Draft'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {form.status === 'published'
+                    {form.status === 'Published'
                       ? 'Visible to the public after creation'
                       : 'Save first, publish when ready'}
                   </p>
@@ -163,19 +163,19 @@ const NewEventPage = () => {
               <Select
                 value={form.status}
                 onValueChange={(v) =>
-                  patch({ status: v as 'published' | 'draft' })
+                  patch({ status: v as 'Published' | 'Draft' })
                 }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue>
                     {() =>
-                      form.status === 'published' ? 'Published' : 'Draft'
+                      form.status === 'Published' ? 'Published' : 'Draft'
                     }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Published">Published</SelectItem>
                 </SelectContent>
               </Select>
 

@@ -86,7 +86,7 @@ public record UpdateEventRequest(
     Guid? VenueMapId,
     [Required] EventStatus Status,
     [MaxLength(100)] string? TimeZone,
-    [Required] string RowVersion
+    [property: Required] string RowVersion
 );
 
 public record CreateEventTicketTypeRequest(
@@ -101,7 +101,7 @@ public record UpdateEventTicketTypeRequest(
     [Range(0.01, double.MaxValue)] decimal Price,
     [MaxLength(500)] string? Description,
     [Range(1, int.MaxValue)] int Capacity,
-    [Required] string RowVersion
+    [property: Required] string RowVersion
 );
 
 public record OrganizerEventTicketTypeDto(
