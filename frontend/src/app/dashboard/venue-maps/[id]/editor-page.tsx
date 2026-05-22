@@ -19,7 +19,7 @@ import { EditorPanel } from '@/components/dashboard/venue-maps/editor-panel';
 
 interface VenueMapEditorPageProps {
   mapId: string;
-  rowVersion: string;
+  rowVersion: number;
   initialName?: string;
   initialWidth?: number;
   initialHeight?: number;
