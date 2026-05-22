@@ -41,6 +41,16 @@ const SignUpForm = () => {
       setError('All fields are required');
       return;
     }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      setError(
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      );
+      return;
+    }
     if (password !== confirm) {
       setError('Passwords do not match');
       return;
@@ -75,6 +85,7 @@ const SignUpForm = () => {
               <Input
                 placeholder="Jonas"
                 autoComplete="given-name"
+                maxLength={100}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
               />
@@ -84,6 +95,7 @@ const SignUpForm = () => {
               <Input
                 placeholder="Jonaitis"
                 autoComplete="family-name"
+                maxLength={100}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
               />
@@ -95,6 +107,7 @@ const SignUpForm = () => {
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
+              maxLength={256}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -103,8 +116,9 @@ const SignUpForm = () => {
           <FormField label="Password">
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Min. 8 chars, upper + lower + digit"
               autoComplete="new-password"
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -113,8 +127,9 @@ const SignUpForm = () => {
           <FormField label="Confirm password">
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Re-enter password"
               autoComplete="new-password"
+              maxLength={128}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
