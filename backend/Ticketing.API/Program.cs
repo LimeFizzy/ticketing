@@ -285,6 +285,11 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 app.MapOpenApi();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
@@ -321,11 +326,6 @@ app.UseCors("FrontendPolicy");
 app.UseRateLimiter();
 
 app.UseMiddleware<GlobalExceptionHandler>();
-
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
 
 app.UseAuthentication();
 app.UseAuthorization();
