@@ -6,7 +6,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Loader2, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { deleteTicketType, updateTicketType } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type {
   EventDto,
   OrganizerEventTicketTypeDto,
@@ -63,7 +65,7 @@ export const EditTicketTypeForm = ({
     if (newCapacity < currentTicketType.sold) return;
 
     setSaving(true);
-    const { data } = await updateTicketType({
+    const { data, error } = await updateTicketType({
       path: { eventId: id, ticketTypeId: ticketId },
       body: {
         name: form.name.trim(),
@@ -74,7 +76,9 @@ export const EditTicketTypeForm = ({
       },
     });
 
-    if (data) {
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+    } else if (data) {
       setCurrentTicketType(data as OrganizerEventTicketTypeDto);
       showSaved();
     }
@@ -85,7 +89,14 @@ export const EditTicketTypeForm = ({
     if (!window.confirm(`Delete "${form.name}"? This cannot be undone.`))
       return;
     setDeleting(true);
-    await deleteTicketType({ path: { eventId: id, ticketTypeId: ticketId } });
+    const { error } = await deleteTicketType({
+      path: { eventId: id, ticketTypeId: ticketId },
+    });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setDeleting(false);
+      return;
+    }
     router.push(dashboardEventTicketsRoute(id));
   };
 

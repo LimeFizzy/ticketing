@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { createReview, updateReview, deleteReview } from '@/lib/api';
-import type { ProblemDetails, ReviewDto } from '@/lib/api/types.gen';
+import type { ReviewDto } from '@/lib/api/types.gen';
+import { extractApiError } from '@/lib/api-error';
 import { Route } from '@/lib/routes';
 
 interface Props {
@@ -22,13 +24,11 @@ export const ReviewForm = ({ eventId, existingReview }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) return;
     setSubmitting(true);
-    setError(null);
     try {
       const body = { rating, comment: comment.trim() || undefined };
       if (existingReview) {
@@ -36,23 +36,25 @@ export const ReviewForm = ({ eventId, existingReview }: Props) => {
           path: { reviewId: existingReview.id },
           body: { ...body, rowVersion: existingReview.rowVersion },
         });
-        if (err) throw err;
+        if (err) {
+          toast.error(extractApiError(err), { duration: Infinity });
+          return;
+        }
       } else {
         const { error: err } = await createReview({
           body: { eventId, ...body },
         });
         if (err) {
-          if ((err as ProblemDetails).status === 403) {
-            setError("You can only review events you've attended.");
-            return;
-          }
-          throw err;
+          toast.error(extractApiError(err), { duration: Infinity });
+          return;
         }
       }
       setDone(true);
       router.refresh();
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.', {
+        duration: Infinity,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -61,13 +63,18 @@ export const ReviewForm = ({ eventId, existingReview }: Props) => {
   const handleDelete = async () => {
     if (!existingReview) return;
     setDeleting(true);
-    try {
-      await deleteReview({ path: { reviewId: existingReview.id } });
-      router.push(Route.Home);
-    } catch {
-      setError('Could not delete review. Please try again.');
+    const { error } = await deleteReview({
+      path: { reviewId: existingReview.id },
+    });
+    if (error) {
+      toast.error(
+        extractApiError(error, 'Could not delete review. Please try again.'),
+        { duration: Infinity }
+      );
       setDeleting(false);
+      return;
     }
+    router.push(Route.Home);
   };
 
   if (done) {
@@ -131,8 +138,6 @@ export const ReviewForm = ({ eventId, existingReview }: Props) => {
           className="resize-none"
         />
       </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex gap-2">
         <Button type="submit" disabled={rating === 0 || submitting}>

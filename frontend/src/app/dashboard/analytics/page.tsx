@@ -13,13 +13,14 @@ const AnalyticsPage = async () => {
   const cookieStore = await cookies();
   const headers = { Cookie: cookieStore.toString() };
 
-  const [{ data: me }, { data: summary }, { data: events }] = await Promise.all(
-    [
+  const [{ data: me, error: meError }, { data: summary }, { data: events }] =
+    await Promise.all([
       getMe({ headers }),
       getAnalyticsSummary({ headers }),
       getAllEventAnalytics({ headers }),
-    ]
-  );
+    ]);
+
+  if (meError) throw new Error('Failed to load analytics. Please try again.');
 
   // TODO: Implement Pagination
   const { data: myEvents } = me?.id

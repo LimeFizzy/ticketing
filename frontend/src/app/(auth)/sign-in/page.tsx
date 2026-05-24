@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { Field } from '@base-ui/react/field';
 import {
   Card,
@@ -44,8 +45,11 @@ const SignInForm = () => {
       await signIn(email, password);
       router.replace(next);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An error occurred during sign in'
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during sign in.',
+        { duration: Infinity }
       );
     }
   };

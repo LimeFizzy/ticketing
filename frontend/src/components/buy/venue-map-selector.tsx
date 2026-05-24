@@ -13,7 +13,9 @@ import { usePanZoom } from '@/hooks/use-pan-zoom';
 import { useTicketSelection } from '@/hooks/use-ticket-selection';
 import { useRestoreSelection } from '@/hooks/use-restore-selection';
 import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
 import { createCheckoutSession, type EventDto } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import { saveSelection } from '@/lib/buy-utils';
 import { eventBuyRoute, Route } from '@/lib/routes';
 
@@ -29,7 +31,6 @@ export const VenueMapSelector = ({
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [submitting, setSubmitting] = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const {
     selection,
@@ -113,7 +114,6 @@ export const VenueMapSelector = ({
       }
 
       setSubmitting(true);
-      setCheckoutError(null);
       try {
         const items = Object.entries(selection)
           .filter(([, qty]) => qty > 0)
@@ -125,8 +125,17 @@ export const VenueMapSelector = ({
         const { data, error } = await createCheckoutSession({
           body: { eventId: event.id, items, promoCode: promoCode ?? null },
         });
-        if (error || !data?.sessionUrl) {
-          setCheckoutError('Something went wrong. Please try again.');
+        if (error) {
+          toast.error(
+            extractApiError(error, 'Checkout failed. Please try again.'),
+            { duration: Infinity }
+          );
+          return;
+        }
+        if (!data?.sessionUrl) {
+          toast.error('Checkout failed. Please try again.', {
+            duration: Infinity,
+          });
           return;
         }
         window.location.href = data.sessionUrl;
@@ -182,7 +191,6 @@ export const VenueMapSelector = ({
         totalQuantity={total}
         totalPrice={totalPrice}
         submitting={submitting}
-        checkoutError={checkoutError}
         onContinue={handleContinue}
       />
     </div>

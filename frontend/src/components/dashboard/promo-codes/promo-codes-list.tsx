@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { toast } from 'sonner';
 import { createPromoCode, deletePromoCode } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { DiscountType, PromoCodeDto } from '@/lib/api/types.gen';
 import { formatCurrencyEur } from '@/lib/formatters';
 
@@ -63,7 +65,7 @@ export const PromoCodesList = ({ eventId, initialCodes }: Props) => {
   const commitAdd = async () => {
     if (!isValid(draft)) return;
     setCommitting(true);
-    const { data } = await createPromoCode({
+    const { data, error } = await createPromoCode({
       path: { eventId },
       body: {
         code: draft.code.trim().toUpperCase(),
@@ -75,6 +77,11 @@ export const PromoCodesList = ({ eventId, initialCodes }: Props) => {
           : null,
       },
     });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setCommitting(false);
+      return;
+    }
     if (data) setCodes((prev) => [...prev, data]);
     setAdding(false);
     setCommitting(false);
@@ -83,7 +90,14 @@ export const PromoCodesList = ({ eventId, initialCodes }: Props) => {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    await deletePromoCode({ path: { eventId, promoCodeId: id } });
+    const { error } = await deletePromoCode({
+      path: { eventId, promoCodeId: id },
+    });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setDeletingId(null);
+      return;
+    }
     setCodes((prev) => prev.filter((c) => c.id !== id));
     setDeletingId(null);
   };

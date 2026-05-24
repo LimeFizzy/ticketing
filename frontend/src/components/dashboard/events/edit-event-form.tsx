@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DisclaimersCard } from '@/components/dashboard/events/disclaimers-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import { deleteEvent, updateEvent } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { EventCategory, EventDto, EventStatus } from '@/lib/api/types.gen';
 import {
   dashboardEventCheckInRoute,
@@ -68,7 +70,7 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
     action: 'save' | 'publish' | 'unpublish'
   ) => {
     setSaving(action);
-    const { data } = await updateEvent({
+    const { data, error } = await updateEvent({
       path: { id },
       body: {
         title: form.title,
@@ -93,7 +95,9 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
       },
     });
 
-    if (data) {
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+    } else if (data) {
       setEvent(data as EventDto);
       patch({ status: nextStatus });
       showSaved();
@@ -108,7 +112,11 @@ export const EditEventForm = ({ event: initialEvent }: { event: EventDto }) => {
   const handleDelete = async () => {
     if (!window.confirm(`Delete "${form.title}"? This cannot be undone.`))
       return;
-    await deleteEvent({ path: { id } });
+    const { error } = await deleteEvent({ path: { id } });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      return;
+    }
     router.push(Route.Dashboard);
   };
 
