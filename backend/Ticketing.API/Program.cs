@@ -14,6 +14,7 @@ using Ticketing.API.Middleware;
 using Ticketing.API.Services;
 using Hangfire;
 using EventService = Ticketing.Application.Services.EventService;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -320,6 +321,11 @@ app.UseCors("FrontendPolicy");
 app.UseRateLimiter();
 
 app.UseMiddleware<GlobalExceptionHandler>();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
