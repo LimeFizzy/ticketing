@@ -8,10 +8,11 @@ namespace Ticketing.Application.Services;
 public interface IEventService
 {
     Task<EventDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default);
+    Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, bool isAdmin = false, CancellationToken cancellationToken = default);
     Task<EventDto> CreateAsync(Guid organizerId, CreateEventRequest request, CancellationToken cancellationToken = default);
-    Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, CancellationToken cancellationToken = default);
-    Task SoftDeleteAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default);
+    Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, bool isAdmin = false, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(Guid eventId, Guid organizerId, bool isAdmin = false, CancellationToken cancellationToken = default);
+    Task<EventDto?> SetFeaturedAsync(Guid eventId, bool featured, uint rowVersion, CancellationToken cancellationToken = default);
 }
 
 public class EventService(
@@ -27,9 +28,9 @@ public class EventService(
         return await MapToDtoAsync(@event, cancellationToken);
     }
 
-    public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, CancellationToken cancellationToken = default)
+    public async Task<PaginatedResult<EventDto>> GetAllAsync(EventsQueryDto? filter = null, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
-        var (events, totalCount) = await eventRepository.GetAllAsync(filter, cancellationToken);
+        var (events, totalCount) = await eventRepository.GetAllAsync(filter, isAdmin, cancellationToken);
         var eventList = events.ToList();
 
         var page = Math.Max(filter?.Page ?? 1, 1);
@@ -84,12 +85,12 @@ public class EventService(
         return await MapToDtoAsync(created, cancellationToken);
     }
 
-    public async Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, CancellationToken cancellationToken = default)
+    public async Task<EventDto?> UpdateAsync(Guid eventId, Guid organizerId, UpdateEventRequest request, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken);
         if (@event == null) return null;
 
-        if (@event.OrganizerId != organizerId)
+        if (!isAdmin && @event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("Event not found or not owned by you");
 
         if (request.Date <= DateTime.UtcNow)
@@ -114,13 +115,25 @@ public class EventService(
         return await MapToDtoAsync(@event, cancellationToken);
     }
 
-    public async Task SoftDeleteAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default)
+    public async Task SoftDeleteAsync(Guid eventId, Guid organizerId, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken) ?? throw new KeyNotFoundException("Event not found");
-        if (@event.OrganizerId != organizerId)
+        if (!isAdmin && @event.OrganizerId != organizerId)
             throw new UnauthorizedAccessException("Event not found or not owned by you");
 
         await eventRepository.SoftDeleteAsync(eventId, cancellationToken);
+    }
+
+    public async Task<EventDto?> SetFeaturedAsync(Guid eventId, bool featured, uint rowVersion, CancellationToken cancellationToken = default)
+    {
+        var @event = await eventRepository.GetByIdAsync(eventId, cancellationToken);
+        if (@event == null) return null;
+
+        @event.RowVersion = rowVersion;
+        @event.Featured = featured;
+        await eventRepository.UpdateAsync(@event, cancellationToken);
+
+        return await MapToDtoAsync(@event, cancellationToken);
     }
 
     private async Task<EventDto> MapToDtoAsync(Event @event, CancellationToken cancellationToken)
