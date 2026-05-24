@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { EventPurchaseCard } from '@/components/events/event-purchase-card';
+import { EventFeaturedToggle } from '@/components/events/event-featured-toggle';
 import { EventDisclaimers } from '@/components/events/event-disclaimers';
 import { EventReviews } from '@/components/events/event-reviews';
 import { CATEGORY_COLORS } from '@/lib/event-styles';
@@ -67,6 +68,11 @@ const EventDetailPage = async ({
           </div>
 
           <EventPurchaseCard eventId={event.id} priceFrom={event.priceFrom} />
+          <EventFeaturedToggle
+            eventId={event.id}
+            featured={event.featured}
+            rowVersion={event.rowVersion}
+          />
         </div>
 
         <div className="flex flex-col gap-4">
