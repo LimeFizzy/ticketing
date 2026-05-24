@@ -141,7 +141,7 @@ public class ScannerService(
                 var (evts, _) = await eventRepository.GetAllAsync(new EventsQueryDto(
                     Category: null, Featured: null, City: null, Search: null,
                     Date: null, Price: null, OrganizerId: oid, Status: null
-                ), cancellationToken);
+                ), false, cancellationToken);
                 allEventIds.AddRange(evts.Select(e => e.Id));
             }
 
