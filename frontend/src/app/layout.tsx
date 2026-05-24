@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/auth-context';
 import './globals.css';
 
@@ -54,6 +55,7 @@ const RootLayout = ({
           ].join(', '),
         }}
       />
+      <Toaster position="top-center" richColors closeButton />
       <AuthProvider>{children}</AuthProvider>
     </body>
   </html>

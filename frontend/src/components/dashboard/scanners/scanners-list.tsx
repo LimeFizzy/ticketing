@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form-field';
+import { toast } from 'sonner';
 import { getScannersForEvent, inviteScanner, removeScanner } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { ScannerDto } from '@/lib/api/types.gen';
 import { cn } from '@/lib/utils';
 
@@ -41,21 +43,20 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
   const [committing, setCommitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [touched, setTouched] = useState({ email: false, firstName: false });
 
   const patchDraft = (patch: Partial<Draft>) =>
     setDraft((prev) => ({ ...prev, ...patch }));
 
   const openModal = () => {
     setDraft(emptyDraft());
-    setApiError(null);
+    setTouched({ email: false, firstName: false });
     setOpen(true);
   };
 
   const commitAdd = async () => {
     if (!isValid(draft)) return;
     setCommitting(true);
-    setApiError(null);
 
     const { data, error } = await inviteScanner({
       path: { eventId },
@@ -69,10 +70,7 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
     });
 
     if (error) {
-      setApiError(
-        (error as Record<string, unknown> & { title?: string })?.title ||
-          'Failed to invite scanner.'
-      );
+      toast.error(extractApiError(error), { duration: Infinity });
       setCommitting(false);
       return;
     }
@@ -90,9 +88,12 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
     const { error } = await removeScanner({
       path: { eventId, assignmentId: id },
     });
-    if (!error) {
-      setScanners((prev) => prev.filter((s) => s.id !== id));
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setDeletingId(null);
+      return;
     }
+    setScanners((prev) => prev.filter((s) => s.id !== id));
     setDeletingId(null);
   };
 
@@ -239,10 +240,18 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
                       onChange={(e) =>
                         patchDraft({ firstName: e.target.value })
                       }
+                      onBlur={() =>
+                        setTouched((t) => ({ ...t, firstName: true }))
+                      }
                       placeholder="Jane"
                       maxLength={100}
                       autoFocus
                     />
+                    {touched.firstName && !draft.firstName.trim() && (
+                      <p className="mt-1 text-xs text-destructive">
+                        First name is required.
+                      </p>
+                    )}
                   </FormField>
                   <FormField label="Last name">
                     <Input
@@ -259,9 +268,16 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
                     type="email"
                     value={draft.email}
                     onChange={(e) => patchDraft({ email: e.target.value })}
+                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
                     placeholder="jane@example.com"
                     maxLength={256}
                   />
+                  {touched.email &&
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim()) && (
+                      <p className="mt-1 text-xs text-destructive">
+                        Please enter a valid email address.
+                      </p>
+                    )}
                 </FormField>
 
                 <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50">
@@ -283,10 +299,6 @@ export const ScannersList = ({ eventId, initialScanners }: Props) => {
                     </p>
                   </div>
                 </label>
-
-                {apiError && (
-                  <p className="text-sm text-destructive">{apiError}</p>
-                )}
               </div>
 
               <div className="mt-6 flex justify-end gap-2">

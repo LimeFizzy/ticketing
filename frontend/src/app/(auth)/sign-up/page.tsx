@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -60,10 +61,11 @@ const SignUpForm = () => {
       await signUp({ firstName, lastName, email, password });
       router.replace(next);
     } catch (err) {
-      setError(
+      toast.error(
         err instanceof Error
           ? err.message
-          : 'An error occurred during registration'
+          : 'An error occurred during registration.',
+        { duration: Infinity }
       );
     }
   };

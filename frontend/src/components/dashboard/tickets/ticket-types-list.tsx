@@ -5,7 +5,9 @@ import { Check, Loader2, Plus, Pencil, Search, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import { createTicketType, deleteTicketType } from '@/lib/api';
+import { extractApiError } from '@/lib/api-error';
 import type { OrganizerEventTicketTypeDto } from '@/lib/api/types.gen';
 
 interface TicketTypesListProps {
@@ -60,7 +62,7 @@ export const TicketTypesList = ({
   const commitAdd = async () => {
     if (!isValid(draft)) return;
     setCommitting(true);
-    const { data } = await createTicketType({
+    const { data, error } = await createTicketType({
       path: { eventId },
       body: {
         name: draft.name.trim(),
@@ -69,6 +71,11 @@ export const TicketTypesList = ({
         capacity: Number(draft.capacity),
       },
     });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setCommitting(false);
+      return;
+    }
     if (data) onChange([...ticketTypes, data]);
     setAdding(false);
     setCommitting(false);
@@ -77,7 +84,14 @@ export const TicketTypesList = ({
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    await deleteTicketType({ path: { eventId, ticketTypeId: id } });
+    const { error } = await deleteTicketType({
+      path: { eventId, ticketTypeId: id },
+    });
+    if (error) {
+      toast.error(extractApiError(error), { duration: Infinity });
+      setDeletingId(null);
+      return;
+    }
     onChange(ticketTypes.filter((t) => t.id !== id));
     setDeletingId(null);
   };

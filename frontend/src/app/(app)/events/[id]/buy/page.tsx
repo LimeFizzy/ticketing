@@ -40,9 +40,7 @@ const BuyTicketsPage = async ({
   if (event.venueMapId) {
     const [mapRes, mappingsRes] = await Promise.all([
       getEventVenueMap({ path: { id: event.id } }),
-      getEventVenueMapPlaces({ path: { eventId: event.id } }).catch(() => ({
-        data: null,
-      })),
+      getEventVenueMapPlaces({ path: { eventId: event.id } }),
     ]);
 
     if (mapRes.data && mappingsRes.data) {
