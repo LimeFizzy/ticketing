@@ -68,7 +68,7 @@ public class StripeService(
             { "userId", userId.ToString() },
             { "eventId", request.EventId.ToString() },
             { "items", JsonSerializer.Serialize(request.Items.Select(i => new
-            { i.EventTicketTypeId, i.Quantity }).ToArray()) }
+            { i.EventTicketTypeId, i.Quantity, i.VenueMapPlaceId }).ToArray()) }
         };
 
         Guid? promoCodeId = null;
